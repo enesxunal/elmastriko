@@ -34,22 +34,74 @@ export default function Home() {
         <details className="mobile-menu">
           <summary aria-label="Menüyü aç"><span/><span/></summary>
           <div className="mobile-menu-panel">
-            <div className="mobile-menu-title">Menü</div>
-            <a href="#kadin">Kadın <ArrowRight size={16}/></a>
-            <a href="#erkek">Erkek <ArrowRight size={16}/></a>
-            <a href="#yeni">Yeni Gelenler <ArrowRight size={16}/></a>
-            <a href="#koleksiyon">Koleksiyonlar <ArrowRight size={16}/></a>
+            <div className="mobile-menu-title">Koleksiyonlar</div>
+            <div className="mobile-menu-group">
+              <a className="mobile-menu-parent" href="#kadin">Kadın <ArrowRight size={16}/></a>
+              <div className="mobile-subgrid">
+                <a href="#">Yeni Gelenler</a><a href="#">Hırkalar</a><a href="#">Kazaklar</a>
+                <a href="#">Ceketler</a><a href="#">Fermuarlı Triko</a><a href="#">Desenli Triko</a>
+              </div>
+            </div>
+            <div className="mobile-menu-group">
+              <a className="mobile-menu-parent" href="#erkek">Erkek <ArrowRight size={16}/></a>
+              <div className="mobile-subgrid">
+                <a href="#">Yeni Gelenler</a><a href="#">Kazaklar</a><a href="#">Hırkalar</a>
+                <a href="#">Fermuarlı Modeller</a><a href="#">Desenli Modeller</a><a href="#">Tüm Erkek</a>
+              </div>
+            </div>
+            <div className="mobile-feature-links">
+              <a href="#yeni">Yeni Gelenler <ArrowRight size={14}/></a>
+              <a href="#koleksiyon">Elmas Seçkisi <ArrowRight size={14}/></a>
+            </div>
             <div className="mobile-menu-secondary">
-              <a href="#">Hesabım</a>
-              <a href="#">Favoriler</a>
-              <a href="#">Sipariş Takibi</a>
+              <a href="#">Hesabım</a><a href="#">Favoriler</a><a href="#">Sipariş Takibi</a>
             </div>
           </div>
         </details>
 
         <nav className="nav-left" aria-label="Ana menü">
-          <a href="#kadin">Kadın</a>
-          <a href="#erkek">Erkek</a>
+          <div className="mega-trigger">
+            <a className="mega-link" href="#kadin">Kadın</a>
+            <div className="mega-menu">
+              <div className="mega-menu-inner">
+                <div className="mega-kicker">Kadın Koleksiyonu</div>
+                <div className="mega-column">
+                  <h4>Giyim</h4>
+                  <a href="#">Yeni Gelenler</a><a href="#">Hırkalar</a><a href="#">Kazaklar</a><a href="#">Ceketler</a><a href="#">Fermuarlı Triko</a>
+                </div>
+                <div className="mega-column">
+                  <h4>Keşfet</h4>
+                  <a href="#">Desenli Triko</a><a href="#">Düz & Zamansız</a><a href="#">Çok Satanlar</a><a href="#">Tüm Kadın</a>
+                </div>
+                <a className="mega-editorial" href="#kadin">
+                  <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=900&q=88" alt="Kadın koleksiyonu"/>
+                  <div><span>Yeni sezon</span><strong>Kadın / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="mega-trigger">
+            <a className="mega-link" href="#erkek">Erkek</a>
+            <div className="mega-menu">
+              <div className="mega-menu-inner">
+                <div className="mega-kicker">Erkek Koleksiyonu</div>
+                <div className="mega-column">
+                  <h4>Giyim</h4>
+                  <a href="#">Yeni Gelenler</a><a href="#">Kazaklar</a><a href="#">Hırkalar</a><a href="#">Fermuarlı Modeller</a><a href="#">Desenli Modeller</a>
+                </div>
+                <div className="mega-column">
+                  <h4>Keşfet</h4>
+                  <a href="#">Günlük Triko</a><a href="#">Klasik Seçki</a><a href="#">Çok Satanlar</a><a href="#">Tüm Erkek</a>
+                </div>
+                <a className="mega-editorial" href="#erkek">
+                  <img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=900&q=88" alt="Erkek koleksiyonu"/>
+                  <div><span>Yeni sezon</span><strong>Erkek / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
+                </a>
+              </div>
+            </div>
+          </div>
+
           <a href="#yeni">Yeni Gelenler</a>
         </nav>
 
@@ -58,7 +110,18 @@ export default function Home() {
         </a>
 
         <div className="header-right">
-          <a className="collection-link" href="#koleksiyon">Koleksiyonlar</a>
+          <div className="mega-trigger collection-trigger">
+            <a className="collection-link mega-link" href="#koleksiyon">Koleksiyonlar</a>
+            <div className="mega-menu">
+              <div className="mega-menu-inner collections-mega">
+                <div className="mega-kicker">Elmas Edit</div>
+                <a className="collection-tile" href="#yeni"><span>01</span><strong>Yeni Sezon</strong><small>Son eklenen parçalar</small></a>
+                <a className="collection-tile" href="#"><span>02</span><strong>Signature Knit</strong><small>Desen ve jakar seçkisi</small></a>
+                <a className="collection-tile" href="#"><span>03</span><strong>Modern Klasikler</strong><small>Zamansız triko parçalar</small></a>
+                <a className="collection-tile dark" href="#koleksiyon"><span>04</span><strong>Tüm Koleksiyonlar</strong><small>Elmas dünyasını keşfet</small></a>
+              </div>
+            </div>
+          </div>
           <div className="header-actions">
             <button aria-label="Ara"><Search size={19} strokeWidth={1.5} /></button>
             <button aria-label="Hesabım"><UserRound size={19} strokeWidth={1.5} /></button>
