@@ -31,6 +31,22 @@ export default function Home() {
       </div>
 
       <header className="site-header">
+        <details className="mobile-menu">
+          <summary aria-label="Menüyü aç"><span/><span/></summary>
+          <div className="mobile-menu-panel">
+            <div className="mobile-menu-title">Menü</div>
+            <a href="#kadin">Kadın <ArrowRight size={16}/></a>
+            <a href="#erkek">Erkek <ArrowRight size={16}/></a>
+            <a href="#yeni">Yeni Gelenler <ArrowRight size={16}/></a>
+            <a href="#koleksiyon">Koleksiyonlar <ArrowRight size={16}/></a>
+            <div className="mobile-menu-secondary">
+              <a href="#">Hesabım</a>
+              <a href="#">Favoriler</a>
+              <a href="#">Sipariş Takibi</a>
+            </div>
+          </div>
+        </details>
+
         <nav className="nav-left" aria-label="Ana menü">
           <a href="#kadin">Kadın</a>
           <a href="#erkek">Erkek</a>
