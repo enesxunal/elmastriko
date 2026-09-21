@@ -2,23 +2,23 @@ import Image from "next/image";
 import { ArrowRight, Heart, Search, ShoppingBag, UserRound, Camera, Plus } from "lucide-react";
 
 const products = [
-  { name: "Dokulu Düğmeli Hırka", price: "1.490 TL", image: "https://images.unsplash.com/photo-1576566588028-4147f3842f27?auto=format&fit=crop&w=900&q=88", tone: "Ekru", badge: "Yeni" },
-  { name: "Jakarlı Triko Ceket", price: "1.790 TL", image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=900&q=88", tone: "Antrasit", badge: "Edit" },
-  { name: "Yumuşak Dokulu Kazak", price: "1.290 TL", image: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=900&q=88", tone: "Taş", badge: "Yeni" },
-  { name: "Fermuarlı Triko Hırka", price: "1.590 TL", image: "https://images.unsplash.com/photo-1603252109303-2751441dd157?auto=format&fit=crop&w=900&q=88", tone: "Lacivert", badge: "Çok Satan" },
+  { name: "Siyah Çizgili Triko Takım", price: "Fiyat yakında", image: "/images/product-black-set.png", tone: "Siyah / Ekru", badge: "Yeni" },
+  { name: "Ekru Çizgili Triko Takım", price: "Fiyat yakında", image: "/images/product-cream-set.png", tone: "Ekru", badge: "Edit" },
+  { name: "Diamond Desenli Triko Hırka", price: "Fiyat yakında", image: "/images/product-white-diamond.png", tone: "Ekru / Lacivert", badge: "Yeni" },
+  { name: "Kapüşonlu Desenli Triko Hırka", price: "Fiyat yakında", image: "/images/product-pattern-cardigan.png", tone: "Ekru / Mürdüm", badge: "Çok Satan" },
 ];
 
 const edits = [
-  { title: "Modern Klasikler", eyebrow: "01 / KADIN", image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=1200&q=90" },
-  { title: "Yeni Erkek", eyebrow: "02 / ERKEK", image: "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=1200&q=90" },
-  { title: "Desen Seçkisi", eyebrow: "03 / JAKAR", image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=1200&q=90" },
+  { title: "Modern Klasikler", eyebrow: "01 / KADIN", image: "/images/edit-modern-classics.png" },
+  { title: "Yeni Erkek", eyebrow: "02 / ERKEK", image: "/images/edit-new-men.png" },
+  { title: "Desen Seçkisi", eyebrow: "03 / JAKAR", image: "/images/edit-pattern-selection.png" },
 ];
 
 const social = [
-  "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=700&q=86",
-  "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=700&q=86",
-  "https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=700&q=86",
-  "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=700&q=86",
+  "/images/category-women.png",
+  "/images/signature-knit.png",
+  "/images/edit-modern-classics.png",
+  "/images/product-pattern-cardigan.png",
 ];
 
 export default function Home() {
@@ -74,7 +74,7 @@ export default function Home() {
                   <a href="#">Desenli Triko</a><a href="#">Düz & Zamansız</a><a href="#">Çok Satanlar</a><a href="#">Tüm Kadın</a>
                 </div>
                 <a className="mega-editorial" href="#kadin">
-                  <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=900&q=88" alt="Kadın koleksiyonu"/>
+                  <img src="/images/category-women.png" alt="Kadın koleksiyonu"/>
                   <div><span>Yeni sezon</span><strong>Kadın / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
                 </a>
               </div>
@@ -95,7 +95,7 @@ export default function Home() {
                   <a href="#">Günlük Triko</a><a href="#">Klasik Seçki</a><a href="#">Çok Satanlar</a><a href="#">Tüm Erkek</a>
                 </div>
                 <a className="mega-editorial" href="#erkek">
-                  <img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=900&q=88" alt="Erkek koleksiyonu"/>
+                  <img src="/images/category-men.png" alt="Erkek koleksiyonu"/>
                   <div><span>Yeni sezon</span><strong>Erkek / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
                 </a>
               </div>
@@ -166,13 +166,13 @@ export default function Home() {
 
       <section className="gender-stage" id="koleksiyon">
         <a className="gender-card women" id="kadin" href="#">
-          <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1500&q=92" alt="Kadın koleksiyonu" />
+          <img src="/images/category-women.png" alt="Kadın koleksiyonu" />
           <div className="gender-overlay" />
           <div className="gender-top"><span>01</span><span>WOMEN</span></div>
           <div className="gender-bottom"><h3>Kadın</h3><span>Koleksiyonu keşfet <ArrowRight size={16}/></span></div>
         </a>
         <a className="gender-card men" id="erkek" href="#">
-          <img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?auto=format&fit=crop&w=1500&q=92" alt="Erkek koleksiyonu" />
+          <img src="/images/category-men.png" alt="Erkek koleksiyonu" />
           <div className="gender-overlay" />
           <div className="gender-top"><span>02</span><span>MEN</span></div>
           <div className="gender-bottom"><h3>Erkek</h3><span>Koleksiyonu keşfet <ArrowRight size={16}/></span></div>
@@ -223,7 +223,7 @@ export default function Home() {
           <a href="#" className="text-link">Desenli trikoları keşfet <ArrowRight size={16}/></a>
         </div>
         <div className="signature-visual">
-          <img src="https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?auto=format&fit=crop&w=1600&q=92" alt="Elmas Triko desen seçkisi"/>
+          <img src="/images/signature-knit.png" alt="Elmas Triko desen seçkisi"/>
           <Image className="signature-emblem" src="/favicon.png" alt="" width={260} height={260}/>
           <span className="vertical-type">ELMAS TRİKO · ISTANBUL</span>
         </div>

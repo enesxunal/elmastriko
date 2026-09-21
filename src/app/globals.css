@@ -18,6 +18,9 @@ button,input{font:inherit}
 img{display:block}
 main{overflow:hidden}
 
+/* Tasarım testi: link ve aksiyonlar bilinçli olarak pasif. */
+main a, main button{pointer-events:none;cursor:default}
+
 .topbar{
   height:30px;padding:0 3vw;background:#151714;color:#f5f0e8;
   display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
@@ -88,7 +91,7 @@ main{overflow:hidden}
 
 .hero{height:calc(100svh - 118px);min-height:680px;position:relative;color:white}
 .hero-media{
-  position:absolute;inset:0;background:url("https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=2200&q=92") center 40%/cover no-repeat;
+  position:absolute;inset:0;background:url("/images/hero-banner.png") center 42%/cover no-repeat;
   transform:scale(1.01)
 }
 .hero-overlay{
