@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import { ArrowRight, Heart, Search, ShoppingBag, UserRound, Camera, Plus } from "lucide-react";
 
@@ -23,7 +25,10 @@ const social = [
 
 export default function Home() {
   return (
-    <main>
+    <main onClick={(event) => {
+      const target = event.target as HTMLElement;
+      if (target.closest("a") || target.closest("button")) event.preventDefault();
+    }}>
       <div className="topbar">
         <span>Ücretsiz kargo limiti yakında</span>
         <span className="topbar-center">Yeni sezon · 2026</span>
