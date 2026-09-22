@@ -25,7 +25,7 @@ export default function StoreHeader() {
         </nav>
         <Link href="/" className="store-logo"><Image src="/elmas-triko.png" alt="Elmas Triko" width={220} height={80}/></Link>
         <div className="store-actions">
-          <button aria-label="Ara"><Search size={19}/></button>
+          <Link href="/arama" aria-label="Ara"><Search size={19}/></Link>
           <Link href="/hesabim" aria-label="Hesabım"><UserRound size={19}/></Link>
           <Link className="store-icon-link" href="/favoriler" aria-label="Favoriler"><Heart size={19}/>{favorites.length > 0 && <span>{favorites.length}</span>}</Link>
           <Link className="store-icon-link" href="/sepet" aria-label="Sepet"><ShoppingBag size={19}/>{cartCount > 0 && <span>{cartCount}</span>}</Link>
