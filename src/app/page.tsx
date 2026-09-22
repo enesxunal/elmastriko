@@ -4,10 +4,10 @@ import Image from "next/image";
 import { ArrowRight, Heart, Search, ShoppingBag, UserRound, Camera, Plus } from "lucide-react";
 
 const products = [
-  { name: "Siyah Çizgili Triko Takım", price: "Fiyat yakında", image: "/images/product-black-set.png", tone: "Siyah / Ekru", badge: "Yeni" },
-  { name: "Ekru Çizgili Triko Takım", price: "Fiyat yakında", image: "/images/product-cream-set.png", tone: "Ekru", badge: "Edit" },
-  { name: "Diamond Desenli Triko Hırka", price: "Fiyat yakında", image: "/images/product-white-diamond.png", tone: "Ekru / Lacivert", badge: "Yeni" },
-  { name: "Kapüşonlu Desenli Triko Hırka", price: "Fiyat yakında", image: "/images/product-pattern-cardigan.png", tone: "Ekru / Mürdüm", badge: "Çok Satan" },
+  { slug: "siyah-cizgili-triko-takim", name: "Siyah Çizgili Triko Takım", price: "Fiyat yakında", image: "/images/product-black-set.png", tone: "Siyah / Ekru", badge: "Yeni" },
+  { slug: "ekru-cizgili-triko-takim", name: "Ekru Çizgili Triko Takım", price: "Fiyat yakında", image: "/images/product-cream-set.png", tone: "Ekru", badge: "Edit" },
+  { slug: "diamond-desenli-triko-hirka", name: "Diamond Desenli Triko Hırka", price: "Fiyat yakında", image: "/images/product-white-diamond.png", tone: "Ekru / Lacivert", badge: "Yeni" },
+  { slug: "kapusonlu-desenli-triko-hirka", name: "Kapüşonlu Desenli Triko Hırka", price: "Fiyat yakında", image: "/images/product-pattern-cardigan.png", tone: "Ekru / Mürdüm", badge: "Çok Satan" },
 ];
 
 const edits = [
@@ -25,14 +25,11 @@ const social = [
 
 export default function Home() {
   return (
-    <main onClick={(event) => {
-      const target = event.target as HTMLElement;
-      if (target.closest("a") || target.closest("button")) event.preventDefault();
-    }}>
+    <main>
       <div className="topbar">
-        <span>Ücretsiz kargo limiti yakında</span>
+        <span>5.000 TL üzeri ücretsiz kargo</span>
         <span className="topbar-center">Yeni sezon · 2026</span>
-        <span>PayTR ile güvenli ödeme</span>
+        <span>Güvenli ödeme</span>
       </div>
 
       <header className="site-header">
@@ -41,32 +38,32 @@ export default function Home() {
           <div className="mobile-menu-panel">
             <div className="mobile-menu-title">Koleksiyonlar</div>
             <div className="mobile-menu-group">
-              <a className="mobile-menu-parent" href="#kadin">Kadın <ArrowRight size={16}/></a>
+              <a className="mobile-menu-parent" href="/kadin">Kadın <ArrowRight size={16}/></a>
               <div className="mobile-subgrid">
                 <a href="#">Yeni Gelenler</a><a href="#">Hırkalar</a><a href="#">Kazaklar</a>
                 <a href="#">Ceketler</a><a href="#">Fermuarlı Triko</a><a href="#">Desenli Triko</a>
               </div>
             </div>
             <div className="mobile-menu-group">
-              <a className="mobile-menu-parent" href="#erkek">Erkek <ArrowRight size={16}/></a>
+              <a className="mobile-menu-parent" href="/erkek">Erkek <ArrowRight size={16}/></a>
               <div className="mobile-subgrid">
                 <a href="#">Yeni Gelenler</a><a href="#">Kazaklar</a><a href="#">Hırkalar</a>
                 <a href="#">Fermuarlı Modeller</a><a href="#">Desenli Modeller</a><a href="#">Tüm Erkek</a>
               </div>
             </div>
             <div className="mobile-feature-links">
-              <a href="#yeni">Yeni Gelenler <ArrowRight size={14}/></a>
+              <a href="/yeni-gelenler">Yeni Gelenler <ArrowRight size={14}/></a>
               <a href="#koleksiyon">Elmas Seçkisi <ArrowRight size={14}/></a>
             </div>
             <div className="mobile-menu-secondary">
-              <a href="#">Hesabım</a><a href="#">Favoriler</a><a href="#">Sipariş Takibi</a>
+              <a href="/hesabim">Hesabım</a><a href="/favoriler">Favoriler</a><a href="/siparis-takip">Sipariş Takibi</a>
             </div>
           </div>
         </details>
 
         <nav className="nav-left" aria-label="Ana menü">
           <div className="mega-trigger">
-            <a className="mega-link" href="#kadin">Kadın</a>
+            <a className="mega-link" href="/kadin">Kadın</a>
             <div className="mega-menu">
               <div className="mega-menu-inner">
                 <div className="mega-kicker">Kadın Koleksiyonu</div>
@@ -78,7 +75,7 @@ export default function Home() {
                   <h4>Keşfet</h4>
                   <a href="#">Desenli Triko</a><a href="#">Düz & Zamansız</a><a href="#">Çok Satanlar</a><a href="#">Tüm Kadın</a>
                 </div>
-                <a className="mega-editorial" href="#kadin">
+                <a className="mega-editorial" href="/kadin">
                   <img src="/images/category-women.png" alt="Kadın koleksiyonu"/>
                   <div><span>Yeni sezon</span><strong>Kadın / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
                 </a>
@@ -87,7 +84,7 @@ export default function Home() {
           </div>
 
           <div className="mega-trigger">
-            <a className="mega-link" href="#erkek">Erkek</a>
+            <a className="mega-link" href="/erkek">Erkek</a>
             <div className="mega-menu">
               <div className="mega-menu-inner">
                 <div className="mega-kicker">Erkek Koleksiyonu</div>
@@ -99,7 +96,7 @@ export default function Home() {
                   <h4>Keşfet</h4>
                   <a href="#">Günlük Triko</a><a href="#">Klasik Seçki</a><a href="#">Çok Satanlar</a><a href="#">Tüm Erkek</a>
                 </div>
-                <a className="mega-editorial" href="#erkek">
+                <a className="mega-editorial" href="/erkek">
                   <img src="/images/category-men.png" alt="Erkek koleksiyonu"/>
                   <div><span>Yeni sezon</span><strong>Erkek / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
                 </a>
@@ -107,10 +104,10 @@ export default function Home() {
             </div>
           </div>
 
-          <a href="#yeni">Yeni Gelenler</a>
+          <a href="/yeni-gelenler">Yeni Gelenler</a>
         </nav>
 
-        <a className="brand" href="#" aria-label="Elmas Triko ana sayfa">
+        <a className="brand" href="/" aria-label="Elmas Triko ana sayfa">
           <Image src="/elmas-triko.png" alt="Elmas Triko" width={290} height={105} priority />
         </a>
 
@@ -120,7 +117,7 @@ export default function Home() {
             <div className="mega-menu">
               <div className="mega-menu-inner collections-mega">
                 <div className="mega-kicker">Elmas Edit</div>
-                <a className="collection-tile" href="#yeni"><span>01</span><strong>Yeni Sezon</strong><small>Son eklenen parçalar</small></a>
+                <a className="collection-tile" href="/yeni-gelenler"><span>01</span><strong>Yeni Sezon</strong><small>Son eklenen parçalar</small></a>
                 <a className="collection-tile" href="#"><span>02</span><strong>Signature Knit</strong><small>Desen ve jakar seçkisi</small></a>
                 <a className="collection-tile" href="#"><span>03</span><strong>Modern Klasikler</strong><small>Zamansız triko parçalar</small></a>
                 <a className="collection-tile dark" href="#koleksiyon"><span>04</span><strong>Tüm Koleksiyonlar</strong><small>Elmas dünyasını keşfet</small></a>
@@ -146,8 +143,8 @@ export default function Home() {
           <h1>Dokuyu<br/><em>yeniden</em> yorumla.</h1>
           <p className="hero-copy">Kadın ve erkek koleksiyonlarında sakin renkler, güçlü desenler ve zamansız triko formlar.</p>
           <div className="hero-ctas">
-            <a href="#kadin" className="btn btn-light">Kadın koleksiyonu <ArrowRight size={16} /></a>
-            <a href="#erkek" className="btn btn-line">Erkek koleksiyonu <ArrowRight size={16} /></a>
+            <a href="/kadin" className="btn btn-light">Kadın koleksiyonu <ArrowRight size={16} /></a>
+            <a href="/erkek" className="btn btn-line">Erkek koleksiyonu <ArrowRight size={16} /></a>
           </div>
         </div>
         <a className="scroll-note" href="#manifesto"><span>Keşfet</span><i /></a>
@@ -192,14 +189,14 @@ export default function Home() {
           </div>
           <div className="section-side">
             <p>Sezonun ilk seçkisi. Kadın ve erkek koleksiyonlarından öne çıkan triko parçalar.</p>
-            <a href="#">Tümünü gör <ArrowRight size={15}/></a>
+            <a href="/yeni-gelenler">Tümünü gör <ArrowRight size={15}/></a>
           </div>
         </div>
 
         <div className="product-grid">
           {products.map((product, i) => (
             <article className={"product-card product-" + (i + 1)} key={product.name}>
-              <a href="#" className="product-image-wrap">
+              <a href={"/urun/" + product.slug} className="product-image-wrap">
                 <img src={product.image} alt={product.name} />
                 <span className="product-badge">{product.badge}</span>
                 <span className="quick-add"><Plus size={16}/> Hızlı ekle</span>
@@ -289,7 +286,7 @@ export default function Home() {
           <p>Kadın ve erkek için modern triko koleksiyonları.</p>
         </div>
         <div className="footer-columns">
-          <div><h4>Alışveriş</h4><a href="#kadin">Kadın</a><a href="#erkek">Erkek</a><a href="#yeni">Yeni Gelenler</a><a href="#">Çok Satanlar</a></div>
+          <div><h4>Alışveriş</h4><a href="/kadin">Kadın</a><a href="/erkek">Erkek</a><a href="/yeni-gelenler">Yeni Gelenler</a><a href="#">Çok Satanlar</a></div>
           <div><h4>Yardım</h4><a href="#">Sipariş Takibi</a><a href="#">Kargo & Teslimat</a><a href="#">İade & Değişim</a><a href="#">İletişim</a></div>
           <div><h4>Kurumsal</h4><a href="#">Hakkımızda</a><a href="#">KVKK</a><a href="#">Gizlilik</a><a href="#">Mesafeli Satış</a></div>
         </div>
