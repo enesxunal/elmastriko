@@ -12,7 +12,8 @@ export type InvoicePayload = {
 export const invoiceIntegration = {
   provider: "NES Portal",
   status: "adapter-ready" as const,
-  async createInvoice(_payload: InvoicePayload) {
+  async createInvoice(payload: InvoicePayload) {
+    void payload;
     throw new Error("NES Portal credentials/API details are not configured yet.");
   },
 };

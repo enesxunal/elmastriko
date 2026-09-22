@@ -1,0 +1,20 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { requireAdmin } from "@/lib/admin";
+import { addProductImage, createVariant, deleteProductImage, deleteVariant, updateVariant } from "../../actions";
+
+export default async function ProductAdminDetail({params,searchParams}:{params:Promise<{id:string}>,searchParams:Promise<{error?:string}>}){
+  const {id}=await params; const {error}=await searchParams; const {supabase}=await requireAdmin();
+  const [{data:product},{data:variants},{data:images}] = await Promise.all([
+    supabase.from("products").select("id,name,slug,gender,product_type,base_price").eq("id",id).maybeSingle(),
+    supabase.from("product_variants").select("id,sku,color,size,price,is_active,inventory(stock,reserved)").eq("product_id",id).order("created_at"),
+    supabase.from("product_images").select("id,url,alt_text,sort_order").eq("product_id",id).order("sort_order")
+  ]);
+  if(!product)notFound();
+  return <main className="admin-page"><div className="admin-breadcrumb"><Link href="/yonetim/urunler">← Ürünler</Link></div><div className="admin-page-head"><div><span>{product.slug}</span><h1>{product.name}</h1></div><p>Varyant, stok ve görseller.</p></div>{error&&<div className="admin-alert error">{error}</div>}
+    <section className="admin-section"><div className="admin-section-head"><h2>Varyantlar & Stok</h2></div><details className="admin-create"><summary>+ Varyant ekle</summary><form action={createVariant} className="admin-form-grid"><input type="hidden" name="product_id" value={id}/><input name="sku" placeholder="SKU"/><input name="color" placeholder="Renk"/><input name="size" placeholder="Beden"/><input name="price" type="number" step="0.01" placeholder="Varyant fiyatı"/><input name="stock" type="number" min="0" defaultValue="0" placeholder="Stok"/><label><input type="checkbox" name="is_active" defaultChecked/> Aktif</label><button>Varyant Ekle</button></form></details>
+      <div className="variant-list">{variants?.map(vr=>{const inv=Array.isArray(vr.inventory)?vr.inventory[0]:vr.inventory;return <article key={vr.id}><form action={updateVariant} className="variant-form"><input type="hidden" name="product_id" value={id}/><input type="hidden" name="id" value={vr.id}/><input name="sku" defaultValue={vr.sku||""} placeholder="SKU"/><input name="color" defaultValue={vr.color||""} placeholder="Renk"/><input name="size" defaultValue={vr.size||""} placeholder="Beden"/><input name="price" type="number" step="0.01" defaultValue={vr.price??""} placeholder="Fiyat"/><input name="stock" type="number" min="0" defaultValue={inv?.stock??0}/><input name="reserved" type="number" min="0" defaultValue={inv?.reserved??0}/><label><input type="checkbox" name="is_active" defaultChecked={vr.is_active}/> Aktif</label><button>Kaydet</button></form><form action={deleteVariant}><input type="hidden" name="product_id" value={id}/><input type="hidden" name="id" value={vr.id}/><button className="danger">Sil</button></form></article>})}</div>
+    </section>
+    <section className="admin-section"><div className="admin-section-head"><h2>Ürün Görselleri</h2></div><form action={addProductImage} className="admin-form-grid compact"><input type="hidden" name="product_id" value={id}/><input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/avif"/><input name="url" placeholder="veya görsel URL"/><input name="alt_text" placeholder="Alt metin"/><input name="sort_order" type="number" defaultValue="0"/><button>Görsel Ekle</button></form><div className="admin-image-grid">{images?.map(img=><article key={img.id}><img src={img.url.startsWith("/images/") && img.url.endsWith(".png") ? img.url.replace(/\.png$/, ".webp") : img.url} alt={img.alt_text||product.name}/><div><span>{img.sort_order}</span><p>{img.alt_text||"Alt metin yok"}</p><form action={deleteProductImage}><input type="hidden" name="product_id" value={id}/><input type="hidden" name="id" value={img.id}/><button className="danger">Sil</button></form></div></article>)}</div></section>
+  </main>;
+}

@@ -1,0 +1,4 @@
+"use client";
+import { FormEvent, useState } from "react";
+import { ArrowRight } from "lucide-react";
+export default function NewsletterForm(){const [state,setState]=useState<"idle"|"loading"|"ok"|"error">("idle");async function submit(e:FormEvent<HTMLFormElement>){e.preventDefault();setState("loading");const fd=new FormData(e.currentTarget);const r=await fetch("/api/newsletter",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email:fd.get("email")})});setState(r.ok?"ok":"error");if(r.ok)e.currentTarget.reset();}return <><form onSubmit={submit}><input name="email" type="email" placeholder="E-posta adresiniz" required/><button disabled={state==="loading"}>{state==="loading"?"Kaydediliyor":"Katıl"} <ArrowRight size={14}/></button></form>{state==="ok"&&<small>Kaydınız alındı.</small>}{state==="error"&&<small>Kayıt tamamlanamadı. Tekrar deneyin.</small>}</>}

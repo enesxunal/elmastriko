@@ -32,7 +32,7 @@ export function useCartCatalog(cart: CartLine[]) {
 
     load();
     return () => { cancelled = true; };
-  }, [slugs.join("|")]);
+  }, [slugs]);
 
   const lines = useMemo(
     () => cart

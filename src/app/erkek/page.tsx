@@ -17,6 +17,6 @@ export default async function MenPage({ searchParams }: { searchParams: Promise<
     {list.length ? <>
       <CatalogFilters basePath="/erkek" currentType={params.type} currentSort={params.sort} types={types}/>
       <section className="catalog-grid">{list.map(p => <ProductCard key={p.slug} product={p}/>)}</section>
-    </> : <section className="empty-collection"><span>ELMAS TRİKO</span><h2>Erkek koleksiyonu hazırlanıyor.</h2><p>Ürünler Supabase'e eklendiğinde bu alan otomatik olarak yayına alınacak.</p></section>}
+    </> : <section className="empty-collection"><span>ELMAS TRİKO</span><h2>Erkek koleksiyonu hazırlanıyor.</h2><p>Ürünler Supabase’e eklendiğinde bu alan otomatik olarak yayına alınacak.</p></section>}
   </main><StoreFooter/></>;
 }

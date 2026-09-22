@@ -1,29 +1,33 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import NewsletterForm from "@/components/NewsletterForm";
+import { useStore } from "@/components/StoreProvider";
 import { ArrowRight, Heart, Search, ShoppingBag, UserRound, Camera, Plus } from "lucide-react";
 
 const products = [
-  { slug: "siyah-cizgili-triko-takim", name: "Siyah Çizgili Triko Takım", price: "Fiyat yakında", image: "/images/product-black-set.png", tone: "Siyah / Ekru", badge: "Yeni" },
-  { slug: "ekru-cizgili-triko-takim", name: "Ekru Çizgili Triko Takım", price: "Fiyat yakında", image: "/images/product-cream-set.png", tone: "Ekru", badge: "Edit" },
-  { slug: "diamond-desenli-triko-hirka", name: "Diamond Desenli Triko Hırka", price: "Fiyat yakında", image: "/images/product-white-diamond.png", tone: "Ekru / Lacivert", badge: "Yeni" },
-  { slug: "kapusonlu-desenli-triko-hirka", name: "Kapüşonlu Desenli Triko Hırka", price: "Fiyat yakında", image: "/images/product-pattern-cardigan.png", tone: "Ekru / Mürdüm", badge: "Çok Satan" },
+  { slug: "siyah-cizgili-triko-takim", name: "Siyah Çizgili Triko Takım", price: "Fiyat yakında", image: "/images/product-black-set.webp", tone: "Siyah / Ekru", badge: "Yeni" },
+  { slug: "ekru-cizgili-triko-takim", name: "Ekru Çizgili Triko Takım", price: "Fiyat yakında", image: "/images/product-cream-set.webp", tone: "Ekru", badge: "Edit" },
+  { slug: "diamond-desenli-triko-hirka", name: "Diamond Desenli Triko Hırka", price: "Fiyat yakında", image: "/images/product-white-diamond.webp", tone: "Ekru / Lacivert", badge: "Yeni" },
+  { slug: "kapusonlu-desenli-triko-hirka", name: "Kapüşonlu Desenli Triko Hırka", price: "Fiyat yakında", image: "/images/product-pattern-cardigan.webp", tone: "Ekru / Mürdüm", badge: "Çok Satan" },
 ];
 
 const edits = [
-  { title: "Modern Klasikler", eyebrow: "01 / KADIN", image: "/images/edit-modern-classics.png" },
-  { title: "Yeni Erkek", eyebrow: "02 / ERKEK", image: "/images/edit-new-men.png" },
-  { title: "Desen Seçkisi", eyebrow: "03 / JAKAR", image: "/images/edit-pattern-selection.png" },
+  { title: "Modern Klasikler", eyebrow: "01 / KADIN", image: "/images/edit-modern-classics.webp" },
+  { title: "Yeni Erkek", eyebrow: "02 / ERKEK", image: "/images/edit-new-men.webp" },
+  { title: "Desen Seçkisi", eyebrow: "03 / JAKAR", image: "/images/edit-pattern-selection.webp" },
 ];
 
 const social = [
-  "/images/category-women.png",
-  "/images/signature-knit.png",
-  "/images/edit-modern-classics.png",
-  "/images/product-pattern-cardigan.png",
+  "/images/category-women.webp",
+  "/images/signature-knit.webp",
+  "/images/edit-modern-classics.webp",
+  "/images/product-pattern-cardigan.webp",
 ];
 
 export default function Home() {
+  const { cartCount, favorites } = useStore();
   return (
     <main>
       <div className="topbar">
@@ -76,7 +80,7 @@ export default function Home() {
                   <a href="#">Desenli Triko</a><a href="#">Düz & Zamansız</a><a href="#">Çok Satanlar</a><a href="#">Tüm Kadın</a>
                 </div>
                 <a className="mega-editorial" href="/kadin">
-                  <img src="/images/category-women.png" alt="Kadın koleksiyonu"/>
+                  <img src="/images/category-women.webp" alt="Kadın koleksiyonu"/>
                   <div><span>Yeni sezon</span><strong>Kadın / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
                 </a>
               </div>
@@ -97,7 +101,7 @@ export default function Home() {
                   <a href="#">Günlük Triko</a><a href="#">Klasik Seçki</a><a href="#">Çok Satanlar</a><a href="#">Tüm Erkek</a>
                 </div>
                 <a className="mega-editorial" href="/erkek">
-                  <img src="/images/category-men.png" alt="Erkek koleksiyonu"/>
+                  <img src="/images/category-men.webp" alt="Erkek koleksiyonu"/>
                   <div><span>Yeni sezon</span><strong>Erkek / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
                 </a>
               </div>
@@ -107,9 +111,9 @@ export default function Home() {
           <a href="/yeni-gelenler">Yeni Gelenler</a>
         </nav>
 
-        <a className="brand" href="/" aria-label="Elmas Triko ana sayfa">
+        <Link className="brand" href="/" aria-label="Elmas Triko ana sayfa">
           <Image src="/elmas-triko.png" alt="Elmas Triko" width={290} height={105} priority />
-        </a>
+        </Link>
 
         <div className="header-right">
           <div className="mega-trigger collection-trigger">
@@ -125,10 +129,10 @@ export default function Home() {
             </div>
           </div>
           <div className="header-actions">
-            <button aria-label="Ara"><Search size={19} strokeWidth={1.5} /></button>
-            <button aria-label="Hesabım"><UserRound size={19} strokeWidth={1.5} /></button>
-            <button aria-label="Favoriler"><Heart size={19} strokeWidth={1.5} /></button>
-            <button aria-label="Sepet"><ShoppingBag size={19} strokeWidth={1.5} /><span className="cart-dot">0</span></button>
+            <Link aria-label="Ara" href="/arama"><Search size={19} strokeWidth={1.5} /></Link>
+            <Link aria-label="Hesabım" href="/hesabim"><UserRound size={19} strokeWidth={1.5} /></Link>
+            <Link aria-label="Favoriler" href="/favoriler"><Heart size={19} strokeWidth={1.5} />{favorites.length > 0 && <span className="cart-dot">{favorites.length}</span>}</Link>
+            <Link aria-label="Sepet" href="/sepet"><ShoppingBag size={19} strokeWidth={1.5} />{cartCount > 0 && <span className="cart-dot">{cartCount}</span>}</Link>
           </div>
         </div>
       </header>
@@ -168,13 +172,13 @@ export default function Home() {
 
       <section className="gender-stage" id="koleksiyon">
         <a className="gender-card women" id="kadin" href="#">
-          <img src="/images/category-women.png" alt="Kadın koleksiyonu" />
+          <img src="/images/category-women.webp" alt="Kadın koleksiyonu" />
           <div className="gender-overlay" />
           <div className="gender-top"><span>01</span><span>WOMEN</span></div>
           <div className="gender-bottom"><h3>Kadın</h3><span>Koleksiyonu keşfet <ArrowRight size={16}/></span></div>
         </a>
         <a className="gender-card men" id="erkek" href="#">
-          <img src="/images/category-men.png" alt="Erkek koleksiyonu" />
+          <img src="/images/category-men.webp" alt="Erkek koleksiyonu" />
           <div className="gender-overlay" />
           <div className="gender-top"><span>02</span><span>MEN</span></div>
           <div className="gender-bottom"><h3>Erkek</h3><span>Koleksiyonu keşfet <ArrowRight size={16}/></span></div>
@@ -225,7 +229,7 @@ export default function Home() {
           <a href="#" className="text-link">Desenli trikoları keşfet <ArrowRight size={16}/></a>
         </div>
         <div className="signature-visual">
-          <img src="/images/signature-knit.png" alt="Elmas Triko desen seçkisi"/>
+          <img src="/images/signature-knit.webp" alt="Elmas Triko desen seçkisi"/>
           <Image className="signature-emblem" src="/favicon.png" alt="" width={260} height={260}/>
           <span className="vertical-type">ELMAS TRİKO · ISTANBUL</span>
         </div>
@@ -276,7 +280,7 @@ export default function Home() {
         <Image src="/favicon.png" alt="" width={120} height={120}/>
         <p className="eyebrow dark">ELMAS CLUB</p>
         <h2>Yeni koleksiyonlardan<br/>ilk senin haberin olsun.</h2>
-        <form><input type="email" placeholder="E-posta adresiniz"/><button type="submit">Katıl <ArrowRight size={16}/></button></form>
+        <NewsletterForm/>
         <small>Kaydolarak kampanya ve yenilik e-postalarını almayı kabul edersiniz.</small>
       </section>
 

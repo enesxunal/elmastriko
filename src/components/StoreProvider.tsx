@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export type CartLine = { slug: string; qty: number; size?: string; color?: string };
@@ -22,17 +22,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
-  const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
-
-  if (!supabaseRef.current) supabaseRef.current = createClient();
-  const supabase = supabaseRef.current;
+  const [supabase] = useState(() => createClient());
 
   useEffect(() => {
-    try {
-      setCart(JSON.parse(localStorage.getItem("elmas-cart") || "[]"));
-      setFavorites(JSON.parse(localStorage.getItem("elmas-favorites") || "[]"));
-    } catch {}
-    setHydrated(true);
+    const timer = window.setTimeout(() => {
+      try {
+        setCart(JSON.parse(localStorage.getItem("elmas-cart") || "[]"));
+        setFavorites(JSON.parse(localStorage.getItem("elmas-favorites") || "[]"));
+      } catch {}
+      setHydrated(true);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -51,9 +51,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (!user || cancelled) return;
 
       let localSlugs: string[] = [];
-      try {
-        localSlugs = JSON.parse(localStorage.getItem("elmas-favorites") || "[]");
-      } catch {}
+      try { localSlugs = JSON.parse(localStorage.getItem("elmas-favorites") || "[]"); } catch {}
 
       if (localSlugs.length) {
         const { data: localProducts } = await supabase.from("products").select("id, slug").in("slug", localSlugs);
@@ -71,14 +69,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       const { data: productRows } = await supabase.from("products").select("slug").in("id", ids);
       if (cancelled) return;
-
       const remoteSlugs = (productRows || []).map(row => row.slug);
       setFavorites(prev => [...new Set([...prev, ...remoteSlugs])]);
     }
 
     if (hydrated) void syncAndLoadFavorites();
     const { data: listener } = supabase.auth.onAuthStateChange(() => void syncAndLoadFavorites());
-
     return () => {
       cancelled = true;
       listener.subscription.unsubscribe();
@@ -88,10 +84,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   async function syncFavorite(slug: string, shouldExist: boolean) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-
     const { data: product } = await supabase.from("products").select("id").eq("slug", slug).maybeSingle();
     if (!product) return;
-
     if (shouldExist) {
       await supabase.from("favorites").upsert({ user_id: user.id, product_id: product.id }, { onConflict: "user_id,product_id" });
     } else {
@@ -99,7 +93,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const value = useMemo<StoreState>(() => ({
+  const value: StoreState = {
     cart,
     favorites,
     addToCart(line) {
@@ -124,7 +118,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     clearCart() { setCart([]); },
     cartCount: cart.reduce((sum, x) => sum + x.qty, 0),
-  }), [cart, favorites]);
+  };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

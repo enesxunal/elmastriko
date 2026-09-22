@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { Product, products as fallbackProducts } from "@/lib/catalog";
 
 type DbProduct = {
@@ -21,10 +21,14 @@ function unique(values: (string | null | undefined)[]) {
   return [...new Set(values.filter((v): v is string => Boolean(v)))];
 }
 
+function optimizedImage(url: string) {
+  return url.startsWith("/images/") && url.endsWith(".png") ? url.replace(/\.png$/, ".webp") : url;
+}
+
 function mapDbProduct(row: DbProduct): Product {
   const images = [...(row.product_images || [])]
     .sort((a, b) => a.sort_order - b.sort_order)
-    .map(x => x.url);
+    .map(x => optimizedImage(x.url));
 
   const variants = (row.product_variants || []).filter(v => v.is_active);
   const variantPrice = variants.map(v => v.price).find(v => v !== null && v !== undefined);
@@ -36,8 +40,8 @@ function mapDbProduct(row: DbProduct): Product {
     category: row.gender === "erkek" ? "erkek" : "kadin",
     type: row.product_type || "Triko",
     price: numericPrice === null ? null : Number(numericPrice),
-    image: images[0] || "/images/product-cream-set.png",
-    images: images.length ? images : ["/images/product-cream-set.png"],
+    image: images[0] || "/images/product-cream-set.webp",
+    images: images.length ? images : ["/images/product-cream-set.webp"],
     colors: unique(variants.map(v => v.color)).length ? unique(variants.map(v => v.color)) : ["Standart"],
     sizes: unique(variants.map(v => v.size)).length ? unique(variants.map(v => v.size)) : ["Standart"],
     badge: row.is_featured ? "Öne Çıkan" : undefined,
@@ -46,7 +50,7 @@ function mapDbProduct(row: DbProduct): Product {
 }
 
 async function fetchDbProducts() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data, error } = await supabase
     .from("products")
     .select(`

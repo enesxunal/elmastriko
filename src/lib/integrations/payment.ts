@@ -10,7 +10,8 @@ export type PaymentIntentInput = {
 export const paymentIntegration = {
   provider: "pending" as PaymentProvider,
   status: "waiting-provider-selection" as const,
-  async createPayment(_input: PaymentIntentInput) {
+  async createPayment(input: PaymentIntentInput) {
+    void input;
     throw new Error("Payment provider has not been selected yet.");
   },
 };

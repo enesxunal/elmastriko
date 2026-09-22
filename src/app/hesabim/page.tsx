@@ -1,4 +1,5 @@
 import StoreHeader from "@/components/StoreHeader";
+import Link from "next/link";
 import StoreFooter from "@/components/StoreFooter";
 import { createClient } from "@/lib/supabase/server";
 import { addAddress, deleteAddress, requestPasswordReset, signIn, signOut, signUp, updateProfile } from "@/app/auth/actions";
@@ -28,10 +29,10 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <section className="account-panels">
         <div className="account-panel account-orders">
           <span>01</span><h2>Siparişlerim</h2>
-          {orders && orders.length > 0 ? orders.map(order => <div className="order-row" key={order.id}>
+          {orders && orders.length > 0 ? orders.map(order => <Link className="order-row" href={"/hesabim/siparis/" + order.id} key={order.id}>
             <div><b>{order.order_no}</b><small>{new Date(order.created_at).toLocaleDateString("tr-TR")}</small></div>
             <div><span>{order.status}</span><b>{Number(order.grand_total).toLocaleString("tr-TR")} {order.currency}</b></div>
-          </div>) : <p>Henüz siparişiniz bulunmuyor.</p>}
+          </Link>) : <p>Henüz siparişiniz bulunmuyor.</p>}
         </div>
 
         <div className="account-panel">
