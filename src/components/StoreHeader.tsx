@@ -4,9 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Heart, Menu, Search, ShoppingBag, UserRound, X } from "lucide-react";
 import { useState } from "react";
+import { useStore } from "./StoreProvider";
 
 export default function StoreHeader() {
   const [open, setOpen] = useState(false);
+  const { cartCount, favorites } = useStore();
   return (
     <>
       <div className="store-topbar">
@@ -25,8 +27,8 @@ export default function StoreHeader() {
         <div className="store-actions">
           <button aria-label="Ara"><Search size={19}/></button>
           <Link href="/hesabim" aria-label="Hesabım"><UserRound size={19}/></Link>
-          <Link href="/favoriler" aria-label="Favoriler"><Heart size={19}/></Link>
-          <Link href="/sepet" aria-label="Sepet"><ShoppingBag size={19}/></Link>
+          <Link className="store-icon-link" href="/favoriler" aria-label="Favoriler"><Heart size={19}/>{favorites.length > 0 && <span>{favorites.length}</span>}</Link>
+          <Link className="store-icon-link" href="/sepet" aria-label="Sepet"><ShoppingBag size={19}/>{cartCount > 0 && <span>{cartCount}</span>}</Link>
         </div>
       </header>
       {open && <div className="drawer-backdrop" onClick={() => setOpen(false)}>
