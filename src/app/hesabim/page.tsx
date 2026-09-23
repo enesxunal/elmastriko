@@ -91,8 +91,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <form className="reset-form" action={requestPasswordReset}><input name="email" type="email" placeholder="Şifre yenileme için e-posta" required/><button type="submit">Şifre Bağlantısı Gönder</button></form>
     </div>
     <div className="auth-columns">
-      <form action={signIn}><h2>Giriş Yap</h2><input name="email" type="email" placeholder="E-posta" required/><input name="password" type="password" placeholder="Şifre" minLength={6} required/><button type="submit">Giriş Yap</button></form>
-      <form action={signUp}><h2>Hesap Oluştur</h2><input name="full_name" placeholder="Ad Soyad" required/><input name="email" type="email" placeholder="E-posta" required/><input name="password" type="password" placeholder="Şifre (en az 6 karakter)" minLength={6} required/><button type="submit">Kayıt Ol</button></form>
+      <form action={signIn}><h2>Giriş Yap</h2><input aria-label="Giriş e-posta" name="email" type="email" placeholder="E-posta" required/><input aria-label="Giriş şifre" name="password" type="password" placeholder="Şifre" minLength={6} required/><button type="submit">Giriş Yap</button></form>
+      <form action={signUp}><h2>Hesap Oluştur</h2><input aria-label="Kayıt ad soyad" name="full_name" placeholder="Ad Soyad" required/><input aria-label="Kayıt e-posta" name="email" type="email" placeholder="E-posta" required/><input aria-label="Kayıt şifre" name="password" type="password" placeholder="Şifre (en az 6 karakter)" minLength={6} required/><button type="submit">Kayıt Ol</button></form>
     </div>
   </main><StoreFooter/></>;
 }
