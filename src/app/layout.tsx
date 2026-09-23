@@ -3,7 +3,7 @@ import { StoreProvider } from "@/components/StoreProvider";
 import { createPublicClient } from "@/lib/supabase/public";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.com";
+const siteUrl = "https://www.elmastriko.com";
 
 export async function generateMetadata(): Promise<Metadata> {
   let title = "Elmas Triko | Kadın & Erkek Triko";

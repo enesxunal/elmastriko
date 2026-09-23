@@ -6,7 +6,7 @@ import ProductPurchase from "@/components/ProductPurchase";
 import ProductCard from "@/components/ProductCard";
 import { getProductBySlug, getProducts } from "@/lib/catalog-db";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.com";
+const siteUrl = "https://www.elmastriko.com";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
