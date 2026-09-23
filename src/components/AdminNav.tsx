@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Boxes, FileText, Gauge, History, Mail, PackageSearch, Plug, SearchCheck, Settings, ShoppingCart, Users, ExternalLink } from "lucide-react";
+import { BarChart3, Boxes, FileText, Gauge, History, Mail, PackageSearch, Plug, SearchCheck, Settings, ShoppingCart, Users, ExternalLink } from "lucide-react";
 
 const items = [
   ["/yonetim", "Genel Bakış", Gauge],
+  ["/yonetim/istatistikler", "İstatistikler", BarChart3],
   ["/yonetim/urunler", "Ürünler", Boxes],
   ["/yonetim/stok", "Stok", PackageSearch],
   ["/yonetim/siparisler", "Siparişler", ShoppingCart],
