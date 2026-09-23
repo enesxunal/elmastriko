@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
+import { basitKargo } from "@/lib/integrations/basitkargo";
 
 function v(fd: FormData, key: string) { return String(fd.get(key) || "").trim(); }
 function num(fd: FormData, key: string) { const x = v(fd,key); return x === "" ? null : Number(x); }
@@ -259,6 +260,79 @@ export async function createCategory(fd: FormData) {
   const {data,error}=await supabase.from("categories").insert({name:v(fd,"name"),slug:v(fd,"slug"),sort_order:Number(v(fd,"sort_order")||0),is_active:fd.get("is_active")==="on"}).select("id").single();
   if(error) redirect("/yonetim/urunler?error="+encodeURIComponent(error.message));
   await audit("create","category",data.id); revalidatePath("/yonetim/urunler");
+}
+
+export async function createBasitKargoShipment(fd: FormData) {
+  const { supabase } = await requireAdmin();
+  const orderId = v(fd,"order_id");
+  const handlerCode = v(fd,"handler_code") || "ECONOMIC";
+  const height = Math.max(1, Number(v(fd,"height") || 10));
+  const width = Math.max(1, Number(v(fd,"width") || 15));
+  const depth = Math.max(1, Number(v(fd,"depth") || 5));
+  const weight = Math.max(0.1, Number(v(fd,"weight") || 1));
+
+  const [{ data: order }, { data: items }, { data: address }] = await Promise.all([
+    supabase.from("orders").select("id,order_no,guest_email,guest_phone,payment_status,status").eq("id",orderId).maybeSingle(),
+    supabase.from("order_items").select("product_name,sku,quantity").eq("order_id",orderId),
+    supabase.from("order_addresses").select("full_name,phone,city,district,address_line").eq("order_id",orderId).eq("kind","shipping").maybeSingle(),
+  ]);
+
+  if (!order) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("Sipariş bulunamadı."));
+  if (order.payment_status !== "paid") redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("Ödeme tamamlanmadan kargo oluşturulamaz."));
+  if (!address) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("Teslimat adresi bulunamadı."));
+  if (!items?.length) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("Sipariş ürünü bulunamadı."));
+
+  try {
+    const response = await basitKargo.createShipment({
+      orderNo: order.order_no,
+      handlerCode,
+      items: items.map(item => ({
+        name: item.product_name,
+        code: item.sku,
+        quantity: Number(item.quantity),
+      })),
+      packages: [{ height, width, depth, weight }],
+      recipient: {
+        name: address.full_name,
+        phone: address.phone || order.guest_phone || "",
+        email: order.guest_email,
+        city: address.city,
+        town: address.district,
+        address: address.address_line,
+      },
+    });
+
+    const providerReference = String(response.id || "");
+    const trackingCode = String(response.handlerShipmentCode || response.barcode || "") || null;
+    const trackingUrl = trackingCode ? `https://www.google.com/search?q=${encodeURIComponent(trackingCode)}` : null;
+    const existing = await supabase.from("shipments").select("id").eq("order_id",orderId).order("created_at",{ascending:false}).limit(1).maybeSingle();
+    const payload = {
+      order_id: orderId,
+      provider: "BasitKargo",
+      provider_reference: providerReference || null,
+      tracking_code: trackingCode,
+      tracking_url: trackingUrl,
+      status: "prepared",
+      raw_response: response,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (existing.data?.id) {
+      await supabase.from("shipments").update(payload).eq("id",existing.data.id);
+    } else {
+      await supabase.from("shipments").insert(payload);
+    }
+
+    await supabase.from("orders").update({status:"ready_to_ship",updated_at:new Date().toISOString()}).eq("id",orderId);
+    await audit("create","shipment",orderId,{provider:"BasitKargo",providerReference,handlerCode});
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "BasitKargo gönderisi oluşturulamadı.";
+    redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent(message));
+  }
+
+  revalidatePath(`/yonetim/siparisler/${orderId}`);
+  revalidatePath("/yonetim/siparisler");
+  redirect(`/yonetim/siparisler/${orderId}?shipment=created`);
 }
 
 export async function saveShipment(fd: FormData) {
