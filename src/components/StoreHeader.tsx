@@ -2,49 +2,149 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, Menu, Search, ShoppingBag, UserRound, X } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Heart, Search, ShoppingBag, UserRound } from "lucide-react";
 import { useStore } from "./StoreProvider";
 
 export default function StoreHeader() {
-  const [open, setOpen] = useState(false);
   const { cartCount, favorites } = useStore();
+
   return (
     <>
-      <div className="store-topbar">
+      <div className="topbar">
         <span>5.000 TL üzeri ücretsiz kargo</span>
-        <span>Elmas Triko · Yeni Sezon</span>
-        <span>Güvenli alışveriş</span>
+        <span className="topbar-center">Yeni sezon · 2026</span>
+        <span>Güvenli ödeme</span>
       </div>
-      <header className="store-header">
-        <button className="store-menu-btn" onClick={() => setOpen(true)} aria-label="Menü"><Menu size={21}/></button>
-        <nav className="store-nav">
-          <Link href="/kadin">Kadın</Link>
-          <Link href="/erkek">Erkek</Link>
+
+      <header className="site-header">
+        <details className="mobile-menu">
+          <summary aria-label="Menüyü aç"><span/><span/></summary>
+          <div className="mobile-menu-panel">
+            <div className="mobile-menu-title">Koleksiyonlar</div>
+
+            <div className="mobile-menu-group">
+              <Link className="mobile-menu-parent" href="/kadin">Kadın <ArrowRight size={16}/></Link>
+              <div className="mobile-subgrid">
+                <Link href="/yeni-gelenler">Yeni Gelenler</Link>
+                <Link href="/arama?type=Hırka">Hırkalar</Link>
+                <Link href="/arama?type=Kazak">Kazaklar</Link>
+                <Link href="/arama?type=Ceket">Ceketler</Link>
+                <Link href="/arama?q=fermuarlı">Fermuarlı Triko</Link>
+                <Link href="/arama?q=desenli">Desenli Triko</Link>
+              </div>
+            </div>
+
+            <div className="mobile-menu-group">
+              <Link className="mobile-menu-parent" href="/erkek">Erkek <ArrowRight size={16}/></Link>
+              <div className="mobile-subgrid">
+                <Link href="/yeni-gelenler">Yeni Gelenler</Link>
+                <Link href="/arama?type=Kazak">Kazaklar</Link>
+                <Link href="/arama?type=Hırka">Hırkalar</Link>
+                <Link href="/arama?q=fermuarlı">Fermuarlı Modeller</Link>
+                <Link href="/arama?q=desenli">Desenli Modeller</Link>
+                <Link href="/erkek">Tüm Erkek</Link>
+              </div>
+            </div>
+
+            <div className="mobile-feature-links">
+              <Link href="/yeni-gelenler">Yeni Gelenler <ArrowRight size={14}/></Link>
+              <Link href="/arama">Elmas Seçkisi <ArrowRight size={14}/></Link>
+            </div>
+
+            <div className="mobile-menu-secondary">
+              <Link href="/hesabim">Hesabım</Link>
+              <Link href="/favoriler">Favoriler</Link>
+              <Link href="/siparis-takip">Sipariş Takibi</Link>
+            </div>
+          </div>
+        </details>
+
+        <nav className="nav-left" aria-label="Ana menü">
+          <div className="mega-trigger">
+            <Link className="mega-link" href="/kadin">Kadın</Link>
+            <div className="mega-menu">
+              <div className="mega-menu-inner">
+                <div className="mega-kicker">Kadın Koleksiyonu</div>
+                <div className="mega-column">
+                  <h4>Giyim</h4>
+                  <Link href="/yeni-gelenler">Yeni Gelenler</Link>
+                  <Link href="/arama?type=Hırka">Hırkalar</Link>
+                  <Link href="/arama?type=Kazak">Kazaklar</Link>
+                  <Link href="/arama?type=Ceket">Ceketler</Link>
+                  <Link href="/arama?q=fermuarlı">Fermuarlı Triko</Link>
+                </div>
+                <div className="mega-column">
+                  <h4>Keşfet</h4>
+                  <Link href="/arama?q=desenli">Desenli Triko</Link>
+                  <Link href="/arama?q=düz">Düz & Zamansız</Link>
+                  <Link href="/yeni-gelenler">Çok Satanlar</Link>
+                  <Link href="/kadin">Tüm Kadın</Link>
+                </div>
+                <Link className="mega-editorial" href="/kadin">
+                  <img src="/images/category-women.webp" alt="Kadın koleksiyonu"/>
+                  <div><span>Yeni sezon</span><strong>Kadın / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="mega-trigger">
+            <Link className="mega-link" href="/erkek">Erkek</Link>
+            <div className="mega-menu">
+              <div className="mega-menu-inner">
+                <div className="mega-kicker">Erkek Koleksiyonu</div>
+                <div className="mega-column">
+                  <h4>Giyim</h4>
+                  <Link href="/yeni-gelenler">Yeni Gelenler</Link>
+                  <Link href="/arama?type=Kazak">Kazaklar</Link>
+                  <Link href="/arama?type=Hırka">Hırkalar</Link>
+                  <Link href="/arama?q=fermuarlı">Fermuarlı Modeller</Link>
+                  <Link href="/arama?q=desenli">Desenli Modeller</Link>
+                </div>
+                <div className="mega-column">
+                  <h4>Keşfet</h4>
+                  <Link href="/arama?q=günlük">Günlük Triko</Link>
+                  <Link href="/arama?q=klasik">Klasik Seçki</Link>
+                  <Link href="/yeni-gelenler">Çok Satanlar</Link>
+                  <Link href="/erkek">Tüm Erkek</Link>
+                </div>
+                <Link className="mega-editorial" href="/erkek">
+                  <img src="/images/category-men.webp" alt="Erkek koleksiyonu"/>
+                  <div><span>Yeni sezon</span><strong>Erkek / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
+                </Link>
+              </div>
+            </div>
+          </div>
+
           <Link href="/yeni-gelenler">Yeni Gelenler</Link>
         </nav>
-        <Link href="/" className="store-logo"><Image src="/elmas-triko.png" alt="Elmas Triko" width={220} height={80}/></Link>
-        <div className="store-actions">
-          <Link href="/arama" aria-label="Ara"><Search size={19}/></Link>
-          <Link href="/hesabim" aria-label="Hesabım"><UserRound size={19}/></Link>
-          <Link className="store-icon-link" href="/favoriler" aria-label="Favoriler"><Heart size={19}/>{favorites.length > 0 && <span>{favorites.length}</span>}</Link>
-          <Link className="store-icon-link" href="/sepet" aria-label="Sepet"><ShoppingBag size={19}/>{cartCount > 0 && <span>{cartCount}</span>}</Link>
+
+        <Link className="brand" href="/" aria-label="Elmas Triko ana sayfa">
+          <Image src="/elmas-triko.png" alt="Elmas Triko" width={290} height={105} priority />
+        </Link>
+
+        <div className="header-right">
+          <div className="mega-trigger collection-trigger">
+            <Link className="collection-link mega-link" href="/arama">Koleksiyonlar</Link>
+            <div className="mega-menu">
+              <div className="mega-menu-inner collections-mega">
+                <div className="mega-kicker">Elmas Edit</div>
+                <Link className="collection-tile" href="/yeni-gelenler"><span>01</span><strong>Yeni Sezon</strong><small>Son eklenen parçalar</small></Link>
+                <Link className="collection-tile" href="/arama?q=desenli"><span>02</span><strong>Signature Knit</strong><small>Desen ve jakar seçkisi</small></Link>
+                <Link className="collection-tile" href="/arama?q=klasik"><span>03</span><strong>Modern Klasikler</strong><small>Zamansız triko parçalar</small></Link>
+                <Link className="collection-tile dark" href="/arama"><span>04</span><strong>Tüm Koleksiyonlar</strong><small>Elmas dünyasını keşfet</small></Link>
+              </div>
+            </div>
+          </div>
+
+          <div className="header-actions">
+            <Link aria-label="Ara" href="/arama"><Search size={19} strokeWidth={1.5}/></Link>
+            <Link aria-label="Hesabım" href="/hesabim"><UserRound size={19} strokeWidth={1.5}/></Link>
+            <Link aria-label="Favoriler" href="/favoriler"><Heart size={19} strokeWidth={1.5}/>{favorites.length > 0 && <span className="cart-dot">{favorites.length}</span>}</Link>
+            <Link aria-label="Sepet" href="/sepet"><ShoppingBag size={19} strokeWidth={1.5}/>{cartCount > 0 && <span className="cart-dot">{cartCount}</span>}</Link>
+          </div>
         </div>
       </header>
-      {open && <div className="drawer-backdrop" onClick={() => setOpen(false)}>
-        <aside className="mobile-drawer" onClick={(e) => e.stopPropagation()}>
-          <button className="drawer-close" onClick={() => setOpen(false)}><X size={22}/></button>
-          <span className="drawer-kicker">Koleksiyonlar</span>
-          <Link href="/kadin" onClick={() => setOpen(false)}>Kadın</Link>
-          <Link href="/erkek" onClick={() => setOpen(false)}>Erkek</Link>
-          <Link href="/yeni-gelenler" onClick={() => setOpen(false)}>Yeni Gelenler</Link>
-          <div className="drawer-sub">
-            <Link href="/favoriler">Favoriler</Link>
-            <Link href="/hesabim">Hesabım</Link>
-            <Link href="/sepet">Sepet</Link>
-          </div>
-        </aside>
-      </div>}
     </>
   );
 }
