@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Heart, Minus, Plus } from "lucide-react";
 import { Product, formatPrice } from "@/lib/catalog";
 import { useStore } from "./StoreProvider";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function ProductPurchase({ product }: { product: Product }) {
   const { addToCart, favorites, toggleFavorite } = useStore();
@@ -27,11 +27,7 @@ export default function ProductPurchase({ product }: { product: Product }) {
   const available = hasInventoryData ? (selectedVariant?.available ?? 0) : null;
   const outOfStock = available !== null && available <= 0;
   const selectedPrice = selectedVariant?.price ?? product.price;
-
-  useEffect(() => {
-    setQty(current => available === null ? current : Math.max(1, Math.min(current, Math.max(1, available))));
-    setAdded(false);
-  }, [available, size, color]);
+  const safeQty = available === null ? qty : Math.max(1, Math.min(qty, Math.max(1, available)));
 
   const colorHasStock = (candidate: string) => {
     if (!product.variants?.length) return true;
@@ -59,7 +55,7 @@ export default function ProductPurchase({ product }: { product: Product }) {
       <label>Renk</label>
       <div className="option-pills">{product.colors.map(c => {
         const enabled = colorHasStock(c);
-        return <button type="button" disabled={!enabled} aria-disabled={!enabled} className={color === c ? "selected" : ""} onClick={() => setColor(c)} key={c}>{c}{!enabled ? " · Tükendi" : ""}</button>;
+        return <button type="button" disabled={!enabled} aria-disabled={!enabled} className={color === c ? "selected" : ""} onClick={() => { setColor(c); setQty(1); setAdded(false); }} key={c}>{c}{!enabled ? " · Tükendi" : ""}</button>;
       })}</div>
     </div>
 
@@ -67,7 +63,7 @@ export default function ProductPurchase({ product }: { product: Product }) {
       <label>Beden</label>
       <div className="size-pills">{product.sizes.map(s => {
         const enabled = sizeHasStock(s);
-        return <button type="button" disabled={!enabled} aria-disabled={!enabled} className={size === s ? "selected" : ""} onClick={() => setSize(s)} key={s}>{s}</button>;
+        return <button type="button" disabled={!enabled} aria-disabled={!enabled} className={size === s ? "selected" : ""} onClick={() => { setSize(s); setQty(1); setAdded(false); }} key={s}>{s}</button>;
       })}</div>
     </div>
 
@@ -77,16 +73,16 @@ export default function ProductPurchase({ product }: { product: Product }) {
 
     <div className="product-buy-row">
       <div className="qty">
-        <button type="button" aria-label="Adedi azalt" onClick={() => setQty(Math.max(1, qty - 1))}><Minus size={15}/></button>
-        <span>{qty}</span>
-        <button type="button" aria-label="Adedi artır" disabled={available !== null && qty >= available} onClick={() => setQty(available === null ? qty + 1 : Math.min(available, qty + 1))}><Plus size={15}/></button>
+        <button type="button" aria-label="Adedi azalt" onClick={() => setQty(Math.max(1, safeQty - 1))}><Minus size={15}/></button>
+        <span>{safeQty}</span>
+        <button type="button" aria-label="Adedi artır" disabled={available !== null && safeQty >= available} onClick={() => setQty(available === null ? safeQty + 1 : Math.min(available, safeQty + 1))}><Plus size={15}/></button>
       </div>
       <button
         className="add-cart"
         disabled={outOfStock || product.price === null}
         onClick={() => {
           if (outOfStock || product.price === null) return;
-          addToCart({ slug: product.slug, qty, size, color });
+          addToCart({ slug: product.slug, qty: safeQty, size, color });
           setAdded(true);
         }}
       >

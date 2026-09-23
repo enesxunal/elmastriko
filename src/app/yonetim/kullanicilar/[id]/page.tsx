@@ -31,7 +31,7 @@ export default async function AdminUserDetail({params}:{params:Promise<{id:strin
       </div>
     </section>
     <section className="admin-section"><div className="admin-section-head"><h2>Favoriler</h2><span>{favorites?.length||0}</span></div>
-      <div className="admin-category-row">{favorites?.map((f:any)=>{const p=Array.isArray(f.products)?f.products[0]:f.products;return p?<Link key={p.id} href={"/urun/"+p.slug}>{p.name}</Link>:null})}</div>
+      <div className="admin-category-row">{favorites?.map((f:{products:{id:string;name:string;slug:string}|{id:string;name:string;slug:string}[]|null})=>{const p=Array.isArray(f.products)?f.products[0]:f.products;return p?<Link key={p.id} href={"/urun/"+p.slug}>{p.name}</Link>:null})}</div>
     </section>
   </main>;
 }

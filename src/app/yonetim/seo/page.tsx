@@ -13,7 +13,7 @@ export default async function SeoAdmin({searchParams}:{searchParams:Promise<{err
   ]);
   const seo=(seoRow?.value||{}) as {siteName?:string;defaultTitle?:string;defaultDescription?:string};
   const missingDescriptions=(products||[]).filter(p=>!p.description).length;
-  const missingAlt=(products||[]).filter(p=>!(p.product_images||[]).some((img:any)=>img.alt_text)).length;
+  const missingAlt=(products||[]).filter(p=>!(p.product_images||[]).some((img:{alt_text:string|null})=>img.alt_text)).length;
   const draftPosts=(posts||[]).filter(p=>p.status!=="published").length;
   const missingBlogSeo=(posts||[]).filter(p=>p.status==="published"&&(!p.seo_title||!p.seo_description)).length;
 
