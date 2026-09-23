@@ -12,13 +12,41 @@ async function audit(action: string, entityType: string, entityId?: string, meta
   await supabase.from("audit_logs").insert({ actor_id: user.id, action, entity_type: entityType, entity_id: entityId || null, metadata });
 }
 
+async function uploadProductFiles(
+  supabase: Awaited<ReturnType<typeof requireAdmin>>["supabase"],
+  productId: string,
+  files: File[],
+  altText: string,
+) {
+  const allowedTypes = ["image/png","image/jpeg","image/webp","image/avif"];
+  const validFiles = files.filter(file => file instanceof File && file.size > 0).slice(0,8);
+  for (const [index,file] of validFiles.entries()) {
+    if (!allowedTypes.includes(file.type)) throw new Error("Desteklenmeyen görsel formatı.");
+    if (file.size > 8 * 1024 * 1024) throw new Error("Her görsel en fazla 8 MB olabilir.");
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
+    const path = `${productId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from("product-media").upload(path,file,{contentType:file.type||undefined,upsert:false});
+    if (uploadError) throw uploadError;
+    const url = supabase.storage.from("product-media").getPublicUrl(path).data.publicUrl;
+    const { error: imageError } = await supabase.from("product_images").insert({
+      product_id: productId,
+      url,
+      alt_text: altText || null,
+      sort_order: index,
+    });
+    if (imageError) throw imageError;
+  }
+}
+
 export async function createProduct(fd: FormData) {
   const { supabase } = await requireAdmin();
   const slug = v(fd,"slug");
+  const name = v(fd,"name");
   const { data, error } = await supabase.from("products").insert({
     slug,
-    name: v(fd,"name"),
+    name,
     description: v(fd,"description") || null,
+    category_id: v(fd,"category_id") || null,
     gender: v(fd,"gender") || "kadin",
     product_type: v(fd,"product_type") || null,
     base_price: num(fd,"base_price"),
@@ -27,27 +55,55 @@ export async function createProduct(fd: FormData) {
     is_active: fd.get("is_active") === "on",
     is_featured: fd.get("is_featured") === "on",
   }).select("id").single();
-  if (error) redirect("/yonetim/urunler?error=" + encodeURIComponent(error.message));
+  if (error) redirect("/yonetim/urunler/yeni?error=" + encodeURIComponent(error.message));
+
+  try {
+    await uploadProductFiles(supabase, data.id, fd.getAll("images").filter((item): item is File => item instanceof File), name);
+  } catch (uploadError) {
+    await supabase.from("products").delete().eq("id",data.id);
+    const message = uploadError instanceof Error ? uploadError.message : "Görsel yüklenemedi.";
+    redirect("/yonetim/urunler/yeni?error=" + encodeURIComponent(message));
+  }
+
   await audit("create", "product", data.id, { slug });
   revalidatePath("/yonetim/urunler"); revalidatePath("/kadin"); revalidatePath("/erkek");
+  redirect(`/yonetim/urunler/${data.id}?created=1`);
 }
 
 export async function updateProduct(fd: FormData) {
   const { supabase } = await requireAdmin();
   const id = v(fd,"id");
   const { error } = await supabase.from("products").update({
-    name: v(fd,"name"), description: v(fd,"description") || null,
-    product_type: v(fd,"product_type") || null, base_price: num(fd,"base_price"),
-    compare_at_price: num(fd,"compare_at_price"), is_active: fd.get("is_active") === "on",
-    is_featured: fd.get("is_featured") === "on", updated_at: new Date().toISOString(),
+    slug: v(fd,"slug"),
+    name: v(fd,"name"),
+    description: v(fd,"description") || null,
+    category_id: v(fd,"category_id") || null,
+    gender: v(fd,"gender") || "kadin",
+    product_type: v(fd,"product_type") || null,
+    base_price: num(fd,"base_price"),
+    compare_at_price: num(fd,"compare_at_price"),
+    is_active: fd.get("is_active") === "on",
+    is_featured: fd.get("is_featured") === "on",
+    updated_at: new Date().toISOString(),
   }).eq("id", id);
-  if (error) redirect("/yonetim/urunler?error=" + encodeURIComponent(error.message));
+  if (error) redirect(`/yonetim/urunler/${id}?error=` + encodeURIComponent(error.message));
   await audit("update", "product", id);
-  revalidatePath("/yonetim/urunler"); revalidatePath("/kadin"); revalidatePath("/erkek");
+  revalidatePath("/yonetim/urunler"); revalidatePath(`/yonetim/urunler/${id}`); revalidatePath("/kadin"); revalidatePath("/erkek");
+}
+
+function storagePathFromPublicUrl(url: string) {
+  const marker="/storage/v1/object/public/product-media/";
+  const index=url.indexOf(marker);
+  if(index<0) return null;
+  return decodeURIComponent(url.slice(index+marker.length));
 }
 
 export async function deleteProduct(fd: FormData) {
-  const { supabase } = await requireAdmin(); const id=v(fd,"id");
+  const { supabase } = await requireAdmin();
+  const id=v(fd,"id");
+  const { data: images }=await supabase.from("product_images").select("url").eq("product_id",id);
+  const storagePaths=(images||[]).map(image=>storagePathFromPublicUrl(image.url)).filter((path):path is string=>Boolean(path));
+  if(storagePaths.length) await supabase.storage.from("product-media").remove(storagePaths);
   const { error } = await supabase.from("products").delete().eq("id",id);
   if (error) redirect("/yonetim/urunler?error="+encodeURIComponent(error.message));
   await audit("delete","product",id); revalidatePath("/yonetim/urunler");
@@ -117,31 +173,50 @@ export async function deleteVariant(fd: FormData) {
   await supabase.from("product_variants").delete().eq("id",id); await audit("delete","variant",id); revalidatePath(`/yonetim/urunler/${productId}`);
 }
 
-export async function addProductImage(fd: FormData) {
-  const { supabase }=await requireAdmin(); const productId=v(fd,"product_id");
-  let url=v(fd,"url");
-  const file=fd.get("file");
+export async function addProductImages(fd: FormData) {
+  const { supabase }=await requireAdmin();
+  const productId=v(fd,"product_id");
+  const altText=v(fd,"alt_text");
+  const files=fd.getAll("images").filter((item): item is File => item instanceof File && item.size>0);
+  if(!files.length) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent("En az bir görsel seçin."));
 
-  if (file instanceof File && file.size > 0) {
+  const { data: existing } = await supabase.from("product_images").select("sort_order").eq("product_id",productId).order("sort_order",{ascending:false}).limit(1);
+  const offset = Number(existing?.[0]?.sort_order ?? -1) + 1;
+
+  try {
     const allowedTypes=["image/png","image/jpeg","image/webp","image/avif"];
-    if(!allowedTypes.includes(file.type)) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent("Desteklenmeyen görsel formatı."));
-    if(file.size>8*1024*1024) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent("Görsel en fazla 8 MB olabilir."));
-    const ext=(file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
-    const path=`${productId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-    const { error: uploadError }=await supabase.storage.from("product-media").upload(path,file,{contentType:file.type||undefined,upsert:false});
-    if(uploadError) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent(uploadError.message));
-    url=supabase.storage.from("product-media").getPublicUrl(path).data.publicUrl;
+    for (const [index,file] of files.slice(0,8).entries()) {
+      if(!allowedTypes.includes(file.type)) throw new Error("Desteklenmeyen görsel formatı.");
+      if(file.size>8*1024*1024) throw new Error("Her görsel en fazla 8 MB olabilir.");
+      const ext=(file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
+      const path=`${productId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError }=await supabase.storage.from("product-media").upload(path,file,{contentType:file.type||undefined,upsert:false});
+      if(uploadError) throw uploadError;
+      const url=supabase.storage.from("product-media").getPublicUrl(path).data.publicUrl;
+      const { data, error }=await supabase.from("product_images").insert({product_id:productId,url,alt_text:altText||null,sort_order:offset+index}).select("id").single();
+      if(error) throw error;
+      await audit("create","product_image",data.id,{productId});
+    }
+  } catch (uploadError) {
+    const message=uploadError instanceof Error?uploadError.message:"Görsel yüklenemedi.";
+    redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent(message));
   }
 
-  if(!url) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent("Görsel dosyası veya URL gerekli."));
-  const { data, error }=await supabase.from("product_images").insert({product_id:productId,url,alt_text:v(fd,"alt_text")||null,sort_order:Number(v(fd,"sort_order")||0)}).select("id").single();
-  if(error) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent(error.message));
-  await audit("create","product_image",data.id,{productId}); revalidatePath(`/yonetim/urunler/${productId}`);
+  revalidatePath(`/yonetim/urunler/${productId}`);
+  revalidatePath("/yonetim/urunler");
 }
 
 export async function deleteProductImage(fd: FormData) {
-  const { supabase }=await requireAdmin(); const productId=v(fd,"product_id"), id=v(fd,"id");
-  await supabase.from("product_images").delete().eq("id",id); await audit("delete","product_image",id); revalidatePath(`/yonetim/urunler/${productId}`);
+  const { supabase }=await requireAdmin();
+  const productId=v(fd,"product_id"), id=v(fd,"id");
+  const { data:image }=await supabase.from("product_images").select("url").eq("id",id).maybeSingle();
+  const storagePath=image?.url?storagePathFromPublicUrl(image.url):null;
+  if(storagePath) await supabase.storage.from("product-media").remove([storagePath]);
+  const { error }=await supabase.from("product_images").delete().eq("id",id);
+  if(error) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent(error.message));
+  await audit("delete","product_image",id);
+  revalidatePath(`/yonetim/urunler/${productId}`);
+  revalidatePath("/yonetim/urunler");
 }
 
 export async function createCategory(fd: FormData) {
