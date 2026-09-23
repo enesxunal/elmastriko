@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { StoreProvider } from "@/components/StoreProvider";
+import AnalyticsTracker from "@/components/AnalyticsTracker";
 import { createPublicClient } from "@/lib/supabase/public";
 import "./globals.css";
 
@@ -29,5 +30,5 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const organization = {"@context":"https://schema.org","@type":"Organization","name":"Elmas Triko","url":siteUrl,"address":{"@type":"PostalAddress","streetAddress":"Merkez Mah. 716. Sk. No: 8 İç Kapı No: 31","addressLocality":"Bağcılar","addressRegion":"İstanbul","addressCountry":"TR"}};
-  return <html lang="tr"><body><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(organization)}}/><StoreProvider>{children}</StoreProvider></body></html>;
+  return <html lang="tr"><body><script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(organization)}}/><AnalyticsTracker/><StoreProvider>{children}</StoreProvider></body></html>;
 }

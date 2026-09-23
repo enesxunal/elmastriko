@@ -5,9 +5,16 @@ import {
   BarChart3,
   Boxes,
   CircleDollarSign,
+  Clock3,
+  Eye,
+  Globe2,
+  MonitorSmartphone,
+  MousePointerClick,
   PackageCheck,
+  Radio,
   ShoppingBag,
   TrendingUp,
+  UsersRound,
 } from "lucide-react";
 import { requireAdmin } from "@/lib/admin";
 
@@ -64,6 +71,34 @@ type InventoryRow = {
     | null;
 };
 
+type AnalyticsSessionRow = {
+  id: string;
+  visitor_id: string;
+  started_at: string;
+  last_seen_at: string;
+  duration_seconds: number;
+  pageviews: number;
+  entry_path: string;
+  exit_path: string;
+  referrer_host: string | null;
+  source: string;
+  medium: string | null;
+  campaign: string | null;
+  device_type: string | null;
+  browser: string | null;
+  os: string | null;
+};
+
+type AnalyticsPageviewRow = {
+  id: string;
+  session_id: string;
+  visitor_id: string;
+  path: string;
+  page_title: string | null;
+  entered_at: string;
+  duration_seconds: number;
+};
+
 const rangeLabels: Record<RangeKey, string> = {
   "7": "7 Gün",
   "30": "30 Gün",
@@ -99,6 +134,17 @@ function money(value: number) {
 
 function pct(value: number) {
   return value.toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 1 }) + "%";
+}
+
+function duration(value: number) {
+  const seconds = Math.max(0, Math.round(value || 0));
+  if (seconds < 60) return seconds + " sn";
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  if (minutes < 60) return minutes + " dk " + rest + " sn";
+  const hours = Math.floor(minutes / 60);
+  const restMinutes = minutes % 60;
+  return hours + " sa " + restMinutes + " dk";
 }
 
 function dayKey(date: string) {
@@ -145,16 +191,29 @@ export default async function StatisticsPage({
     .order("created_at", { ascending: true });
   if (prevStartIso) orderQuery = orderQuery.gte("created_at", prevStartIso);
 
-  const [ordersResult, itemsResult, addressesResult, profilesResult, inventoryResult, productsResult, favoritesResult] =
-    await Promise.all([
-      orderQuery,
-      supabase.from("order_items").select("order_id,product_id,product_name,sku,color,size,unit_price,quantity,line_total"),
-      supabase.from("order_addresses").select("order_id,kind,city,district").eq("kind", "shipping"),
-      supabase.from("profiles").select("id,created_at,role").eq("role", "customer"),
-      supabase.from("inventory").select("stock,reserved,product_variants(id,sku,products(id,name,slug))"),
-      supabase.from("products").select("id,name,slug,is_active,gender,created_at"),
-      supabase.from("favorites").select("user_id,product_id"),
-    ]);
+  const [
+    ordersResult,
+    itemsResult,
+    addressesResult,
+    profilesResult,
+    inventoryResult,
+    productsResult,
+    favoritesResult,
+    analyticsSessionsResult,
+    analyticsPageviewsResult,
+    activeNowResult,
+  ] = await Promise.all([
+    orderQuery,
+    supabase.from("order_items").select("order_id,product_id,product_name,sku,color,size,unit_price,quantity,line_total"),
+    supabase.from("order_addresses").select("order_id,kind,city,district").eq("kind", "shipping"),
+    supabase.from("profiles").select("id,created_at,role").eq("role", "customer"),
+    supabase.from("inventory").select("stock,reserved,product_variants(id,sku,products(id,name,slug))"),
+    supabase.from("products").select("id,name,slug,is_active,gender,created_at"),
+    supabase.from("favorites").select("user_id,product_id"),
+    supabase.from("analytics_sessions").select("id,visitor_id,started_at,last_seen_at,duration_seconds,pageviews,entry_path,exit_path,referrer_host,source,medium,campaign,device_type,browser,os").order("started_at",{ascending:false}).limit(5000),
+    supabase.from("analytics_pageviews").select("id,session_id,visitor_id,path,page_title,entered_at,duration_seconds").order("entered_at",{ascending:false}).limit(10000),
+    supabase.rpc("analytics_active_now"),
+  ]);
 
   const allOrders = (ordersResult.data || []) as OrderRow[];
   const items = (itemsResult.data || []) as OrderItemRow[];
@@ -163,10 +222,111 @@ export default async function StatisticsPage({
   const profiles = profilesResult.data || [];
   const products = productsResult.data || [];
   const favorites = favoritesResult.data || [];
+  const allAnalyticsSessions = (analyticsSessionsResult.data || []) as AnalyticsSessionRow[];
+  const allAnalyticsPageviews = (analyticsPageviewsResult.data || []) as AnalyticsPageviewRow[];
+  const activeNow = Number(activeNowResult.data || 0);
+  const analyticsReady = !analyticsSessionsResult.error && !analyticsPageviewsResult.error && !activeNowResult.error;
 
   const isCurrent = (date: string) => !currentStart || new Date(date) >= currentStart;
   const isPrevious = (date: string) =>
     Boolean(currentStart && prevStart && new Date(date) >= prevStart && new Date(date) < currentStart);
+
+  const currentSessions = allAnalyticsSessions.filter((s) => isCurrent(s.started_at));
+  const previousSessions = allAnalyticsSessions.filter((s) => isPrevious(s.started_at));
+  const currentSessionIds = new Set(currentSessions.map((s) => s.id));
+  const currentPageviews = allAnalyticsPageviews.filter((p) => currentSessionIds.has(p.session_id) && isCurrent(p.entered_at));
+  const uniqueVisitors = new Set(currentSessions.map((s) => s.visitor_id)).size;
+  const previousUniqueVisitors = new Set(previousSessions.map((s) => s.visitor_id)).size;
+  const avgSessionDuration = currentSessions.length
+    ? currentSessions.reduce((sum, s) => sum + Number(s.duration_seconds || 0), 0) / currentSessions.length
+    : 0;
+  const previousAvgSessionDuration = previousSessions.length
+    ? previousSessions.reduce((sum, s) => sum + Number(s.duration_seconds || 0), 0) / previousSessions.length
+    : 0;
+  const avgPageDuration = currentPageviews.length
+    ? currentPageviews.reduce((sum, p) => sum + Number(p.duration_seconds || 0), 0) / currentPageviews.length
+    : 0;
+  const pagesPerSession = currentSessions.length ? currentPageviews.length / currentSessions.length : 0;
+  const previousSessionIds = new Set(previousSessions.map((s) => s.id));
+  const previousPagesPerSession = previousSessions.length
+    ? allAnalyticsPageviews.filter((p) => previousSessionIds.has(p.session_id)).length / previousSessions.length
+    : 0;
+  const singlePageSessions = currentSessions.filter((s) => Number(s.pageviews || 0) <= 1).length;
+  const singlePageRate = currentSessions.length ? (singlePageSessions / currentSessions.length) * 100 : 0;
+
+  const pageMap = new Map<string, { views: number; sessions: Set<string>; seconds: number }>();
+  currentPageviews.forEach((p) => {
+    const row = pageMap.get(p.path) || { views: 0, sessions: new Set<string>(), seconds: 0 };
+    row.views += 1;
+    row.sessions.add(p.session_id);
+    row.seconds += Number(p.duration_seconds || 0);
+    pageMap.set(p.path, row);
+  });
+  const topPages = [...pageMap.entries()]
+    .map(([path, row]) => ({ path, views: row.views, sessions: row.sessions.size, avgSeconds: row.views ? row.seconds / row.views : 0 }))
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 10);
+
+  const landingMap = new Map<string, { sessions: number; seconds: number }>();
+  currentSessions.forEach((s) => {
+    const row = landingMap.get(s.entry_path) || { sessions: 0, seconds: 0 };
+    row.sessions += 1;
+    row.seconds += Number(s.duration_seconds || 0);
+    landingMap.set(s.entry_path, row);
+  });
+  const landingPages = [...landingMap.entries()]
+    .map(([path, row]) => ({ path, sessions: row.sessions, avgSeconds: row.sessions ? row.seconds / row.sessions : 0 }))
+    .sort((a, b) => b.sessions - a.sessions)
+    .slice(0, 8);
+
+  const sourceMap = new Map<string, number>();
+  const referrerMap = new Map<string, number>();
+  const deviceMap = new Map<string, number>();
+  const browserMap = new Map<string, number>();
+  currentSessions.forEach((s) => {
+    sourceMap.set(s.source || "Direct", (sourceMap.get(s.source || "Direct") || 0) + 1);
+    const referrer = s.referrer_host || (s.source === "Direct" ? "Doğrudan" : s.source || "Bilinmiyor");
+    referrerMap.set(referrer, (referrerMap.get(referrer) || 0) + 1);
+    deviceMap.set(s.device_type || "Bilinmiyor", (deviceMap.get(s.device_type || "Bilinmiyor") || 0) + 1);
+    browserMap.set(s.browser || "Bilinmiyor", (browserMap.get(s.browser || "Bilinmiyor") || 0) + 1);
+  });
+  const trafficSources = [...sourceMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const topReferrers = [...referrerMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const devices = [...deviceMap.entries()].sort((a,b)=>b[1]-a[1]);
+  const browsers = [...browserMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const recentSessions = currentSessions.slice(0, 12);
+
+  const trafficDailyMap = new Map<string, { date: string; sessions: number; visitors: Set<string>; views: number }>();
+  currentSessions.forEach((s) => {
+    const key = new Date(s.started_at).toISOString().slice(0,10);
+    const row = trafficDailyMap.get(key) || { date: s.started_at, sessions: 0, visitors: new Set<string>(), views: 0 };
+    row.sessions += 1;
+    row.visitors.add(s.visitor_id);
+    trafficDailyMap.set(key,row);
+  });
+  currentPageviews.forEach((p) => {
+    const key = new Date(p.entered_at).toISOString().slice(0,10);
+    const row = trafficDailyMap.get(key) || { date: p.entered_at, sessions: 0, visitors: new Set<string>(), views: 0 };
+    row.views += 1;
+    trafficDailyMap.set(key,row);
+  });
+  if (range !== "all" && currentStart) {
+    for (let i=0;i<Number(range);i++) {
+      const d = new Date(currentStart);
+      d.setDate(d.getDate()+i);
+      const key = d.toISOString().slice(0,10);
+      if (!trafficDailyMap.has(key)) trafficDailyMap.set(key,{date:d.toISOString(),sessions:0,visitors:new Set<string>(),views:0});
+    }
+  }
+  const trafficDaily = [...trafficDailyMap.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([,v])=>v);
+  const chartTrafficDaily = trafficDaily.length > 31
+    ? trafficDaily.filter((_,i)=>i % Math.ceil(trafficDaily.length/30) === 0 || i === trafficDaily.length-1)
+    : trafficDaily;
+  const maxTrafficViews = Math.max(1,...chartTrafficDaily.map((d)=>d.views));
+
+  const visitorChange = change(uniqueVisitors, previousUniqueVisitors);
+  const sessionDurationChange = change(avgSessionDuration, previousAvgSessionDuration);
+  const pagesPerSessionChange = change(pagesPerSession, previousPagesPerSession);
 
   const currentOrders = allOrders.filter((o) => isCurrent(o.created_at));
   const previousOrders = allOrders.filter((o) => isPrevious(o.created_at));
@@ -275,6 +435,13 @@ export default async function StatisticsPage({
   const avgChange = change(avgOrder, previousAvg);
   const paidRateChange = change(paidRate, previousPaidRate);
 
+  const trafficKpis = [
+    { label: "Benzersiz Ziyaretçi", value: uniqueVisitors.toLocaleString("tr-TR"), change: visitorChange, icon: UsersRound, note: "Aynı cihaz tarayıcısı tek ziyaretçi sayılır" },
+    { label: "Oturum", value: currentSessions.length.toLocaleString("tr-TR"), change: change(currentSessions.length, previousSessions.length), icon: Globe2, note: "30 dk hareketsizlik sonrası yeni oturum" },
+    { label: "Ort. Site Süresi", value: duration(avgSessionDuration), change: sessionDurationChange, icon: Clock3, note: "Aktif geçirilen görünür süre" },
+    { label: "Sayfa / Oturum", value: pagesPerSession.toLocaleString("tr-TR",{minimumFractionDigits:1,maximumFractionDigits:1}), change: pagesPerSessionChange, icon: MousePointerClick, note: currentPageviews.length.toLocaleString("tr-TR") + " toplam sayfa görüntüleme" },
+  ];
+
   const kpis = [
     { label: "Net Ciro", value: money(revenue), change: revenueChange, icon: CircleDollarSign, note: "Ödenmiş, iptal/iade hariç" },
     { label: "Sipariş", value: currentOrders.length.toLocaleString("tr-TR"), change: orderChange, icon: ShoppingBag, note: "Oluşturulan toplam sipariş" },
@@ -298,6 +465,122 @@ export default async function StatisticsPage({
           ))}
         </nav>
       </section>
+
+      <section className="analytics-traffic-title">
+        <div><span>ZİYARETÇİ ANALİTİĞİ</span><h2>Trafik ve davranış</h2><p>Ziyaretçinin nereden geldiğini, hangi sayfalara girdiğini ve aktif olarak ne kadar süre kaldığını gösterir.</p></div>
+        <div className="analytics-live"><Radio size={14}/><b>{activeNow}</b><span>son 5 dk aktif</span></div>
+      </section>
+
+      {!analyticsReady && (
+        <div className="admin-alert error">Ziyaretçi analitiği veritabanı henüz aktif değil. Analytics migration çalıştırıldıktan sonra bu alan otomatik veri toplamaya başlayacak.</div>
+      )}
+
+      <section className="analytics-kpis traffic-kpis">
+        {trafficKpis.map(({ label, value, change: delta, icon: Icon, note }) => (
+          <article key={label}>
+            <div className="analytics-kpi-top">
+              <span className="analytics-icon"><Icon size={18}/></span>
+              {range !== "all" && (
+                <span className={"analytics-delta " + (delta >= 0 ? "up" : "down")}>
+                  {delta >= 0 ? <ArrowUpRight size={13}/> : <ArrowDownRight size={13}/>}
+                  {pct(Math.abs(delta))}
+                </span>
+              )}
+            </div>
+            <small>{label}</small><strong>{value}</strong><p>{note}</p>
+          </article>
+        ))}
+      </section>
+
+      <section className="analytics-grid-main">
+        <article className="admin-section analytics-chart-card">
+          <div className="admin-section-head">
+            <div><span>TRAFİK TRENDİ</span><h2>Ziyaret ve sayfa görüntüleme</h2></div>
+            <div className="analytics-chart-total"><small>Ort. sayfa süresi</small><b>{duration(avgPageDuration)}</b></div>
+          </div>
+          {chartTrafficDaily.length ? (
+            <>
+              <div className="analytics-chart traffic-chart">
+                {chartTrafficDaily.map((day,index)=>(
+                  <div className="analytics-bar-cell" key={day.date+index}>
+                    <div className="analytics-bar-track" title={dayKey(day.date)+" • "+day.views+" görüntüleme • "+day.sessions+" oturum"}>
+                      <i style={{height:Math.max(day.views>0?8:2,(day.views/maxTrafficViews)*100)+"%"}}/>
+                    </div>
+                    <span>{index % Math.max(1,Math.ceil(chartTrafficDaily.length/7))===0 || index===chartTrafficDaily.length-1 ? dayKey(day.date):""}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="analytics-chart-foot"><span><i className="legend-dot"/> Günlük sayfa görüntüleme</span><b>{currentSessions.length} oturum · {uniqueVisitors} ziyaretçi</b></div>
+            </>
+          ) : <div className="admin-empty-state"><Eye size={24}/><b>Henüz ziyaret verisi yok</b><span>Migration aktif olduğunda gerçek trafik burada birikmeye başlayacak.</span></div>}
+        </article>
+        <article className="admin-section analytics-summary-card">
+          <div className="admin-section-head"><div><span>DAVRANIŞ ÖZETİ</span><h2>Oturum kalitesi</h2></div></div>
+          <div className="analytics-summary-list">
+            <div><span>Toplam sayfa görüntüleme</span><b>{currentPageviews.length}</b></div>
+            <div><span>Ort. sayfa süresi</span><b>{duration(avgPageDuration)}</b></div>
+            <div><span>Ort. site süresi</span><b>{duration(avgSessionDuration)}</b></div>
+            <div><span>Sayfa / oturum</span><b>{pagesPerSession.toLocaleString("tr-TR",{minimumFractionDigits:1,maximumFractionDigits:1})}</b></div>
+            <div><span>Tek sayfalı oturum</span><b>{pct(singlePageRate)}</b></div>
+            <div><span>Şu an aktif</span><b>{activeNow}</b></div>
+          </div>
+        </article>
+      </section>
+
+      <section className="analytics-grid-equal">
+        <article className="admin-section">
+          <div className="admin-section-head"><div><span>EN ÇOK GÖRÜLEN</span><h2>Sayfa performansı</h2></div></div>
+          <div className="analytics-table-wrap">
+            <div className="analytics-data-head"><span>Sayfa</span><span>Görüntüleme</span><span>Oturum</span><span>Ort. süre</span></div>
+            {topPages.length ? topPages.map((page)=><div className="analytics-data-row" key={page.path}><b title={page.path}>{page.path}</b><span>{page.views}</span><span>{page.sessions}</span><span>{duration(page.avgSeconds)}</span></div>) : <div className="admin-empty-state compact"><span>Henüz sayfa verisi yok.</span></div>}
+          </div>
+        </article>
+        <article className="admin-section">
+          <div className="admin-section-head"><div><span>İLK GİRİŞ</span><h2>Landing sayfaları</h2></div></div>
+          <div className="analytics-table-wrap landing-table">
+            <div className="analytics-data-head"><span>Giriş sayfası</span><span>Oturum</span><span>Ort. site süresi</span></div>
+            {landingPages.length ? landingPages.map((page)=><div className="analytics-data-row" key={page.path}><b title={page.path}>{page.path}</b><span>{page.sessions}</span><span>{duration(page.avgSeconds)}</span></div>) : <div className="admin-empty-state compact"><span>Henüz landing verisi yok.</span></div>}
+          </div>
+        </article>
+      </section>
+
+      <section className="analytics-grid-thirds">
+        <article className="admin-section">
+          <div className="admin-section-head"><div><span>KAYNAK</span><h2>Nereden geliyorlar?</h2></div></div>
+          <div className="analytics-status-list">
+            {trafficSources.length ? trafficSources.map(([source,count])=><div key={source}><span>{source}</span><div><i style={{width:currentSessions.length?(count/currentSessions.length)*100+"%":"0%"}}/></div><b>{count}</b></div>) : <div className="admin-empty-state compact"><span>Kaynak verisi yok.</span></div>}
+          </div>
+        </article>
+        <article className="admin-section">
+          <div className="admin-section-head"><div><span>REFERANS</span><h2>Gelen site / platform</h2></div></div>
+          <div className="analytics-city-list">
+            {topReferrers.length ? topReferrers.map(([host,count],index)=><div key={host}><span>{index+1}</span><b title={host}>{host}</b><small>{count} oturum</small></div>) : <div className="admin-empty-state compact"><span>Referans verisi yok.</span></div>}
+          </div>
+        </article>
+        <article className="admin-section">
+          <div className="admin-section-head"><div><span>CİHAZ</span><h2>Teknoloji dağılımı</h2></div><MonitorSmartphone size={18}/></div>
+          <div className="analytics-device-groups">
+            <div>{devices.map(([name,count])=><span key={name}><b>{name}</b><small>{count} oturum</small></span>)}</div>
+            <div>{browsers.map(([name,count])=><span key={name}><b>{name}</b><small>{count}</small></span>)}</div>
+          </div>
+        </article>
+      </section>
+
+      <section className="admin-section analytics-recent">
+        <div className="admin-section-head"><div><span>SON OTURUMLAR</span><h2>Ziyaret akışı</h2></div><small>IP adresi veya kişisel parmak izi tutulmaz.</small></div>
+        <div className="analytics-session-head"><span>Başlangıç</span><span>Kaynak</span><span>İlk sayfa</span><span>Son sayfa</span><span>Sayfa</span><span>Süre</span><span>Cihaz</span></div>
+        {recentSessions.length ? recentSessions.map((session)=><div className="analytics-session-row" key={session.id}>
+          <span>{new Date(session.started_at).toLocaleString("tr-TR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</span>
+          <span><b>{session.source}</b><small>{session.referrer_host || "—"}</small></span>
+          <span title={session.entry_path}>{session.entry_path}</span>
+          <span title={session.exit_path}>{session.exit_path}</span>
+          <span>{session.pageviews}</span>
+          <span>{duration(session.duration_seconds)}</span>
+          <span><b>{session.device_type || "—"}</b><small>{session.browser || "—"} · {session.os || "—"}</small></span>
+        </div>) : <div className="admin-empty-state compact"><span>Henüz oturum kaydı yok.</span></div>}
+      </section>
+
+      <section className="analytics-traffic-title commerce-title"><div><span>TİCARET ANALİTİĞİ</span><h2>Satış ve ürün performansı</h2></div></section>
 
       <section className="analytics-kpis">
         {kpis.map(({ label, value, change: delta, icon: Icon, note }) => (
