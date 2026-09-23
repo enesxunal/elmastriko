@@ -22,8 +22,10 @@ export async function signUp(formData: FormData) {
   const fullName = value(formData, "full_name");
   const email = value(formData, "email");
   const password = String(formData.get("password") || "");
+  const headerStore = await headers();
+  const origin = headerStore.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.com";
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
+  const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName }, emailRedirectTo: origin + "/auth/callback?next=/hesabim" } });
   if (error) redirect("/hesabim?error=" + encodeURIComponent(error.message));
   redirect("/hesabim?message=" + encodeURIComponent("Kaydınız oluşturuldu. E-posta doğrulaması açıksa gelen kutunuzu kontrol edin."));
 }
@@ -41,9 +43,24 @@ export async function requestPasswordReset(formData: FormData) {
   const headerStore = await headers();
   const origin = headerStore.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.vercel.app";
   const supabase = await createClient();
-  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: origin + "/hesabim" });
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: origin + "/auth/callback?next=/hesabim%3Freset%3D1" });
   if (error) redirect("/hesabim?error=" + encodeURIComponent(error.message));
   redirect("/hesabim?message=" + encodeURIComponent("Şifre yenileme bağlantısı e-posta adresinize gönderildi."));
+}
+
+export async function updatePassword(formData: FormData) {
+  const password = String(formData.get("password") || "");
+  const confirm = String(formData.get("confirm_password") || "");
+  if (password.length < 8) redirect("/hesabim?reset=1&error=" + encodeURIComponent("Şifre en az 8 karakter olmalı."));
+  if (password !== confirm) redirect("/hesabim?reset=1&error=" + encodeURIComponent("Şifreler eşleşmiyor."));
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/hesabim?error=" + encodeURIComponent("Şifre yenileme oturumu geçersiz veya süresi dolmuş."));
+
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) redirect("/hesabim?reset=1&error=" + encodeURIComponent(error.message));
+  redirect("/hesabim?message=" + encodeURIComponent("Şifreniz güncellendi."));
 }
 
 export async function updateProfile(formData: FormData) {

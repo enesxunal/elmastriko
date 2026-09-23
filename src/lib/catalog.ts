@@ -10,6 +10,16 @@ export type Product = {
   sizes: string[];
   badge?: string;
   description: string;
+  variants?: Array<{
+    id: string;
+    sku?: string | null;
+    color?: string | null;
+    size?: string | null;
+    price?: number | null;
+    stock: number;
+    reserved: number;
+    available: number;
+  }>;
 };
 
 export const products: Product[] = [
@@ -68,7 +78,7 @@ export const products: Product[] = [
 ];
 
 export const FREE_SHIPPING_THRESHOLD = 5000;
-export const STANDARD_SHIPPING_FEE = 149;
+export const STANDARD_SHIPPING_FEE: number | null = null;
 
 export function formatPrice(price: number | null) {
   if (price === null) return "Fiyat yakında";

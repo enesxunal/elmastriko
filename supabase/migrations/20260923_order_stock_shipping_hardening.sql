@@ -1,3 +1,10 @@
+begin;
+
+update public.site_settings
+set value = jsonb_set(value, '{shippingFee}', 'null'::jsonb, true),
+    updated_at = now()
+where key = 'commerce';
+
 -- Secure guest/member order creation without exposing broad INSERT policies.
 create or replace function public.create_store_order(payload jsonb)
 returns jsonb
@@ -195,3 +202,5 @@ $$;
 
 revoke all on function public.create_store_order(jsonb) from public;
 grant execute on function public.create_store_order(jsonb) to anon, authenticated;
+
+commit;

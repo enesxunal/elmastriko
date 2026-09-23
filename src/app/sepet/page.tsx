@@ -33,7 +33,7 @@ export default function CartPage() {
           <div className="cart-line-side"><strong>{formatPrice(product.price)}</strong><button onClick={() => removeFromCart(line.slug)} aria-label="Kaldır"><Trash2 size={16}/></button></div>
         </div>)}
       </section>
-      <aside className="cart-summary"><h2>Sipariş Özeti</h2><div><span>Ara toplam</span><b>{hasUnknownPrice ? "Fiyat listesi bekleniyor" : formatPrice(subtotal)}</b></div><div><span>Kargo</span><b>{quote.free ? "Ücretsiz" : hasUnknownPrice ? "Hesaplanacak" : formatPrice(quote.fee)}</b></div><div className="summary-total"><span>Toplam</span><b>{hasUnknownPrice ? "—" : formatPrice(subtotal + quote.fee)}</b></div>{lines.length > 0 ? <Link href="/checkout">Alışverişi Tamamla</Link> : <span className="disabled-checkout">Alışverişi Tamamla</span>}<small>Ödeme sağlayıcısı henüz seçilmedi. Checkout ve sipariş akışı sağlayıcıdan bağımsız hazır.</small></aside>
+      <aside className="cart-summary"><h2>Sipariş Özeti</h2><div><span>Ara toplam</span><b>{hasUnknownPrice ? "Fiyat listesi bekleniyor" : formatPrice(subtotal)}</b></div><div><span>Kargo</span><b>{quote.free ? "Ücretsiz" : hasUnknownPrice ? "Hesaplanacak" : quote.fee === null ? "Kargo tutarı onayda" : formatPrice(quote.fee)}</b></div><div className="summary-total"><span>Toplam</span><b>{hasUnknownPrice || quote.fee === null ? "—" : formatPrice(subtotal + quote.fee)}</b></div>{lines.length > 0 ? <Link href="/checkout">Alışverişi Tamamla</Link> : <span className="disabled-checkout">Alışverişi Tamamla</span>}<small>Ödeme sağlayıcısı henüz seçilmedi. Checkout ve sipariş akışı sağlayıcıdan bağımsız hazır.</small></aside>
     </div>
   </main><StoreFooter/></>;
 }

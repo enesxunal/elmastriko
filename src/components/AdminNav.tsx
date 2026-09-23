@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Boxes, FileText, Gauge, History, Mail, Plug, SearchCheck, Settings, ShoppingCart, Users, ExternalLink } from "lucide-react";
+import { Boxes, FileText, Gauge, History, Mail, PackageSearch, Plug, SearchCheck, Settings, ShoppingCart, Users, ExternalLink } from "lucide-react";
 
 const items = [
   ["/yonetim", "Genel Bakış", Gauge],
   ["/yonetim/urunler", "Ürünler", Boxes],
+  ["/yonetim/stok", "Stok", PackageSearch],
   ["/yonetim/siparisler", "Siparişler", ShoppingCart],
   ["/yonetim/kullanicilar", "Müşteriler", Users],
   ["/yonetim/mesajlar", "Mesajlar", Mail],

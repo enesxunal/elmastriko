@@ -14,7 +14,15 @@ type DbProduct = {
   is_featured: boolean;
   created_at: string;
   product_images?: { url: string; sort_order: number; alt_text: string | null }[];
-  product_variants?: { color: string | null; size: string | null; price: number | string | null; is_active: boolean }[];
+  product_variants?: {
+    id: string;
+    sku: string | null;
+    color: string | null;
+    size: string | null;
+    price: number | string | null;
+    is_active: boolean;
+    inventory?: { stock: number; reserved: number }[] | { stock: number; reserved: number } | null;
+  }[];
 };
 
 function unique(values: (string | null | undefined)[]) {
@@ -33,6 +41,21 @@ function mapDbProduct(row: DbProduct): Product {
   const variants = (row.product_variants || []).filter(v => v.is_active);
   const variantPrice = variants.map(v => v.price).find(v => v !== null && v !== undefined);
   const numericPrice = row.base_price ?? variantPrice ?? null;
+  const mappedVariants = variants.map(variant => {
+    const inv = Array.isArray(variant.inventory) ? variant.inventory[0] : variant.inventory;
+    const stock = Number(inv?.stock || 0);
+    const reserved = Number(inv?.reserved || 0);
+    return {
+      id: variant.id,
+      sku: variant.sku,
+      color: variant.color,
+      size: variant.size,
+      price: variant.price === null || variant.price === undefined ? null : Number(variant.price),
+      stock,
+      reserved,
+      available: Math.max(0, stock - reserved),
+    };
+  });
 
   return {
     slug: row.slug,
@@ -46,6 +69,7 @@ function mapDbProduct(row: DbProduct): Product {
     sizes: unique(variants.map(v => v.size)).length ? unique(variants.map(v => v.size)) : ["Standart"],
     badge: row.is_featured ? "Öne Çıkan" : undefined,
     description: row.description || "Elmas Triko yeni sezon koleksiyonundan seçili parça.",
+    variants: mappedVariants,
   };
 }
 
@@ -57,7 +81,7 @@ async function fetchDbProducts() {
       id, slug, name, description, gender, product_type, base_price, compare_at_price,
       is_active, is_featured, created_at,
       product_images(url, sort_order, alt_text),
-      product_variants(color, size, price, is_active)
+      product_variants(id, sku, color, size, price, is_active, inventory(stock, reserved))
     `)
     .eq("is_active", true)
     .order("created_at", { ascending: false });

@@ -117,10 +117,16 @@ export async function updateOrderStatus(fd: FormData) {
 }
 
 export async function setUserRole(fd: FormData) {
-  const { supabase } = await requireAdmin(); const id=v(fd,"id"), role=v(fd,"role");
-  if (!['customer','admin'].includes(role)) return;
-  await supabase.from("profiles").update({role,updated_at:new Date().toISOString()}).eq("id",id);
-  await audit("role_change","profile",id,{role}); revalidatePath("/yonetim/kullanicilar");
+  const { supabase, user } = await requireAdmin();
+  const id=v(fd,"id"), role=v(fd,"role");
+  if (!["customer","admin"].includes(role)) return;
+  if (id === user.id && role !== "admin") {
+    redirect("/yonetim/kullanicilar?error=" + encodeURIComponent("Kendi yönetici yetkinizi kaldıramazsınız."));
+  }
+  const { error } = await supabase.from("profiles").update({role,updated_at:new Date().toISOString()}).eq("id",id);
+  if(error) redirect("/yonetim/kullanicilar?error=" + encodeURIComponent(error.message));
+  await audit("role_change","profile",id,{role});
+  revalidatePath("/yonetim/kullanicilar");
 }
 
 export async function saveIntegration(fd: FormData) {
@@ -151,6 +157,23 @@ export async function saveSiteSetting(fd: FormData) {
   await audit("update","site_setting",key); revalidatePath("/yonetim/ayarlar");
 }
 
+export async function saveSeoSettings(fd: FormData) {
+  const { supabase, user } = await requireAdmin();
+  const siteName=v(fd,"site_name") || "Elmas Triko";
+  const defaultTitle=v(fd,"default_title");
+  const defaultDescription=v(fd,"default_description");
+  if(!defaultTitle || !defaultDescription) {
+    redirect("/yonetim/seo?error="+encodeURIComponent("SEO başlığı ve açıklaması boş bırakılamaz."));
+  }
+  const value={siteName,defaultTitle,defaultDescription};
+  const { error }=await supabase.from("site_settings").upsert({key:"seo",value,updated_by:user.id,updated_at:new Date().toISOString()});
+  if(error) redirect("/yonetim/seo?error="+encodeURIComponent(error.message));
+  await audit("update","site_setting","seo");
+  revalidatePath("/");
+  revalidatePath("/yonetim/seo");
+  redirect("/yonetim/seo?saved=1");
+}
+
 export async function createVariant(fd: FormData) {
   const { supabase } = await requireAdmin();
   const productId=v(fd,"product_id");
@@ -166,6 +189,18 @@ export async function updateVariant(fd: FormData) {
   if(error) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent(error.message));
   await supabase.from("inventory").upsert({variant_id:id,stock:Number(v(fd,"stock")||0),reserved:Number(v(fd,"reserved")||0),updated_at:new Date().toISOString()});
   await audit("update","variant",id); revalidatePath(`/yonetim/urunler/${productId}`);
+}
+
+export async function updateInventoryOnly(fd: FormData) {
+  const { supabase } = await requireAdmin();
+  const variantId=v(fd,"variant_id");
+  const stock=Math.max(0,Number(v(fd,"stock")||0));
+  const reserved=Math.max(0,Number(v(fd,"reserved")||0));
+  const { error }=await supabase.from("inventory").upsert({variant_id:variantId,stock,reserved,updated_at:new Date().toISOString()});
+  if(error) redirect("/yonetim/stok?error="+encodeURIComponent(error.message));
+  await audit("inventory_update","variant",variantId,{stock,reserved});
+  revalidatePath("/yonetim/stok");
+  revalidatePath("/yonetim");
 }
 
 export async function deleteVariant(fd: FormData) {
@@ -275,12 +310,6 @@ export async function toggleSubscriber(fd: FormData) {
   await audit("update","newsletter_subscriber",id,{active}); revalidatePath("/yonetim/mesajlar");
 }
 
-export async function saveSeoSettings(fd: FormData) {
-  const { supabase, user }=await requireAdmin();
-  const value={siteName:v(fd,"site_name")||"Elmas Triko",defaultTitle:v(fd,"default_title"),defaultDescription:v(fd,"default_description")};
-  await supabase.from("site_settings").upsert({key:"seo",value,updated_by:user.id,updated_at:new Date().toISOString()});
-  await audit("update","site_setting","seo",value); revalidatePath("/", "layout"); revalidatePath("/yonetim/ayarlar");
-}
 
 export async function saveContactSettings(fd: FormData) {
   const { supabase, user }=await requireAdmin();

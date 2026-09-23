@@ -17,19 +17,28 @@ type StoreState = {
 };
 
 const StoreContext = createContext<StoreState | null>(null);
+const GUEST_FAVORITES_KEY = "elmas-guest-favorites";
+
+function readGuestFavorites() {
+  try {
+    const value = JSON.parse(localStorage.getItem(GUEST_FAVORITES_KEY) || "[]");
+    return Array.isArray(value) ? value.filter(item => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartLine[]>([]);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [supabase] = useState(() => createClient());
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      try {
-        setCart(JSON.parse(localStorage.getItem("elmas-cart") || "[]"));
-        setFavorites(JSON.parse(localStorage.getItem("elmas-favorites") || "[]"));
-      } catch {}
+      try { setCart(JSON.parse(localStorage.getItem("elmas-cart") || "[]")); } catch {}
+      setFavorites(readGuestFavorites());
       setHydrated(true);
     }, 0);
     return () => window.clearTimeout(timer);
@@ -40,41 +49,50 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [cart, hydrated]);
 
   useEffect(() => {
-    if (hydrated) localStorage.setItem("elmas-favorites", JSON.stringify(favorites));
-  }, [favorites, hydrated]);
+    if (hydrated && !authUserId) localStorage.setItem(GUEST_FAVORITES_KEY, JSON.stringify(favorites));
+  }, [favorites, hydrated, authUserId]);
 
   useEffect(() => {
     let cancelled = false;
 
-    async function syncAndLoadFavorites() {
+    async function syncIdentity() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
+      if (cancelled) return;
 
-      let localSlugs: string[] = [];
-      try { localSlugs = JSON.parse(localStorage.getItem("elmas-favorites") || "[]"); } catch {}
+      if (!user) {
+        setAuthUserId(null);
+        setFavorites(readGuestFavorites());
+        return;
+      }
 
-      if (localSlugs.length) {
-        const { data: localProducts } = await supabase.from("products").select("id, slug").in("slug", localSlugs);
+      setAuthUserId(user.id);
+      const guestSlugs = readGuestFavorites();
+
+      if (guestSlugs.length) {
+        const { data: localProducts } = await supabase.from("products").select("id, slug").in("slug", guestSlugs);
         if (localProducts?.length) {
           await supabase.from("favorites").upsert(
             localProducts.map(product => ({ user_id: user.id, product_id: product.id })),
             { onConflict: "user_id,product_id" }
           );
         }
+        localStorage.removeItem(GUEST_FAVORITES_KEY);
       }
 
       const { data: favoriteRows } = await supabase.from("favorites").select("product_id").eq("user_id", user.id);
       const ids = (favoriteRows || []).map(row => row.product_id);
-      if (!ids.length || cancelled) return;
+      if (!ids.length || cancelled) {
+        setFavorites([]);
+        return;
+      }
 
       const { data: productRows } = await supabase.from("products").select("slug").in("id", ids);
       if (cancelled) return;
-      const remoteSlugs = (productRows || []).map(row => row.slug);
-      setFavorites(prev => [...new Set([...prev, ...remoteSlugs])]);
+      setFavorites((productRows || []).map(row => row.slug));
     }
 
-    if (hydrated) void syncAndLoadFavorites();
-    const { data: listener } = supabase.auth.onAuthStateChange(() => void syncAndLoadFavorites());
+    if (hydrated) void syncIdentity();
+    const { data: listener } = supabase.auth.onAuthStateChange(() => void syncIdentity());
     return () => {
       cancelled = true;
       listener.subscription.unsubscribe();
@@ -112,7 +130,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     toggleFavorite(slug) {
       setFavorites(prev => {
         const shouldExist = !prev.includes(slug);
-        void syncFavorite(slug, shouldExist);
+        if (authUserId) void syncFavorite(slug, shouldExist);
         return shouldExist ? [...prev, slug] : prev.filter(x => x !== slug);
       });
     },

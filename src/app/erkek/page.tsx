@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import ProductCard from "@/components/ProductCard";
 import CatalogFilters from "@/components/CatalogFilters";
 import { getProducts, getProductTypes } from "@/lib/catalog-db";
+
+export const metadata: Metadata = { title: "Erkek Triko Koleksiyonu", description: "Elmas Triko erkek koleksiyonu: yeni sezon erkek triko ve zamansız parçalar.", alternates: { canonical: "/erkek" } };
 
 export default async function MenPage({ searchParams }: { searchParams: Promise<{ type?: string; sort?: "newest" | "price-asc" | "price-desc" }> }) {
   const params = await searchParams;

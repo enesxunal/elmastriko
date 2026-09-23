@@ -2,9 +2,9 @@ import StoreHeader from "@/components/StoreHeader";
 import Link from "next/link";
 import StoreFooter from "@/components/StoreFooter";
 import { createClient } from "@/lib/supabase/server";
-import { addAddress, deleteAddress, requestPasswordReset, signIn, signOut, signUp, updateProfile } from "@/app/auth/actions";
+import { addAddress, deleteAddress, requestPasswordReset, signIn, signOut, signUp, updatePassword, updateProfile } from "@/app/auth/actions";
 
-export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; message?: string }> }) {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; message?: string; reset?: string }> }) {
   const params = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -25,6 +25,15 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       </section>
 
       {(params.error || params.message) && <div className={"auth-message " + (params.error ? "error" : "")}>{params.error || params.message}</div>}
+
+      {params.reset === "1" && <section className="account-panel password-reset-panel">
+        <span>GÜVENLİK</span><h2>Yeni şifre belirle</h2><p>Hesabınız için en az 8 karakterli yeni bir şifre oluşturun.</p>
+        <form className="account-form" action={updatePassword}>
+          <input name="password" type="password" minLength={8} placeholder="Yeni şifre" autoComplete="new-password" required/>
+          <input name="confirm_password" type="password" minLength={8} placeholder="Yeni şifre tekrar" autoComplete="new-password" required/>
+          <button type="submit">Şifreyi Güncelle</button>
+        </form>
+      </section>}
 
       <section className="account-panels">
         <div className="account-panel account-orders">

@@ -134,7 +134,7 @@ on conflict (provider) do nothing;
 
 insert into public.site_settings (key,value) values
 ('seo',jsonb_build_object('siteName','Elmas Triko','defaultTitle','Elmas Triko | Kadın & Erkek Triko','defaultDescription','Elmas Triko kadın ve erkek koleksiyonları. Yeni sezon triko, hırka, kazak ve zamansız parçalar.')),
-('commerce',jsonb_build_object('freeShippingThreshold',5000,'shippingFee',149,'currency','TRY'))
+('commerce',jsonb_build_object('freeShippingThreshold',5000,'shippingFee',null,'currency','TRY'))
 on conflict (key) do nothing;
 
 
