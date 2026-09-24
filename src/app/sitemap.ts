@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = "https://www.elmastriko.com";
-  const staticRoutes = ["","/kadin","/erkek","/yeni-gelenler","/blog","/hakkimizda","/iletisim","/kargo-iade","/kvkk","/mesafeli-satis"];
+  const staticRoutes = ["","/kadin","/erkek","/yeni-gelenler","/blog","/hakkimizda","/iletisim","/kargo-iade","/kvkk","/gizlilik","/mesafeli-satis"];
   const supabase=await createClient();
   const [{data:products},{data:posts}] = await Promise.all([
     supabase.from("products").select("slug,updated_at").eq("is_active",true),

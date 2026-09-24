@@ -291,10 +291,10 @@ export default function Home() {
         </div>
         <div className="footer-columns">
           <div><h4>Alışveriş</h4><a href="/kadin">Kadın</a><a href="/erkek">Erkek</a><a href="/yeni-gelenler">Yeni Gelenler</a><a href="/yeni-gelenler">Çok Satanlar</a></div>
-          <div><h4>Yardım</h4><a href="/siparis-takip">Sipariş Takibi</a><a href="/kargo-iade">Kargo & Teslimat</a><a href="/kargo-iade">İade & Değişim</a><a href="/iletisim">İletişim</a></div>
-          <div><h4>Kurumsal</h4><a href="/hakkimizda">Hakkımızda</a><a href="/kvkk">KVKK</a><a href="/kvkk">Gizlilik</a><a href="/mesafeli-satis">Mesafeli Satış</a></div>
+          <div><h4>Yardım</h4><a href="/siparis-takip">Sipariş Takibi</a><a href="/kargo-iade">Teslimat – İade – İptal</a><a href="/iletisim">İletişim</a></div>
+          <div><h4>Kurumsal</h4><a href="/hakkimizda">Hakkımızda</a><a href="/kvkk">KVKK</a><a href="/gizlilik">Gizlilik Politikası</a><a href="/mesafeli-satis">Mesafeli Satış Sözleşmesi</a></div>
         </div>
-        <div className="footer-bottom"><span>© 2026 ELMAS TRİKO</span><span>Türkiye · TRY ₺</span><a href="https://www.instagram.com/elmas_triko/" target="_blank" rel="noreferrer">Instagram</a></div>
+        <div className="footer-bottom"><span>© 2026 ELMAS TRİKO</span><span className="payment-brands" aria-label="Desteklenen kartlar"><b>VISA</b><b>Mastercard</b><b>TROY</b></span><a href="https://www.instagram.com/elmas_triko/" target="_blank" rel="noreferrer">Instagram</a></div>
       </footer>
     </main>
   );
