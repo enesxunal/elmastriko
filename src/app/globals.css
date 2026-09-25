@@ -583,3 +583,6 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
   .rank-main>div:first-child{display:grid}
   .rank-main small{white-space:normal}
 }
+
+/* Tosla review: direct catalog purchase CTA */
+.catalog-quick-add{width:calc(100% - 24px);margin:0 12px 14px;height:38px;border:1px solid #173d31;border-radius:8px;background:#173d31;color:#fff;display:flex;align-items:center;justify-content:center;gap:7px;font-size:10px;font-weight:600;transition:.18s ease}.catalog-quick-add:hover:not(:disabled){background:#214f3f;transform:translateY(-1px)}.catalog-quick-add.added{background:#2f6546;border-color:#2f6546}.catalog-quick-add:disabled{background:#eef0ed;border-color:#e0e4e0;color:#919892;cursor:not-allowed}.catalog-card{padding-bottom:1px}
