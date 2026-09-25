@@ -5,13 +5,25 @@ import Link from "next/link";
 import NewsletterForm from "@/components/NewsletterForm";
 import { useStore } from "@/components/StoreProvider";
 import { ArrowRight, Heart, Search, ShoppingBag, UserRound, Camera, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 
-const products = [
-  { slug: "siyah-cizgili-triko-takim", name: "Siyah Çizgili Triko Takım", price: "Fiyat yakında", image: "/images/product-black-set.webp", tone: "Siyah / Ekru", badge: "Yeni" },
-  { slug: "ekru-cizgili-triko-takim", name: "Ekru Çizgili Triko Takım", price: "Fiyat yakında", image: "/images/product-cream-set.webp", tone: "Ekru", badge: "Edit" },
-  { slug: "diamond-desenli-triko-hirka", name: "Diamond Desenli Triko Hırka", price: "Fiyat yakında", image: "/images/product-white-diamond.webp", tone: "Ekru / Lacivert", badge: "Yeni" },
-  { slug: "kapusonlu-desenli-triko-hirka", name: "Kapüşonlu Desenli Triko Hırka", price: "Fiyat yakında", image: "/images/product-pattern-cardigan.webp", tone: "Ekru / Mürdüm", badge: "Çok Satan" },
-];
+type HomeProduct = {
+  slug: string;
+  name: string;
+  price: number | null;
+  image: string;
+  colors: string[];
+  badge?: string;
+};
+
+function displayPrice(price: number | null) {
+  if (price === null) return "Fiyat yakında";
+  return new Intl.NumberFormat("tr-TR", {
+    style: "currency",
+    currency: "TRY",
+    maximumFractionDigits: 0,
+  }).format(price);
+}
 
 const edits = [
   { title: "Modern Klasikler", eyebrow: "01 / KADIN", image: "/images/edit-modern-classics.webp" },
@@ -28,6 +40,23 @@ const social = [
 
 export default function Home() {
   const { cartCount, favorites } = useStore();
+  const [products, setProducts] = useState<HomeProduct[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/api/catalog", { cache: "no-store" })
+      .then(response => response.ok ? response.json() : Promise.reject(new Error("catalog_fetch_failed")))
+      .then(data => {
+        if (!cancelled) setProducts((data.products || []).slice(0, 4));
+      })
+      .catch(() => {
+        if (!cancelled) setProducts([]);
+      });
+
+    return () => { cancelled = true; };
+  }, []);
+
   return (
     <main>
       <div className="topbar">
@@ -202,16 +231,16 @@ export default function Home() {
             <article className={"product-card product-" + (i + 1)} key={product.name}>
               <a href={"/urun/" + product.slug} className="product-image-wrap">
                 <img src={product.image} alt={product.name} />
-                <span className="product-badge">{product.badge}</span>
+                <span className="product-badge">{product.badge || "Yeni"}</span>
                 <span className="quick-add"><Plus size={16}/> Hızlı ekle</span>
               </a>
               <div className="product-info">
                 <div>
                   <h3>{product.name}</h3>
-                  <p>{product.tone}</p>
+                  <p>{product.colors?.length ? product.colors.join(" / ") : "Elmas Triko"}</p>
                 </div>
                 <div className="price-row">
-                  <strong>{product.price}</strong>
+                  <strong>{displayPrice(product.price)}</strong>
                   <button aria-label={product.name + " favorilere ekle"}><Heart size={17} strokeWidth={1.4}/></button>
                 </div>
               </div>
