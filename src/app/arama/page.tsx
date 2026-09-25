@@ -11,6 +11,7 @@ export default async function SearchPage({
 }) {
   const params = await searchParams;
   const query = (params.q || "").trim();
+  const hasCatalogFilter = Boolean(query || params.type);
   const [list, types] = await Promise.all([
     getProducts({ query, type: params.type, sort: params.sort }),
     getProductTypes(),
@@ -19,15 +20,15 @@ export default async function SearchPage({
   return <><StoreHeader/><main className="listing-page">
     <div className="simple-title search-title">
       <span>ARAMA</span>
-      <h1>{query ? "“" + query + "”" : "Ürün Ara"}</h1>
+      <h1>{query ? "“" + query + "”" : params.type ? params.type : "Ürün Ara"}</h1>
       <form className="search-form" action="/arama">
         <input name="q" defaultValue={query} placeholder="Ürün, kategori veya renk ara..." autoFocus={!query}/>
         <button type="submit">Ara</button>
       </form>
-      {query && <p>{list.length} sonuç bulundu.</p>}
+      {hasCatalogFilter && <p>{list.length} ürün gösteriliyor.</p>}
     </div>
 
-    {query && <>
+    {hasCatalogFilter && <>
       <CatalogFilters basePath="/arama" query={query} currentType={params.type} currentSort={params.sort} types={types}/>
       {list.length ? <section className="catalog-grid">{list.map(p => <ProductCard key={p.slug} product={p}/>)}</section> :
       <section className="empty-collection"><span>SONUÇ YOK</span><h2>Aradığınız ürün bulunamadı.</h2><p>Farklı bir ürün adı, renk veya kategori deneyebilirsiniz.</p></section>}

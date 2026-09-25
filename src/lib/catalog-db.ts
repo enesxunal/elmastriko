@@ -109,7 +109,10 @@ export async function getProducts(options?: {
         .includes(q)
     );
   }
-  if (options?.type) list = list.filter(p => p.type === options.type);
+  if (options?.type) {
+    const typed = list.filter(p => p.type === options.type);
+    if (typed.length) list = typed;
+  }
 
   if (options?.sort === "price-asc") {
     list = [...list].sort((a, b) => (a.price ?? Number.MAX_SAFE_INTEGER) - (b.price ?? Number.MAX_SAFE_INTEGER));
