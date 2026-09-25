@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
-import { createBasitKargoShipment, saveInvoice, savePaymentRecord, saveShipment, updateOrderStatus } from "../../actions";
+import { createBasitKargoShipment, createNesInvoice, saveInvoice, savePaymentRecord, saveShipment, updateOrderStatus } from "../../actions";
 
 const orderStatuses=["draft","awaiting_payment","paid","invoice_pending","ready_to_ship","shipped","delivered","cancelled","refunded"];
 const paymentStatuses=["pending","paid","failed","refunded","cancelled"];
@@ -25,7 +25,7 @@ export default async function AdminOrderDetail({params}:{params:Promise<{id:stri
         <hr/>
         <form action={saveShipment}><input type="hidden" name="order_id" value={id}/><input name="provider" defaultValue={shipment?.provider||"BasitKargo"}/><input name="tracking_code" defaultValue={shipment?.tracking_code||""} placeholder="Takip kodu"/><input name="tracking_url" defaultValue={shipment?.tracking_url||""} placeholder="Takip URL"/><select name="status" defaultValue={shipment?.status||"pending"}><option>pending</option><option>prepared</option><option>shipped</option><option>delivered</option><option>returned</option><option>problem</option></select><button>Manuel kaydet</button></form>
       </article>
-      <article><h2>Fatura</h2><form action={saveInvoice}><input type="hidden" name="order_id" value={id}/><input name="provider" defaultValue={invoice?.provider||"NES Portal"}/><input name="invoice_no" defaultValue={invoice?.invoice_no||""} placeholder="Fatura no"/><select name="status" defaultValue={invoice?.status||"pending"}><option>pending</option><option>created</option><option>sent</option><option>cancelled</option><option>error</option></select><button>Kaydet</button></form></article>
+      <article><h2>Fatura</h2><form action={createNesInvoice} className="admin-editor"><input type="hidden" name="order_id" value={id}/><button type="submit" disabled={order.payment_status!=="paid"||invoice?.status==="sent"}>{invoice?.status==="sent"?"NES faturası gönderildi":"NES faturası oluştur ve gönder"}</button>{order.payment_status!=="paid"&&<small>Ödeme tamamlanınca aktif olur.</small>}{invoice?.invoice_no&&<small>Fatura no: {invoice.invoice_no}</small>}</form><hr/><form action={saveInvoice}><input type="hidden" name="order_id" value={id}/><input name="provider" defaultValue={invoice?.provider||"NES Portal"}/><input name="invoice_no" defaultValue={invoice?.invoice_no||""} placeholder="Fatura no"/><select name="status" defaultValue={invoice?.status||"pending"}><option>pending</option><option>created</option><option>sent</option><option>cancelled</option><option>error</option></select><button>Manuel kaydet</button></form></article>
     </section>
     <section className="admin-section"><div className="admin-section-head"><h2>Ödeme Kaydı</h2></div><form action={savePaymentRecord} className="admin-form-grid"><input type="hidden" name="order_id" value={id}/><input name="provider" defaultValue={payment?.provider||"manual"} placeholder="Provider"/><input name="provider_reference" defaultValue={payment?.provider_reference||""} placeholder="Referans"/><input name="amount" type="number" step="0.01" defaultValue={payment?.amount??order.grand_total}/><select name="status" defaultValue={payment?.status||order.payment_status}>{paymentStatuses.map(s=><option key={s}>{s}</option>)}</select><button>Ödemeyi Güncelle</button></form></section>
   </main>;

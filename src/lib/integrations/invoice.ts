@@ -26,6 +26,20 @@ export type NesUploadResponse = {
   [key: string]: unknown;
 };
 
+export type NesDocumentSerie = {
+  id: string;
+  serie: string;
+  isDefault: boolean;
+  isPortal: boolean;
+  activeStatus: string;
+  counters: Array<{
+    id: string;
+    year: number;
+    nextNumber: string;
+    lastIssueDate?: string | null;
+  }>;
+};
+
 function config() {
   return {
     apiKey: process.env.NES_API_KEY || "",
@@ -105,7 +119,7 @@ async function uploadUbl(
 
   form.set("File", new Blob([filePart], { type: "application/xml" }), `${input.sourceRecordId}.xml`);
   form.set("IsDirectSend", String(input.directSend ?? true));
-  form.set("PreviewType", input.previewType || "Pdf");
+  form.set("PreviewType", input.previewType || "None");
   form.set("SourceApp", c.sourceApp);
   form.set("SourceAppRecordId", input.sourceRecordId);
   form.set("AutoSaveCompany", "true");
@@ -145,6 +159,19 @@ export const invoiceIntegration = {
       "einvoice",
       `/v1/users/${encodeURIComponent(ELMAS_VKN)}/All`,
     );
+  },
+
+  async getDefaultSeries(type: NesDocumentType, year = new Date().getFullYear()) {
+    const series = await request<NesDocumentSerie[]>(
+      type,
+      "/v1/definitions/series?status=Active&source=All",
+    );
+    const selected = series.find(item => item.isDefault) || series[0];
+    if (!selected) throw new Error(`NES ${type}: aktif belge serisi bulunamadı.`);
+    const counter = selected.counters.find(item => item.year === year);
+    if (!counter) throw new Error(`NES ${type}: ${year} belge sayacı bulunamadı.`);
+    const invoiceNumber = selected.serie + String(year) + String(counter.nextNumber).padStart(9, "0");
+    return { series: selected, counter, invoiceNumber };
   },
 
   async lookupTaxpayer(identifier: string) {

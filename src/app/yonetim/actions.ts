@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import { basitKargo } from "@/lib/integrations/basitkargo";
+import { createNesInvoiceForOrder } from "@/lib/integrations/nes-order-invoice";
 
 function v(fd: FormData, key: string) { return String(fd.get(key) || "").trim(); }
 function num(fd: FormData, key: string) { const x = v(fd,key); return x === "" ? null : Number(x); }
@@ -341,6 +342,21 @@ export async function saveShipment(fd: FormData) {
   const payload={order_id:orderId,provider:v(fd,"provider")||"BasitKargo",tracking_code:v(fd,"tracking_code")||null,tracking_url:v(fd,"tracking_url")||null,status:v(fd,"status")||"pending",updated_at:new Date().toISOString()};
   if(existing.data?.id) await supabase.from("shipments").update(payload).eq("id",existing.data.id); else await supabase.from("shipments").insert(payload);
   await audit("update","shipment",orderId,payload); revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`);
+}
+
+export async function createNesInvoice(fd: FormData) {
+  await requireAdmin();
+  const orderId = v(fd, "order_id");
+  if (!orderId) redirect("/yonetim/siparisler?error=" + encodeURIComponent("Sipariş seçilmedi."));
+  try {
+    await createNesInvoiceForOrder(orderId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "NES faturası oluşturulamadı.";
+    redirect("/yonetim/siparisler/" + orderId + "?error=" + encodeURIComponent(message));
+  }
+  revalidatePath("/yonetim/siparisler/" + orderId);
+  revalidatePath("/hesabim/siparis/" + orderId);
+  redirect("/yonetim/siparisler/" + orderId + "?invoice=sent");
 }
 
 export async function saveInvoice(fd: FormData) {

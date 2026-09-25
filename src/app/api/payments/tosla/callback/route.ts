@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { tosla, validateToslaCallback } from "@/lib/integrations/tosla";
+import { isNesConfigured } from "@/lib/integrations/invoice";
+import { createNesInvoiceForOrder } from "@/lib/integrations/nes-order-invoice";
 
 export async function POST(request: NextRequest) {
   const form = await request.formData();
@@ -76,6 +78,14 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString(),
     })
     .eq("id", order.id);
+
+  if (paid && isNesConfigured()) {
+    try {
+      await createNesInvoiceForOrder(order.id);
+    } catch (invoiceError) {
+      console.error("NES invoice creation failed after payment:", invoiceError);
+    }
+  }
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.com").replace(/\/$/, "");
   const target = paid
