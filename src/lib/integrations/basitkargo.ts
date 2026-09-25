@@ -91,6 +91,17 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const basitKargo = {
   configured: isBasitKargoConfigured,
 
+  async healthCheck() {
+    const [handlers, balance, brands, addresses] = await Promise.all([
+      this.listHandlers(),
+      this.balance(),
+      this.brands(),
+      this.addresses(),
+    ]);
+
+    return { handlers, balance, brands, addresses };
+  },
+
   async listHandlers() {
     return request<Array<{ name: string; code: string; logo?: string }>>("/handlers");
   },

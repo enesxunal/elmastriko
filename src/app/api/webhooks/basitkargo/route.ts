@@ -48,7 +48,12 @@ export async function POST(request: NextRequest) {
 
   const providerReference = String(payload.id || "");
   const barcode = String(payload.barcode || "");
-  const handlerShipmentCode = String(payload.handlerShipmentCode || "");
+  const shipmentInfo = payload.shipmentInfo && typeof payload.shipmentInfo === "object"
+    ? payload.shipmentInfo as Record<string, unknown>
+    : null;
+  const handlerShipmentCode = String(
+    payload.handlerShipmentCode || shipmentInfo?.handlerShipmentCode || "",
+  );
   const status = String(payload.status || "");
 
   if (!providerReference && !barcode && !handlerShipmentCode) {
