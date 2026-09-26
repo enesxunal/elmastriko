@@ -3,26 +3,31 @@ import { ArrowLeft, ExternalLink, ImagePlus, PackageCheck, Save, Trash2 } from "
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import ProductMediaUploadForm from "@/components/ProductMediaUploadForm";
-import { createVariant, deleteProduct, deleteProductImage, deleteVariant, updateProduct, updateVariant } from "../../actions";
+import { createVariant, createVariantMatrix, deleteProduct, deleteProductImage, deleteVariant, updateProduct, updateVariant } from "../../actions";
 
 export default async function ProductAdminDetail({
   params,
   searchParams,
 }:{
   params:Promise<{id:string}>;
-  searchParams:Promise<{error?:string;created?:string}>;
+  searchParams:Promise<{error?:string;created?:string;variants_created?:string}>;
 }){
   const {id}=await params;
-  const {error,created}=await searchParams;
+  const {error,created,variants_created}=await searchParams;
   const {supabase}=await requireAdmin();
 
-  const [{data:product},{data:variants},{data:images},{data:categories}] = await Promise.all([
+  const [{data:product},{data:variants},{data:images},{data:categories},{data:productOptionsRow}] = await Promise.all([
     supabase.from("products").select("id,name,slug,gender,product_type,base_price,compare_at_price,description,category_id,is_active,is_featured").eq("id",id).maybeSingle(),
     supabase.from("product_variants").select("id,sku,color,size,price,is_active,inventory(stock,reserved)").eq("product_id",id).order("created_at"),
     supabase.from("product_images").select("id,url,alt_text,sort_order").eq("product_id",id).order("sort_order"),
     supabase.from("categories").select("id,name").eq("is_active",true).order("sort_order"),
+    supabase.from("site_settings").select("value").eq("key","product_options").maybeSingle(),
   ]);
   if(!product) notFound();
+
+  const productOptions=(productOptionsRow?.value||{}) as {colors?:string[];sizes?:string[]};
+  const optionColors=Array.isArray(productOptions.colors)&&productOptions.colors.length?productOptions.colors:["Siyah","Beyaz","Ekru","Lacivert","Bordo","Yeşil","Haki","Gri","Vizon","Bej","Mürdüm"];
+  const optionSizes=Array.isArray(productOptions.sizes)&&productOptions.sizes.length?productOptions.sizes:["S","M","L","XL","XXL"];
 
   const totalStock=(variants||[]).reduce((sum,variant)=>{
     const inv=Array.isArray(variant.inventory)?variant.inventory[0]:variant.inventory;
@@ -48,6 +53,7 @@ export default async function ProductAdminDetail({
     </div>
 
     {created&&<div className="admin-alert success"><PackageCheck size={16}/> Ürün oluşturuldu. Şimdi beden, renk ve stok varyantlarını ekleyebilirsiniz.</div>}
+    {variants_created&&<div className="admin-alert success"><PackageCheck size={16}/> {variants_created} varyant otomatik oluşturuldu.</div>}
     {error&&<div className="admin-alert error">{error}</div>}
 
     <div className="product-editor-detail-grid">
@@ -96,8 +102,16 @@ export default async function ProductAdminDetail({
         <section className="product-editor-card">
           <div className="product-editor-card-head"><div><span>3</span><div><h2>Beden, renk & stok</h2><p>Her beden-renk kombinasyonunu ayrı varyant olarak yönetin.</p></div></div><b>{variants?.length||0} varyant</b></div>
 
-          <details className="variant-create-box" open={!variants?.length}>
-            <summary>+ Yeni varyant ekle</summary>
+          <form action={createVariantMatrix} className="variant-matrix-box">
+            <input type="hidden" name="product_id" value={id}/>
+            <div className="variant-matrix-head"><div><strong>Hızlı varyant oluştur</strong><span>Renkleri ve bedenleri seç; tüm kombinasyonlar tek seferde oluşsun.</span></div><Link href="/yonetim/ayarlar#product-options">Renk / beden listesini düzenle</Link></div>
+            <div className="variant-matrix-group"><label>Renkler</label><div className="variant-option-chips">{optionColors.map(color=><label key={color}><input type="checkbox" name="colors" value={color}/><span>{color}</span></label>)}</div></div>
+            <div className="variant-matrix-group"><label>Bedenler</label><div className="variant-option-chips">{optionSizes.map(size=><label key={size}><input type="checkbox" name="sizes" value={size}/><span>{size}</span></label>)}</div></div>
+            <div className="variant-matrix-actions"><div className="product-field"><label>Varyant başına başlangıç stoğu</label><input name="stock" type="number" min="0" defaultValue="0"/></div><button className="admin-primary-button" type="submit">Seçili varyantları oluştur</button></div>
+          </form>
+
+          <details className="variant-create-box">
+            <summary>Tek varyant ekle (gelişmiş)</summary>
             <form action={createVariant} className="variant-create-form">
               <input type="hidden" name="product_id" value={id}/>
               <div className="product-field"><label>SKU</label><input name="sku" placeholder="ELM-001-S-SYH"/></div>

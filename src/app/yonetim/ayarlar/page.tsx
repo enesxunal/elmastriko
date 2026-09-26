@@ -1,8 +1,9 @@
 import { requireAdmin } from "@/lib/admin";
-import { saveContactSettings, saveSeoSettings, saveSiteSetting } from "../actions";
+import { saveContactSettings, saveProductOptions, saveSeoSettings, saveSiteSetting } from "../actions";
 
 type SeoSetting={siteName?:string;defaultTitle?:string;defaultDescription?:string};
 type ContactSetting={email?:string;phone?:string;whatsapp?:string;instagram?:string};
+type ProductOptionsSetting={colors?:string[];sizes?:string[]};
 
 export default async function SettingsAdmin({searchParams}:{searchParams:Promise<{error?:string}>}){
   const {error}=await searchParams;
@@ -11,7 +12,12 @@ export default async function SettingsAdmin({searchParams}:{searchParams:Promise
   const find=(key:string)=>settings?.find(x=>x.key===key)?.value as Record<string,unknown>|undefined;
   const seo=(find("seo")||{}) as SeoSetting;
   const contact=(find("contact")||{}) as ContactSetting;
-  const advanced=settings?.filter(x=>!["seo","contact"].includes(x.key))||[];
+  const productOptions=(find("product_options")||{}) as ProductOptionsSetting;
+  const defaultColors=["Siyah","Beyaz","Ekru","Lacivert","Bordo","Yeşil","Haki","Gri","Vizon","Bej","Mürdüm"];
+  const defaultSizes=["S","M","L","XL","XXL"];
+  const colors=Array.isArray(productOptions.colors)&&productOptions.colors.length?productOptions.colors:defaultColors;
+  const sizes=Array.isArray(productOptions.sizes)&&productOptions.sizes.length?productOptions.sizes:defaultSizes;
+  const advanced=settings?.filter(x=>!["seo","contact","product_options"].includes(x.key))||[];
 
   return <main className="admin-page">
     <div className="admin-page-head"><div><span>YAPILANDIRMA</span><h1>Site & SEO Ayarları</h1></div><p>Müşterinin günlük kullanacağı temel site ayarları. Teknik JSON alanları ayrıca gelişmiş bölümde tutulur.</p></div>
@@ -34,6 +40,15 @@ export default async function SettingsAdmin({searchParams}:{searchParams:Promise
         <label>WhatsApp<input name="whatsapp" defaultValue={contact.whatsapp||""} placeholder="+90..."/></label>
         <label>Instagram<input name="instagram" defaultValue={contact.instagram||""} placeholder="https://instagram.com/elmas_triko"/></label>
         <button>İletişim Bilgilerini Kaydet</button>
+      </form>
+    </section>
+
+    <section className="admin-section" id="product-options">
+      <div className="admin-section-head"><h2>Ürün seçenekleri</h2><span>Varyantlarda tekrar kullanılır</span></div>
+      <form action={saveProductOptions} className="product-options-settings">
+        <div><label>Renkler</label><textarea name="colors" defaultValue={colors.join("\n")} rows={8}/><small>Her satıra bir renk yazın. Ürün varyantlarında sabit listeden seçilir.</small></div>
+        <div><label>Bedenler</label><textarea name="sizes" defaultValue={sizes.join("\n")} rows={8}/><small>Örn: S, M, L, XL, XXL. Gerektiğinde yeni beden ekleyebilirsiniz.</small></div>
+        <button className="admin-primary-button" type="submit">Ürün seçeneklerini kaydet</button>
       </form>
     </section>
 

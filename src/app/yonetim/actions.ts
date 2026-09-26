@@ -176,6 +176,55 @@ export async function saveSeoSettings(fd: FormData) {
   redirect("/yonetim/seo?saved=1");
 }
 
+export async function saveProductOptions(fd: FormData) {
+  const { supabase, user } = await requireAdmin();
+  const parseList=(raw:string)=>[...new Set(raw.split(/[\n,]/).map(x=>x.trim()).filter(Boolean))];
+  const colors=parseList(v(fd,"colors"));
+  const sizes=parseList(v(fd,"sizes"));
+  if(!colors.length || !sizes.length) {
+    redirect("/yonetim/ayarlar?error="+encodeURIComponent("En az bir renk ve bir beden tanımlayın."));
+  }
+  const value={colors,sizes};
+  const { error }=await supabase.from("site_settings").upsert({key:"product_options",value,updated_by:user.id,updated_at:new Date().toISOString()});
+  if(error) redirect("/yonetim/ayarlar?error="+encodeURIComponent(error.message));
+  await audit("update","site_setting","product_options",{colors:colors.length,sizes:sizes.length});
+  revalidatePath("/yonetim/ayarlar");
+  revalidatePath("/yonetim/urunler");
+  redirect("/yonetim/ayarlar?saved=product-options#product-options");
+}
+
+export async function createVariantMatrix(fd: FormData) {
+  const { supabase } = await requireAdmin();
+  const productId=v(fd,"product_id");
+  const colors=[...new Set(fd.getAll("colors").map(x=>String(x).trim()).filter(Boolean))];
+  const sizes=[...new Set(fd.getAll("sizes").map(x=>String(x).trim()).filter(Boolean))];
+  const stock=Math.max(0,Number(v(fd,"stock")||0));
+  if(!productId || !colors.length || !sizes.length) {
+    redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent("En az bir renk ve bir beden seçin."));
+  }
+  if(colors.length*sizes.length>100) {
+    redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent("Tek seferde en fazla 100 varyant oluşturabilirsiniz."));
+  }
+  const { data: existing, error: existingError }=await supabase.from("product_variants").select("color,size").eq("product_id",productId);
+  if(existingError) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent(existingError.message));
+  const key=(color:string,size:string)=>`${color.toLocaleLowerCase("tr-TR")}::${size.toLocaleLowerCase("tr-TR")}`;
+  const existingKeys=new Set((existing||[]).map(x=>key(x.color||"",x.size||"")));
+  const rows=colors.flatMap(color=>sizes.map(size=>({product_id:productId,color,size,price:null,is_active:true}))).filter(row=>!existingKeys.has(key(row.color,row.size)));
+  if(!rows.length) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent("Seçtiğiniz renk/beden kombinasyonları zaten mevcut."));
+  const { data: created, error }=await supabase.from("product_variants").insert(rows).select("id,color,size");
+  if(error) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent(error.message));
+  if(created?.length) {
+    const { error: inventoryError }=await supabase.from("inventory").upsert(created.map(item=>({variant_id:item.id,stock,reserved:0,updated_at:new Date().toISOString()})));
+    if(inventoryError) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent(inventoryError.message));
+  }
+  await audit("bulk_create","variant",productId,{count:created?.length||0,colors,sizes,stock});
+  revalidatePath(`/yonetim/urunler/${productId}`);
+  revalidatePath("/yonetim/urunler");
+  revalidatePath("/kadin");
+  revalidatePath("/erkek");
+  redirect(`/yonetim/urunler/${productId}?variants_created=${created?.length||0}`);
+}
+
 export async function createVariant(fd: FormData) {
   const { supabase } = await requireAdmin();
   const productId=v(fd,"product_id");
