@@ -136,7 +136,7 @@ export const tosla = {
     installmentCount?: number;
   }) {
     const amount = Math.round(input.amountTry * 100);
-    const response = await post<ToslaBaseResponse>("startPaymentThreeDSession", {
+    const response = await post<ToslaBaseResponse>("threeDPayment", {
       callbackUrl: input.callbackUrl,
       orderId: input.orderId,
       amount,
