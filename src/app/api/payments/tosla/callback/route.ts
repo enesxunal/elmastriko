@@ -4,6 +4,25 @@ import { tosla, validateToslaCallback } from "@/lib/integrations/tosla";
 import { isNesConfigured } from "@/lib/integrations/invoice";
 import { createNesInvoiceForOrder } from "@/lib/integrations/nes-order-invoice";
 
+function responseValue(payload: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = payload[key];
+    if (value !== undefined && value !== null && String(value) !== "") return String(value);
+  }
+  return "";
+}
+
+function providerAmountMatches(payload: Record<string, unknown>, expectedTry: number) {
+  const raw = responseValue(payload, "Amount", "amount");
+  if (!raw) return true;
+
+  const amount = Number(raw);
+  if (!Number.isFinite(amount)) return false;
+
+  const expectedMinor = Math.round(expectedTry * 100);
+  return Math.round(amount) === expectedMinor;
+}
+
 export async function POST(request: NextRequest) {
   const form = await request.formData();
   const payload: Record<string, string> = {};
@@ -21,27 +40,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "OrderId is missing." }, { status: 400 });
   }
 
-  let providerResult: Record<string, unknown> = payload;
-  if (threeDSessionId) {
-    try {
-      providerResult = await tosla.threeDSessionResult(threeDSessionId);
-    } catch {
-      providerResult = payload;
-    }
-  }
-
-  const bankCode = String(
-    providerResult.BankResponseCode ||
-    providerResult.bankResponseCode ||
-    payload.BankResponseCode ||
-    ""
-  );
-  const paid = bankCode === "00";
-
   const supabase = createAdminClient();
   const { data: order } = await supabase
     .from("orders")
-    .select("id")
+    .select("id,order_no,grand_total,payment_status")
     .eq("order_no", orderNo)
     .maybeSingle();
 
@@ -49,9 +51,50 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Order not found." }, { status: 404 });
   }
 
+  let providerResult: Record<string, unknown> | null = null;
+  let verificationError: string | null = null;
+
+  if (threeDSessionId) {
+    try {
+      providerResult = await tosla.threeDSessionResult(threeDSessionId);
+    } catch (error) {
+      verificationError = error instanceof Error ? error.message : "threeDSessionResult failed";
+    }
+  }
+
+  if (!providerResult) {
+    try {
+      providerResult = await tosla.inquiry(orderNo);
+      verificationError = null;
+    } catch (error) {
+      verificationError = error instanceof Error ? error.message : "inquiry failed";
+    }
+  }
+
+  const verified = Boolean(providerResult);
+  const result = providerResult || payload;
+  const bankCode = responseValue(result, "BankResponseCode", "bankResponseCode") ||
+    payload.BankResponseCode ||
+    "";
+  const resultOrderNo = responseValue(result, "OrderId", "orderId");
+  const orderMatches = !resultOrderNo || resultOrderNo === orderNo;
+  const amountMatches = providerAmountMatches(result, Number(order.grand_total));
+  const paid = verified && bankCode === "00" && orderMatches && amountMatches;
+  const failed = verified && bankCode !== "00";
+
+  const paymentStatus = paid ? "paid" : failed ? "failed" : "pending";
   const paymentUpdate = {
-    status: paid ? "paid" : "failed",
-    raw_response: { callback: payload, result: providerResult },
+    status: paymentStatus,
+    raw_response: {
+      callback: payload,
+      result,
+      verification: {
+        verified,
+        orderMatches,
+        amountMatches,
+        error: verificationError,
+      },
+    },
     updated_at: new Date().toISOString(),
   };
 
@@ -69,15 +112,17 @@ export async function POST(request: NextRequest) {
       .eq("provider", "tosla");
   }
 
-  await supabase
-    .from("orders")
-    .update({
-      payment_provider: "tosla",
-      payment_status: paid ? "paid" : "failed",
-      status: paid ? "paid" : "awaiting_payment",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", order.id);
+  if (order.payment_status !== "paid") {
+    await supabase
+      .from("orders")
+      .update({
+        payment_provider: "tosla",
+        payment_status: paymentStatus,
+        status: paid ? "paid" : "awaiting_payment",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", order.id);
+  }
 
   if (paid && isNesConfigured()) {
     try {
@@ -87,10 +132,9 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.com").replace(/\/$/, "");
-  const target = paid
-    ? `${siteUrl}/checkout?payment=success&order=${encodeURIComponent(orderNo)}`
-    : `${siteUrl}/checkout?payment=failed&order=${encodeURIComponent(orderNo)}`;
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.elmastriko.com").replace(/\/$/, "");
+  const state = paid ? "success" : failed ? "failed" : "pending";
+  const target = `${siteUrl}/checkout?payment=${state}&order=${encodeURIComponent(orderNo)}`;
 
   return NextResponse.redirect(target, 303);
 }

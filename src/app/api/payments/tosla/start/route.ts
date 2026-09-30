@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Bu sipariş zaten ödendi." }, { status: 409 });
   }
 
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.com").replace(/\/$/, "");
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.elmastriko.com").replace(/\/$/, "");
   const result = await tosla.startHostedThreeD({
     callbackUrl: siteUrl + "/api/payments/tosla/callback",
     orderId: order.order_no,
