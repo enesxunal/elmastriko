@@ -25,8 +25,8 @@ export default function CheckoutPage() {
   const [invoiceType, setInvoiceType] = useState<"individual" | "company">("individual");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
-  const hasUnknownPrice = lines.some(x => x.product.price === null);
-  const subtotal = lines.reduce((sum, x) => sum + ((x.product.price || 0) * x.line.qty), 0);
+  const hasUnknownPrice = lines.some(x => x.unitPrice === null);
+  const subtotal = lines.reduce((sum, x) => sum + ((x.unitPrice || 0) * x.line.qty), 0);
   const shipping = getShippingQuote(subtotal);
   const total = shipping.fee === null ? null : subtotal + shipping.fee;
 
