@@ -81,7 +81,7 @@ function customerParty(a: NesInvoiceAddress) {
     : "";
   return [
     "<cac:AccountingCustomerParty><cac:Party>",
-    identification(a.taxNumber),
+    identification(a.taxNumber || "11111111111"),
     "<cac:PartyName><cbc:Name>" + x(name) + "</cbc:Name></cac:PartyName>",
     "<cac:PostalAddress><cbc:StreetName>" + x(a.addressLine) + "</cbc:StreetName><cbc:CitySubdivisionName>" + x(a.district) + "</cbc:CitySubdivisionName><cbc:CityName>" + x(a.city) + "</cbc:CityName>" + (a.postalCode ? "<cbc:PostalZone>" + x(a.postalCode) + "</cbc:PostalZone>" : "") + "<cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country></cac:PostalAddress>",
     a.taxNumber ? "<cac:PartyTaxScheme><cac:TaxScheme><cbc:Name>" + x(a.taxOffice || "") + "</cbc:Name></cac:TaxScheme></cac:PartyTaxScheme>" : "",
