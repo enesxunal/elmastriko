@@ -16,7 +16,7 @@ export default function CartPage() {
   const hasUnknownPrice = lines.some(x => x.unitPrice === null);
   const subtotal = lines.reduce((sum, x) => sum + ((x.unitPrice || 0) * x.line.qty), 0);
   const freeShipping = subtotal >= freeShippingThreshold;
-  const effectiveShippingFee = freeShipping ? 0 : shippingFee;
+  const effectiveShippingFee = lines.length === 0 ? 0 : freeShipping ? 0 : shippingFee;
   const remaining = Math.max(0, freeShippingThreshold - subtotal);
   const total = effectiveShippingFee === null ? null : subtotal + effectiveShippingFee;
 

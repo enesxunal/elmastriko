@@ -25,7 +25,7 @@ export default async function AccountOrderDetail({params}:{params:Promise<{id:st
   ]);
   if(!order)notFound();
 
-  const activeIndex=Math.max(0,flow.indexOf(order.status));
+  const activeIndex=flow.indexOf(order.status);
   const shipment=shipments?.[0];
   const invoice=invoices?.[0];
 
