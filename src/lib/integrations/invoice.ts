@@ -170,7 +170,12 @@ export const invoiceIntegration = {
     if (!selected) throw new Error(`NES ${type}: aktif belge serisi bulunamadı.`);
     const counter = selected.counters.find(item => item.year === year);
     if (!counter) throw new Error(`NES ${type}: ${year} belge sayacı bulunamadı.`);
-    const invoiceNumber = selected.serie + String(year) + String(counter.nextNumber).padStart(9, "0");
+    // Portal series are auto-numbered by NES. For those series NES expects
+    // only the three-character series code in UBL cbc:ID; sending a full
+    // 16-character number is rejected with schematron error 1150.
+    const invoiceNumber = selected.isPortal
+      ? selected.serie
+      : selected.serie + String(year) + String(counter.nextNumber).padStart(9, "0");
     return { series: selected, counter, invoiceNumber };
   },
 
