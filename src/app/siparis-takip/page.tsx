@@ -7,6 +7,20 @@ type TrackedItem={name:string;quantity:number;size?:string|null;color?:string|nu
 type TrackedShipment={provider:string;status:string;trackingCode?:string|null;trackingUrl?:string|null};
 type TrackedOrder={orderNo:string;status:string;paymentStatus:string;grandTotal:number|string;currency:string;createdAt:string;items:TrackedItem[];shipment?:TrackedShipment|null};
 
+const orderStatusLabels:Record<string,string>={
+  awaiting_payment:"Ödeme bekliyor",paid:"Ödeme alındı",invoice_pending:"Hazırlanıyor",
+  ready_to_ship:"Kargoya hazır",shipped:"Kargoda",delivered:"Teslim edildi",
+  cancelled:"İptal edildi",refunded:"İade edildi",
+};
+const shipmentStatusLabels:Record<string,string>={
+  pending:"Kargo kaydı bekleniyor",prepared:"Paket hazırlandı",shipped:"Kargoya verildi",
+  delivered:"Teslim edildi",returned:"İade sürecinde",problem:"Kargo sorunu",
+};
+function orderStep(status:string,paymentStatus:string){
+  if(status==="delivered")return 4;if(status==="shipped")return 3;if(status==="ready_to_ship")return 2;
+  if(paymentStatus==="paid"||["paid","invoice_pending"].includes(status))return 1;return 0;
+}
+
 export default async function OrderTrackingPage({searchParams}:{searchParams:Promise<{order?:string;email?:string}>}) {
   const q=await searchParams;
   let result:TrackedOrder|null=null;
@@ -26,10 +40,13 @@ export default async function OrderTrackingPage({searchParams}:{searchParams:Pro
     </section>
     {searched&&(result?<section className="tracking-result">
       <div><span>SİPARİŞ</span><h2>{result.orderNo}</h2><p>{new Date(result.createdAt).toLocaleString("tr-TR")}</p></div>
-      <div className="tracking-status"><b>{result.status}</b><span>Ödeme: {result.paymentStatus}</span></div>
+      <div className="tracking-status"><b>{orderStatusLabels[result.status]||result.status}</b><span>Ödeme: {result.paymentStatus==="paid"?"Onaylandı":"Bekliyor"}</span></div>
+      {!["cancelled","refunded"].includes(result.status)&&<div className="tracking-progress">
+        {["Sipariş","Ödeme","Hazırlık","Kargo","Teslim"].map((label,index)=><span key={label} className={index<=orderStep(result.status,result.paymentStatus)?"active":""}><i/>{label}</span>)}
+      </div>}
       <div className="tracking-items">{result.items?.map((item,idx)=><p key={idx}><b>{item.name}</b><span>{item.quantity} adet · {item.size||""} {item.color||""}</span></p>)}</div>
       <div className="tracking-total">Toplam <b>{Number(result.grandTotal).toLocaleString("tr-TR")} {result.currency}</b></div>
-      {result.shipment&&<div className="tracking-shipment"><span>{result.shipment.provider}</span><b>{result.shipment.status}</b><p>{result.shipment.trackingCode||"Takip kodu bekleniyor"}</p>{result.shipment.trackingUrl&&<a href={result.shipment.trackingUrl} target="_blank" rel="noreferrer">Kargoyu takip et →</a>}</div>}
+      {result.shipment?<div className="tracking-shipment"><span>{result.shipment.provider}</span><b>{shipmentStatusLabels[result.shipment.status]||result.shipment.status}</b><p>{result.shipment.trackingCode||"Takip kodu bekleniyor"}</p>{result.shipment.trackingUrl&&<a href={result.shipment.trackingUrl} target="_blank" rel="noreferrer">Kargoyu takip et →</a>}</div>:<div className="tracking-shipment muted"><span>KARGO</span><b>Hazırlık bekleniyor</b><p>Kargo kaydı oluşturulduğunda takip bilgileri burada görünecek.</p></div>}
     </section>:<section className="tracking-not-found"><h2>Sipariş bulunamadı.</h2><p>Sipariş numarası ve e-posta adresini kontrol edin.</p></section>)}
     <section className="tracking-options"><Link href="/hesabim"><span>ÜYE SİPARİŞLERİ</span><h2>Hesabımdan görüntüle</h2><p>Sipariş geçmişi, ödeme ve teslimat durumu.</p></Link><div><span>YARDIM</span><h2>Bir sorun mu var?</h2><p>İletişim bilgilerimiz tamamlandığında destek kanalına buradan ulaşabileceksiniz.</p></div></section>
   </main><StoreFooter/></>;
