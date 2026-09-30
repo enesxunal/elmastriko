@@ -109,7 +109,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             : []
         );
 
-        setCart(prev => prev.filter(item => activeSlugs.has(item.slug)));
+        setCart(prev => {
+          const next = prev.filter(item => activeSlugs.has(item.slug));
+          return next.length === prev.length ? prev : next;
+        });
       } catch {
         // Keep the current cart if catalog validation is temporarily unavailable.
       }
@@ -117,7 +120,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
     void pruneMissingProducts();
     return () => { cancelled = true; };
-  }, [hydrated]);
+  }, [hydrated, cart]);
 
   useEffect(() => {
     if (hydrated && !authUserId) localStorage.setItem(GUEST_FAVORITES_KEY, JSON.stringify(favorites));
