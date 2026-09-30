@@ -139,8 +139,9 @@ export async function POST(request: NextRequest) {
   }
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.elmastriko.com").replace(/\/$/, "");
-  const state = paid ? "success" : failed ? "failed" : "pending";
-  const target = `${siteUrl}/checkout?payment=${state}&order=${encodeURIComponent(order.order_no)}`;
+  const target = paid
+    ? `${siteUrl}/siparis-basarili?order=${encodeURIComponent(order.order_no)}`
+    : `${siteUrl}/checkout?payment=${failed ? "failed" : "pending"}&order=${encodeURIComponent(order.order_no)}`;
 
   return NextResponse.redirect(target, 303);
 }

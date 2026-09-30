@@ -23,7 +23,7 @@ export async function createNesInvoiceForOrder(orderId: string): Promise<Invoice
   const supabase = createAdminClient();
   const [{ data: order, error: orderError }, { data: items, error: itemsError }, { data: addresses, error: addressError }, { data: payment }] = await Promise.all([
     supabase.from("orders").select("id,order_no,guest_email,guest_phone,status,payment_status,subtotal,shipping_fee,discount_total,grand_total,currency,created_at").eq("id", orderId).maybeSingle(),
-    supabase.from("order_items").select("id,product_name,sku,unit_price,quantity,line_total").eq("order_id", orderId).order("created_at", { ascending: true }),
+    supabase.from("order_items").select("id,product_name,sku,unit_price,quantity,line_total").eq("order_id", orderId).order("id", { ascending: true }),
     supabase.from("order_addresses").select("kind,full_name,company_name,tax_office,tax_number,phone,city,district,postal_code,address_line").eq("order_id", orderId),
     supabase.from("payments").select("provider,status,created_at").eq("order_id", orderId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
