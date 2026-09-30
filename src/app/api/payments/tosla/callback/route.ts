@@ -34,17 +34,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid callback hash." }, { status: 400 });
   }
 
-  const orderNo = payload.OrderId || payload.orderId || "";
+  const providerOrderId = payload.OrderId || payload.orderId || "";
   const threeDSessionId = payload.ThreeDSessionId || payload.threeDSessionId || "";
-  if (!orderNo) {
+  if (!providerOrderId) {
     return NextResponse.json({ error: "OrderId is missing." }, { status: 400 });
   }
 
   const supabase = createAdminClient();
+  const { data: payment } = await supabase
+    .from("payments")
+    .select("id,order_id,provider_reference")
+    .eq("provider", "tosla")
+    .eq("provider_reference", providerOrderId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!payment) {
+    return NextResponse.json({ error: "Payment not found." }, { status: 404 });
+  }
+
   const { data: order } = await supabase
     .from("orders")
     .select("id,order_no,grand_total,payment_status")
-    .eq("order_no", orderNo)
+    .eq("id", payment.order_id)
     .maybeSingle();
 
   if (!order) {
@@ -64,7 +77,7 @@ export async function POST(request: NextRequest) {
 
   if (!providerResult) {
     try {
-      providerResult = await tosla.inquiry(orderNo);
+      providerResult = await tosla.inquiry(providerOrderId);
       verificationError = null;
     } catch (error) {
       verificationError = error instanceof Error ? error.message : "inquiry failed";
@@ -77,7 +90,7 @@ export async function POST(request: NextRequest) {
     payload.BankResponseCode ||
     "";
   const resultOrderNo = responseValue(result, "OrderId", "orderId");
-  const orderMatches = !resultOrderNo || resultOrderNo === orderNo;
+  const orderMatches = !resultOrderNo || resultOrderNo === providerOrderId;
   const amountMatches = providerAmountMatches(result, Number(order.grand_total));
   const paid = verified && bankCode === "00" && orderMatches && amountMatches;
   const failed = verified && bankCode !== "00";
@@ -94,23 +107,16 @@ export async function POST(request: NextRequest) {
         amountMatches,
         error: verificationError,
       },
+      providerOrderId,
+      threeDSessionId,
     },
     updated_at: new Date().toISOString(),
   };
 
-  if (threeDSessionId) {
-    await supabase
-      .from("payments")
-      .update(paymentUpdate)
-      .eq("order_id", order.id)
-      .eq("provider_reference", threeDSessionId);
-  } else {
-    await supabase
-      .from("payments")
-      .update(paymentUpdate)
-      .eq("order_id", order.id)
-      .eq("provider", "tosla");
-  }
+  await supabase
+    .from("payments")
+    .update(paymentUpdate)
+    .eq("id", payment.id);
 
   if (order.payment_status !== "paid") {
     await supabase
@@ -134,7 +140,7 @@ export async function POST(request: NextRequest) {
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.elmastriko.com").replace(/\/$/, "");
   const state = paid ? "success" : failed ? "failed" : "pending";
-  const target = `${siteUrl}/checkout?payment=${state}&order=${encodeURIComponent(orderNo)}`;
+  const target = `${siteUrl}/checkout?payment=${state}&order=${encodeURIComponent(order.order_no)}`;
 
   return NextResponse.redirect(target, 303);
 }

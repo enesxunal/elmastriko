@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 type OrderPayload = {
   email: string;
@@ -24,6 +25,17 @@ type OrderPayload = {
   items: Array<{ slug: string; qty: number; size?: string; color?: string }>;
 };
 
+type OrderResult = {
+  status?: string;
+  orderId?: string;
+  orderNo?: string;
+  currency?: string;
+  subtotal?: number;
+  grandTotal?: number;
+  shippingFee?: number;
+  [key: string]: unknown;
+};
+
 export async function POST(request: NextRequest) {
   let payload: OrderPayload;
 
@@ -45,5 +57,42 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status });
   }
 
-  return NextResponse.json(data, { status: 201 });
+  const result = (data || {}) as OrderResult;
+  if (result.orderId && Number.isFinite(Number(result.subtotal))) {
+    const admin = createAdminClient();
+    const { data: commerce } = await admin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "commerce")
+      .maybeSingle();
+
+    const value = (commerce?.value || {}) as Record<string, unknown>;
+    const threshold = Number(value.freeShippingThreshold ?? 5000);
+    const configuredFee = value.shippingFee === null || value.shippingFee === undefined || value.shippingFee === ""
+      ? null
+      : Number(value.shippingFee);
+    const subtotal = Number(result.subtotal);
+    const effectiveShippingFee = subtotal >= threshold
+      ? 0
+      : configuredFee;
+
+    if (effectiveShippingFee !== null && Number.isFinite(effectiveShippingFee)) {
+      const grandTotal = subtotal + effectiveShippingFee;
+      if (Number(result.shippingFee) !== effectiveShippingFee || Number(result.grandTotal) !== grandTotal) {
+        await admin
+          .from("orders")
+          .update({
+            shipping_fee: effectiveShippingFee,
+            grand_total: grandTotal,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", result.orderId);
+
+        result.shippingFee = effectiveShippingFee;
+        result.grandTotal = grandTotal;
+      }
+    }
+  }
+
+  return NextResponse.json(result, { status: 201 });
 }

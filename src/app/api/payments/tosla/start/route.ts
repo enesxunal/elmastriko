@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isToslaConfigured, tosla } from "@/lib/integrations/tosla";
 
+function providerOrderId(orderId: string) {
+  return "ET" + orderId.replace(/-/g, "").slice(0, 16).toUpperCase();
+}
+
 export async function POST(request: NextRequest) {
   if (!isToslaConfigured()) {
     return NextResponse.json({ error: "Tosla credentials are not configured." }, { status: 503 });
@@ -38,11 +42,12 @@ export async function POST(request: NextRequest) {
   }
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.elmastriko.com").replace(/\/$/, "");
+  const toslaOrderId = providerOrderId(order.id);
   let result;
   try {
     result = await tosla.startHostedThreeD({
       callbackUrl: siteUrl + "/api/payments/tosla/callback",
-      orderId: order.order_no,
+      orderId: toslaOrderId,
       amountTry: Number(order.grand_total),
       installmentCount: Math.max(0, Math.min(12, Number(body.installmentCount || 0))),
     });
@@ -62,10 +67,14 @@ export async function POST(request: NextRequest) {
   await supabase.from("payments").insert({
     order_id: order.id,
     provider: "tosla",
-    provider_reference: sessionId,
+    provider_reference: toslaOrderId,
     amount: order.grand_total,
     status: "pending",
-    raw_response: result,
+    raw_response: {
+      ...result,
+      providerOrderId: toslaOrderId,
+      threeDSessionId: sessionId,
+    },
   });
 
   await supabase
@@ -81,6 +90,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     orderId: order.id,
     orderNo: order.order_no,
+    providerOrderId: toslaOrderId,
     threeDSessionId: sessionId,
     formUrl: result.formUrl,
     iframeUrl: result.iframeUrl,
