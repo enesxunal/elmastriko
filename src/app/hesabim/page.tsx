@@ -18,10 +18,17 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
     return <><StoreHeader/><main className="account-dashboard">
       <section className="account-welcome">
-        <span>ELMAS HESABIM</span>
-        <h1>{profile?.full_name || user.email}</h1>
-        <p>{user.email}</p>
+        <div className="account-welcome-copy">
+          <span>ELMAS HESABIM</span>
+          <h1>{profile?.full_name || user.email}</h1>
+          <p>{user.email}</p>
+        </div>
         <form action={signOut}><button>Çıkış Yap</button></form>
+        <div className="account-quick-stats">
+          <div><strong>{orders?.length || 0}</strong><span>Sipariş</span></div>
+          <div><strong>{addresses?.length || 0}</strong><span>Kayıtlı adres</span></div>
+          <div><strong>{orders?.filter(order => order.status === "delivered").length || 0}</strong><span>Teslim edildi</span></div>
+        </div>
       </section>
 
       {(params.error || params.message) && <div className={"auth-message " + (params.error ? "error" : "")}>{params.error || params.message}</div>}

@@ -21,7 +21,7 @@ export default function CartPage() {
   const total = effectiveShippingFee === null ? null : subtotal + effectiveShippingFee;
 
   return <><StoreHeader/><main className="cart-page">
-    <div className="simple-title"><span>ALIŞVERİŞ</span><h1>Sepet</h1></div>
+    <div className="simple-title cart-title"><div><span>ALIŞVERİŞ</span><h1>Sepet</h1></div><p>{lines.length ? lines.reduce((sum,row)=>sum+row.line.qty,0) + " ürün seçtiniz. Siparişinizi gözden geçirip güvenli ödeme adımına geçebilirsiniz." : "Sepetinizdeki ürünler burada görünecek."}</p></div>
     <div className="cart-layout">
       <section className="cart-items">
         <div className="shipping-progress">
@@ -36,7 +36,18 @@ export default function CartPage() {
           <div className="cart-line-side"><strong>{formatPrice(unitPrice)}</strong><button onClick={() => removeFromCart(line)} aria-label="Kaldır"><Trash2 size={16}/></button></div>
         </div>)}
       </section>
-      <aside className="cart-summary"><h2>Sipariş Özeti</h2><div><span>Ara toplam</span><b>{hasUnknownPrice ? "Fiyat listesi bekleniyor" : formatPrice(subtotal)}</b></div><div><span>Kargo</span><b>{commerceLoading ? "Hesaplanıyor" : freeShipping ? "Ücretsiz" : hasUnknownPrice ? "Hesaplanacak" : effectiveShippingFee === null ? "Kargo tutarı onayda" : formatPrice(effectiveShippingFee)}</b></div><div className="summary-total"><span>Toplam</span><b>{hasUnknownPrice || total === null ? "—" : formatPrice(total)}</b></div>{lines.length > 0 && total !== null ? <Link href="/checkout">Alışverişi Tamamla</Link> : <span className="disabled-checkout">Alışverişi Tamamla</span>}<small>Ödeme Tosla İşim Sanal POS üzerinden 3D Secure ile güvenli şekilde tamamlanır.</small></aside>
+      <aside className="cart-summary premium-cart-summary">
+        <div className="summary-kicker">SİPARİŞ ÖZETİ</div><h2>Toplamınız</h2>
+        <div><span>Ara toplam</span><b>{hasUnknownPrice ? "Fiyat listesi bekleniyor" : formatPrice(subtotal)}</b></div>
+        <div><span>Kargo</span><b>{commerceLoading ? "Hesaplanıyor" : freeShipping ? "Ücretsiz" : hasUnknownPrice ? "Hesaplanacak" : effectiveShippingFee === null ? "Kargo tutarı onayda" : formatPrice(effectiveShippingFee)}</b></div>
+        <div className="summary-total"><span>Toplam</span><b>{hasUnknownPrice || total === null ? "—" : formatPrice(total)}</b></div>
+        {lines.length > 0 && total !== null ? <Link href="/checkout">Güvenli Ödemeye Geç</Link> : <span className="disabled-checkout">Güvenli Ödemeye Geç</span>}
+        <div className="cart-trust-list">
+          <span><b>3D Secure</b><small>Tosla İşim Sanal POS ile korumalı ödeme</small></span>
+          <span><b>Hızlı teslimat</b><small>Siparişiniz ödeme sonrası hazırlanır</small></span>
+          <span><b>Kolay takip</b><small>Hesabınızdan sipariş ve kargo durumunu izleyin</small></span>
+        </div>
+      </aside>
     </div>
   </main><StoreFooter/></>;
 }
