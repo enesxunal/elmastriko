@@ -88,6 +88,38 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [cart, hydrated]);
 
   useEffect(() => {
+    if (!hydrated || !cart.length) return;
+    let cancelled = false;
+
+    async function pruneMissingProducts() {
+      const slugs = [...new Set(cart.map(item => item.slug).filter(Boolean))];
+      if (!slugs.length) return;
+
+      try {
+        const response = await fetch("/api/catalog?slugs=" + encodeURIComponent(slugs.join(",")), {
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const body = await response.json() as { products?: Array<{ slug?: string }> };
+        if (cancelled) return;
+
+        const activeSlugs = new Set(
+          Array.isArray(body.products)
+            ? body.products.map(product => product.slug).filter((slug): slug is string => Boolean(slug))
+            : []
+        );
+
+        setCart(prev => prev.filter(item => activeSlugs.has(item.slug)));
+      } catch {
+        // Keep the current cart if catalog validation is temporarily unavailable.
+      }
+    }
+
+    void pruneMissingProducts();
+    return () => { cancelled = true; };
+  }, [hydrated]);
+
+  useEffect(() => {
     if (hydrated && !authUserId) localStorage.setItem(GUEST_FAVORITES_KEY, JSON.stringify(favorites));
   }, [favorites, hydrated, authUserId]);
 

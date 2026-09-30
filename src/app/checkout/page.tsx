@@ -154,11 +154,11 @@ export default function CheckoutPage() {
                 postalCode,
                 addressLine,
               },
-          items: cart.map(item => ({
-            slug: item.slug,
-            qty: item.qty,
-            size: item.size,
-            color: item.color,
+          items: lines.map(({ line }) => ({
+            slug: line.slug,
+            qty: line.qty,
+            size: line.size,
+            color: line.color,
           })),
         }),
       });
