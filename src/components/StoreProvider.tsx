@@ -4,13 +4,14 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export type CartLine = { slug: string; qty: number; size?: string; color?: string };
+type CartIdentity = Pick<CartLine, "slug" | "size" | "color">;
 
 type StoreState = {
   cart: CartLine[];
   favorites: string[];
   addToCart: (line: CartLine) => void;
-  removeFromCart: (slug: string) => void;
-  setQty: (slug: string, qty: number) => void;
+  removeFromCart: (line: CartIdentity) => void;
+  setQty: (line: CartIdentity, qty: number) => void;
   toggleFavorite: (slug: string) => void;
   clearCart: () => void;
   cartCount: number;
@@ -18,6 +19,39 @@ type StoreState = {
 
 const StoreContext = createContext<StoreState | null>(null);
 const GUEST_FAVORITES_KEY = "elmas-guest-favorites";
+const CART_KEY = "elmas-cart";
+
+function sameCartLine(a: CartIdentity, b: CartIdentity) {
+  return a.slug === b.slug &&
+    (a.size || "") === (b.size || "") &&
+    (a.color || "") === (b.color || "");
+}
+
+function normalizeCart(value: unknown): CartLine[] {
+  if (!Array.isArray(value)) return [];
+
+  const merged: CartLine[] = [];
+  for (const raw of value) {
+    if (!raw || typeof raw !== "object") continue;
+    const item = raw as Partial<CartLine>;
+    const slug = typeof item.slug === "string" ? item.slug.trim() : "";
+    const qty = Number(item.qty);
+    if (!slug || !Number.isFinite(qty) || qty <= 0) continue;
+
+    const line: CartLine = {
+      slug,
+      qty: Math.max(1, Math.floor(qty)),
+      ...(typeof item.size === "string" && item.size ? { size: item.size } : {}),
+      ...(typeof item.color === "string" && item.color ? { color: item.color } : {}),
+    };
+
+    const existing = merged.find(existingLine => sameCartLine(existingLine, line));
+    if (existing) existing.qty += line.qty;
+    else merged.push(line);
+  }
+
+  return merged;
+}
 
 function readGuestFavorites() {
   try {
@@ -37,7 +71,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      try { setCart(JSON.parse(localStorage.getItem("elmas-cart") || "[]")); } catch {}
+      try {
+        const stored = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+        setCart(normalizeCart(stored));
+      } catch {
+        setCart([]);
+      }
       setFavorites(readGuestFavorites());
       setHydrated(true);
     }, 0);
@@ -45,7 +84,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (hydrated) localStorage.setItem("elmas-cart", JSON.stringify(cart));
+    if (hydrated) localStorage.setItem(CART_KEY, JSON.stringify(normalizeCart(cart)));
   }, [cart, hydrated]);
 
   useEffect(() => {
@@ -117,15 +156,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     addToCart(line) {
       if (!line.slug) return;
       setCart(prev => {
-        const found = prev.find(x => x.slug === line.slug && x.size === line.size && x.color === line.color);
-        if (found) return prev.map(x => x === found ? { ...x, qty: x.qty + Math.max(1, line.qty) } : x);
-        return [...prev, { ...line, qty: Math.max(1, line.qty) }];
+        const next = normalizeCart(prev);
+        const found = next.find(item => sameCartLine(item, line));
+        if (found) {
+          return next.map(item => sameCartLine(item, line)
+            ? { ...item, qty: item.qty + Math.max(1, Math.floor(line.qty || 1)) }
+            : item);
+        }
+        return [...next, { ...line, qty: Math.max(1, Math.floor(line.qty || 1)) }];
       });
     },
-    removeFromCart(slug) { setCart(prev => prev.filter(x => x.slug !== slug)); },
-    setQty(slug, qty) {
-      if (qty <= 0) setCart(prev => prev.filter(x => x.slug !== slug));
-      else setCart(prev => prev.map(x => x.slug === slug ? { ...x, qty } : x));
+    removeFromCart(line) {
+      setCart(prev => prev.filter(item => !sameCartLine(item, line)));
+    },
+    setQty(line, qty) {
+      if (qty <= 0) {
+        setCart(prev => prev.filter(item => !sameCartLine(item, line)));
+      } else {
+        setCart(prev => prev.map(item => sameCartLine(item, line) ? { ...item, qty } : item));
+      }
     },
     toggleFavorite(slug) {
       setFavorites(prev => {
@@ -135,7 +184,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       });
     },
     clearCart() { setCart([]); },
-    cartCount: cart.reduce((sum, x) => sum + x.qty, 0),
+    cartCount: cart.reduce((sum, item) => sum + item.qty, 0),
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
