@@ -64,18 +64,31 @@ async function readJsonResponse<T>(response: Response): Promise<T & { error?: st
 }
 
 export default function CheckoutPage() {
-  const { cart } = useStore();
+  const { cart, clearCart } = useStore();
   const { lines, loading } = useCartCatalog(cart);
   const { freeShippingThreshold, shippingFee, loading: commerceLoading } = useCommerceSettings();
   const formRef = useRef<HTMLFormElement>(null);
   const [invoiceType, setInvoiceType] = useState<"individual" | "company">("individual");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [paymentSuccess] = useState<{ orderNo: string } | null>(() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("payment") === "success"
+      ? { orderNo: params.get("order") || "" }
+      : null;
+  });
   const hasUnknownPrice = lines.some(x => x.unitPrice === null);
   const subtotal = lines.reduce((sum, x) => sum + ((x.unitPrice || 0) * x.line.qty), 0);
   const freeShipping = subtotal >= freeShippingThreshold;
   const effectiveShippingFee = freeShipping ? 0 : shippingFee;
   const total = effectiveShippingFee === null ? null : subtotal + effectiveShippingFee;
+
+  useEffect(() => {
+    if (!paymentSuccess) return;
+    const timer = window.setTimeout(() => clearCart(), 0);
+    return () => window.clearTimeout(timer);
+  }, [paymentSuccess, clearCart]);
 
   useEffect(() => {
     let cancelled = false;
@@ -218,6 +231,18 @@ export default function CheckoutPage() {
       setSubmitError(error instanceof Error ? error.message : "Sipariş başlatılamadı.");
       setSubmitting(false);
     }
+  }
+
+  if (paymentSuccess) {
+    return <><StoreHeader/><main className="checkout-page">
+      <section className="checkout-main">
+        <span className="checkout-kicker">ÖDEME BAŞARILI</span>
+        <h1>Siparişiniz alındı.</h1>
+        <p>{paymentSuccess.orderNo ? `Sipariş numaranız: ${paymentSuccess.orderNo}` : "Ödemeniz başarıyla tamamlandı."}</p>
+        <p>Siparişiniz ödeme onayıyla birlikte işleme alındı.</p>
+        <Link href="/hesabim">Siparişlerimi görüntüle →</Link>
+      </section>
+    </main></>;
   }
 
   return <><StoreHeader/><main className="checkout-page">
