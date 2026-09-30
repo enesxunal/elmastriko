@@ -160,6 +160,9 @@ export function buildNesUblInvoice(input: NesUblInput) {
     note,
     "<cbc:DocumentCurrencyCode>" + currency + "</cbc:DocumentCurrencyCode><cbc:LineCountNumeric>" + lines.length + "</cbc:LineCountNumeric>",
     "<cac:OrderReference><cbc:ID>" + x(input.orderNo) + "</cbc:ID><cbc:IssueDate>" + x(input.orderDate) + "</cbc:IssueDate></cac:OrderReference>",
+    input.profileId === "EARSIVFATURA"
+      ? "<cac:AdditionalDocumentReference><cbc:ID>ELEKTRONIK</cbc:ID><cbc:IssueDate>" + x(input.issueDate) + "</cbc:IssueDate><cbc:DocumentTypeCode>SEND_TYPE</cbc:DocumentTypeCode></cac:AdditionalDocumentReference>"
+      : "",
     supplierParty(),
     customerParty(input.billing),
     '<cac:TaxTotal><cbc:TaxAmount currencyID="' + currency + '">' + money(totalTax) + "</cbc:TaxAmount>" + taxGroups + "</cac:TaxTotal>",
