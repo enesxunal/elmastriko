@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "crypto";
 
-const TEST_BASE_URL = "https://ent.akodepos.com/api/Payment/";
-const LIVE_BASE_URL = "https://api.akodepos.com/api/Payment/";
+const TEST_BASE_URL = "https://prepentegrasyon.tosla.com/api/Payment/";
+const LIVE_BASE_URL = "https://entegrasyon.tosla.com/api/Payment/";
 
 type ToslaBaseResponse = Record<string, unknown> & {
   ThreeDSessionId?: string;
@@ -27,6 +27,22 @@ export function isToslaConfigured() {
   return Boolean(c.clientId && c.apiUser && c.apiPass);
 }
 
+function istanbulTimeSpan() {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Istanbul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date());
+
+  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
+  return values.year + values.month + values.day + values.hour + values.minute + values.second;
+}
+
 function authParams() {
   const c = config();
   if (!isToslaConfigured()) {
@@ -34,25 +50,16 @@ function authParams() {
   }
 
   const rnd = String(Math.floor(Math.random() * 10000) + 1);
-  const now = new Date();
-  const pad = (value: number) => String(value).padStart(2, "0");
-  const timeSpan =
-    now.getFullYear() +
-    pad(now.getMonth() + 1) +
-    pad(now.getDate()) +
-    pad(now.getHours()) +
-    pad(now.getMinutes()) +
-    pad(now.getSeconds());
-
+  const timeSpan = istanbulTimeSpan();
   const hashSource = c.apiPass + c.clientId + c.apiUser + rnd + timeSpan;
-  const Hash = createHash("sha512").update(hashSource, "utf8").digest("base64");
+  const hash = createHash("sha512").update(hashSource, "utf8").digest("base64");
 
   return {
     clientId: c.clientId,
     apiUser: c.apiUser,
-    Rnd: rnd,
+    rnd,
     timeSpan,
-    Hash,
+    hash,
   };
 }
 
@@ -155,8 +162,8 @@ export const tosla = {
 
   async refund(orderId: string, amountTry: number) {
     return post<ToslaBaseResponse>("refund", {
-      OrderId: orderId,
-      Amount: Math.round(amountTry * 100),
+      orderId,
+      amount: Math.round(amountTry * 100),
     });
   },
 

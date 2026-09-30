@@ -42,6 +42,27 @@ function splitFullName(fullName: string) {
   };
 }
 
+async function readJsonResponse<T>(response: Response): Promise<T & { error?: string }> {
+  const text = await response.text();
+  if (!text) {
+    return {
+      error: response.ok
+        ? "Sunucudan boş yanıt alındı."
+        : `Sunucu hatası (${response.status}). Lütfen tekrar deneyin.`,
+    } as T & { error?: string };
+  }
+
+  try {
+    return JSON.parse(text) as T & { error?: string };
+  } catch {
+    return {
+      error: response.ok
+        ? "Sunucu yanıtı okunamadı."
+        : `Sunucu hatası (${response.status}). Lütfen tekrar deneyin.`,
+    } as T & { error?: string };
+  }
+}
+
 export default function CheckoutPage() {
   const { cart } = useStore();
   const { lines, loading } = useCartCatalog(cart);
@@ -163,7 +184,7 @@ export default function CheckoutPage() {
         }),
       });
 
-      const orderBody = await orderResponse.json() as CreatedOrder & { error?: string };
+      const orderBody = await readJsonResponse<CreatedOrder>(orderResponse);
       if (!orderResponse.ok || !orderBody.orderId) {
         throw new Error(orderBody.error || "Sipariş oluşturulamadı.");
       }
@@ -177,7 +198,7 @@ export default function CheckoutPage() {
         }),
       });
 
-      const payment = await paymentResponse.json() as PaymentStart;
+      const payment = await readJsonResponse<PaymentStart>(paymentResponse);
       if (!paymentResponse.ok) {
         throw new Error(payment.error || "Ödeme oturumu başlatılamadı.");
       }

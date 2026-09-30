@@ -38,12 +38,21 @@ export async function POST(request: NextRequest) {
   }
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.elmastriko.com").replace(/\/$/, "");
-  const result = await tosla.startHostedThreeD({
-    callbackUrl: siteUrl + "/api/payments/tosla/callback",
-    orderId: order.order_no,
-    amountTry: Number(order.grand_total),
-    installmentCount: Math.max(0, Math.min(12, Number(body.installmentCount || 0))),
-  });
+  let result;
+  try {
+    result = await tosla.startHostedThreeD({
+      callbackUrl: siteUrl + "/api/payments/tosla/callback",
+      orderId: order.order_no,
+      amountTry: Number(order.grand_total),
+      installmentCount: Math.max(0, Math.min(12, Number(body.installmentCount || 0))),
+    });
+  } catch (error) {
+    console.error("Tosla payment session start failed:", error);
+    return NextResponse.json(
+      { error: "Tosla ödeme oturumu başlatılamadı. Lütfen tekrar deneyin." },
+      { status: 502 }
+    );
+  }
 
   const sessionId = String(result.ThreeDSessionId || "");
   if (!sessionId) {
