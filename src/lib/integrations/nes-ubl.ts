@@ -60,7 +60,7 @@ function supplierParty() {
     "<cac:AccountingSupplierParty><cac:Party>",
     "<cbc:WebsiteURI>https://www.elmastriko.com</cbc:WebsiteURI>",
     '<cac:PartyIdentification><cbc:ID schemeID="VKN">' + x(company.taxNumber) + "</cbc:ID></cac:PartyIdentification>",
-    '<cac:PartyIdentification><cbc:ID schemeID="MERSISNO">' + x(company.mersis) + "</cbc:ID></cac:PartyIdentification>",
+    "<cac:PartyName><cbc:Name>" + x(company.legalName) + "</cbc:Name></cac:PartyName>",
     "<cac:PostalAddress><cbc:StreetName>" + x(company.address) + "</cbc:StreetName><cbc:CitySubdivisionName>Bağcılar</cbc:CitySubdivisionName><cbc:CityName>İstanbul</cbc:CityName><cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country></cac:PostalAddress>",
     "<cac:PartyTaxScheme><cac:TaxScheme><cbc:Name>" + x(company.taxOffice) + "</cbc:Name></cac:TaxScheme></cac:PartyTaxScheme>",
     "<cac:PartyLegalEntity><cbc:RegistrationName>" + x(company.legalName) + "</cbc:RegistrationName></cac:PartyLegalEntity>",
@@ -82,6 +82,7 @@ function customerParty(a: NesInvoiceAddress) {
   return [
     "<cac:AccountingCustomerParty><cac:Party>",
     identification(a.taxNumber),
+    "<cac:PartyName><cbc:Name>" + x(name) + "</cbc:Name></cac:PartyName>",
     "<cac:PostalAddress><cbc:StreetName>" + x(a.addressLine) + "</cbc:StreetName><cbc:CitySubdivisionName>" + x(a.district) + "</cbc:CitySubdivisionName><cbc:CityName>" + x(a.city) + "</cbc:CityName>" + (a.postalCode ? "<cbc:PostalZone>" + x(a.postalCode) + "</cbc:PostalZone>" : "") + "<cac:Country><cbc:Name>Türkiye</cbc:Name></cac:Country></cac:PostalAddress>",
     a.taxNumber ? "<cac:PartyTaxScheme><cac:TaxScheme><cbc:Name>" + x(a.taxOffice || "") + "</cbc:Name></cac:TaxScheme></cac:PartyTaxScheme>" : "",
     a.companyName ? "<cac:PartyLegalEntity><cbc:RegistrationName>" + x(name) + "</cbc:RegistrationName></cac:PartyLegalEntity>" : "",
