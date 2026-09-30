@@ -2,7 +2,27 @@ import StoreHeader from "@/components/StoreHeader";
 import Link from "next/link";
 import StoreFooter from "@/components/StoreFooter";
 import { createClient } from "@/lib/supabase/server";
-import { addAddress, deleteAddress, requestPasswordReset, signIn, signOut, signUp, updatePassword, updateProfile } from "@/app/auth/actions";
+import { addAddress, deleteAddress, requestPasswordReset, setDefaultAddress, signIn, signOut, signUp, updateAddress, updatePassword, updateProfile } from "@/app/auth/actions";
+
+const orderStatusLabels: Record<string, string> = {
+  draft: "Taslak",
+  awaiting_payment: "Ödeme bekliyor",
+  paid: "Ödeme alındı",
+  invoice_pending: "Hazırlanıyor",
+  ready_to_ship: "Kargoya hazır",
+  shipped: "Kargoda",
+  delivered: "Teslim edildi",
+  cancelled: "İptal edildi",
+  refunded: "İade edildi",
+};
+
+function orderStep(status: string) {
+  if (status === "delivered") return 4;
+  if (status === "shipped") return 3;
+  if (status === "ready_to_ship") return 2;
+  if (["paid", "invoice_pending"].includes(status)) return 1;
+  return 0;
+}
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; message?: string; reset?: string }> }) {
   const params = await searchParams;
@@ -15,6 +35,26 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       supabase.from("orders").select("id, order_no, status, grand_total, currency, created_at").order("created_at", { ascending: false }).limit(10),
       supabase.from("addresses").select("id, title, full_name, phone, city, district, postal_code, address_line, is_default").order("is_default", { ascending: false }).order("created_at", { ascending: false }),
     ]);
+
+    const orderIds = (orders || []).map(order => order.id);
+    const { data: orderItems } = orderIds.length
+      ? await supabase.from("order_items").select("order_id,product_id,product_name,color,size,quantity").in("order_id", orderIds)
+      : { data: [] };
+    const productIds = Array.from(new Set((orderItems || []).map(item => item.product_id).filter(Boolean))) as string[];
+    const { data: productImages } = productIds.length
+      ? await supabase.from("product_images").select("product_id,url,alt_text,sort_order").in("product_id", productIds).order("sort_order", { ascending: true })
+      : { data: [] };
+
+    const imageByProduct = new Map<string,string>();
+    for (const image of productImages || []) {
+      if (image.product_id && !imageByProduct.has(image.product_id)) imageByProduct.set(image.product_id, image.url);
+    }
+    const itemsByOrder = new Map<string, typeof orderItems>();
+    for (const item of orderItems || []) {
+      const list = itemsByOrder.get(item.order_id) || [];
+      list.push(item);
+      itemsByOrder.set(item.order_id, list);
+    }
 
     return <><StoreHeader/><main className="account-dashboard">
       <section className="account-welcome">
@@ -45,10 +85,23 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <section className="account-panels">
         <div className="account-panel account-orders">
           <span>01</span><h2>Siparişlerim</h2>
-          {orders && orders.length > 0 ? orders.map(order => <Link className="order-row" href={"/hesabim/siparis/" + order.id} key={order.id}>
-            <div><b>{order.order_no}</b><small>{new Date(order.created_at).toLocaleDateString("tr-TR")}</small></div>
-            <div><span>{order.status}</span><b>{Number(order.grand_total).toLocaleString("tr-TR")} {order.currency}</b></div>
-          </Link>) : <p>Henüz siparişiniz bulunmuyor.</p>}
+          {orders && orders.length > 0 ? orders.map(order => {
+            const orderProducts = itemsByOrder.get(order.id) || [];
+            const firstProduct = orderProducts[0];
+            const thumb = firstProduct?.product_id ? imageByProduct.get(firstProduct.product_id) : null;
+            const step = orderStep(order.status);
+            const terminal = ["cancelled","refunded"].includes(order.status);
+            return <Link className="order-row order-history-card" href={"/hesabim/siparis/" + order.id} key={order.id}>
+              <div className="order-history-product">
+                <div className="order-history-thumb">{thumb ? <img src={thumb} alt={firstProduct?.product_name || "Sipariş ürünü"}/> : <span>ET</span>}</div>
+                <div><b>{firstProduct?.product_name || order.order_no}</b><small>{orderProducts.length > 1 ? "+" + (orderProducts.length - 1) + " ürün daha" : firstProduct ? firstProduct.quantity + " adet" + (firstProduct.size ? " · " + firstProduct.size : "") + (firstProduct.color ? " · " + firstProduct.color : "") : new Date(order.created_at).toLocaleDateString("tr-TR")}</small><small>{order.order_no} · {new Date(order.created_at).toLocaleDateString("tr-TR")}</small></div>
+              </div>
+              <div className="order-history-meta"><span className={terminal ? "order-status danger" : "order-status"}>{orderStatusLabels[order.status] || order.status}</span><b>{Number(order.grand_total).toLocaleString("tr-TR")} {order.currency}</b></div>
+              {!terminal && <div className="order-mini-progress" aria-label="Sipariş durumu">
+                {["Sipariş","Ödeme","Hazırlık","Kargo","Teslim"].map((label,index)=><span key={label} className={index <= step ? "active" : ""}><i/>{label}</span>)}
+              </div>}
+            </Link>;
+          }) : <p>Henüz siparişiniz bulunmuyor.</p>}
         </div>
 
         <div className="account-panel">
@@ -72,9 +125,27 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <div className="address-layout">
           <div className="address-list">
             {addresses && addresses.length > 0 ? addresses.map(address => <article className="address-card" key={address.id}>
-              <div><span>{address.is_default ? "VARSAYILAN" : "ADRES"}</span><h3>{address.title}</h3></div>
+              <div className="address-card-head"><div><span>{address.is_default ? "VARSAYILAN" : "ADRES"}</span><h3>{address.title}</h3></div>{address.is_default && <b>✓</b>}</div>
               <p><b>{address.full_name}</b><br/>{address.address_line}<br/>{address.district} / {address.city}{address.postal_code ? " · " + address.postal_code : ""}{address.phone ? <><br/>{address.phone}</> : null}</p>
-              <form action={deleteAddress}><input type="hidden" name="id" value={address.id}/><button type="submit">Adresi Sil</button></form>
+              <div className="address-card-actions">
+                <details className="address-edit">
+                  <summary>Düzenle</summary>
+                  <form action={updateAddress} className="address-edit-form">
+                    <input type="hidden" name="id" value={address.id}/>
+                    <input name="title" defaultValue={address.title} placeholder="Adres başlığı" required/>
+                    <input name="full_name" defaultValue={address.full_name} placeholder="Ad Soyad" required/>
+                    <input name="phone" defaultValue={address.phone || ""} placeholder="Telefon"/>
+                    <input name="city" defaultValue={address.city} placeholder="İl" required/>
+                    <input name="district" defaultValue={address.district} placeholder="İlçe" required/>
+                    <input name="postal_code" defaultValue={address.postal_code || ""} placeholder="Posta kodu"/>
+                    <textarea name="address_line" defaultValue={address.address_line} placeholder="Açık adres" required/>
+                    <label className="check-row"><input type="checkbox" name="is_default" defaultChecked={address.is_default}/> Varsayılan adres yap</label>
+                    <button type="submit">Değişiklikleri Kaydet</button>
+                  </form>
+                </details>
+                {!address.is_default && <form action={setDefaultAddress}><input type="hidden" name="id" value={address.id}/><button type="submit">Varsayılan Yap</button></form>}
+                <form action={deleteAddress}><input type="hidden" name="id" value={address.id}/><button type="submit" className="address-delete">Sil</button></form>
+              </div>
             </article>) : <div className="address-empty">Kayıtlı adresiniz bulunmuyor.</div>}
           </div>
 

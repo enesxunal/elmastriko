@@ -106,6 +106,62 @@ export async function addAddress(formData: FormData) {
   revalidatePath("/hesabim");
 }
 
+export async function updateAddress(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/hesabim");
+
+  const id = value(formData, "id");
+  const row = {
+    title: value(formData, "title"),
+    full_name: value(formData, "full_name"),
+    phone: value(formData, "phone") || null,
+    city: value(formData, "city"),
+    district: value(formData, "district"),
+    postal_code: value(formData, "postal_code") || null,
+    address_line: value(formData, "address_line"),
+    is_default: formData.get("is_default") === "on",
+  };
+
+  if (!id || !row.title || !row.full_name || !row.city || !row.district || !row.address_line) {
+    redirect("/hesabim?error=" + encodeURIComponent("Adres alanlarını eksiksiz doldurun."));
+  }
+
+  if (row.is_default) {
+    await supabase.from("addresses").update({ is_default: false }).eq("user_id", user.id);
+  }
+
+  const { error } = await supabase
+    .from("addresses")
+    .update(row)
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) redirect("/hesabim?error=" + encodeURIComponent(error.message));
+  revalidatePath("/hesabim");
+  redirect("/hesabim?message=" + encodeURIComponent("Adresiniz güncellendi."));
+}
+
+export async function setDefaultAddress(formData: FormData) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/hesabim");
+
+  const id = value(formData, "id");
+  if (!id) redirect("/hesabim");
+
+  await supabase.from("addresses").update({ is_default: false }).eq("user_id", user.id);
+  const { error } = await supabase
+    .from("addresses")
+    .update({ is_default: true })
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) redirect("/hesabim?error=" + encodeURIComponent(error.message));
+  revalidatePath("/hesabim");
+  redirect("/hesabim?message=" + encodeURIComponent("Varsayılan adres güncellendi."));
+}
+
 export async function deleteAddress(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
