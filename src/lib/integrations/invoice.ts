@@ -97,6 +97,32 @@ async function request<T>(
   return payload as T;
 }
 
+async function requestBinary(
+  type: NesDocumentType,
+  path: string,
+): Promise<{ bytes: ArrayBuffer; contentType: string }> {
+  const c = config();
+  if (!c.apiKey) throw new Error("NES_API_KEY is not configured.");
+
+  const response = await fetch(baseUrl(type) + path, {
+    headers: {
+      Authorization: `Bearer ${c.apiKey}`,
+      Accept: "application/pdf",
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`NES ${type} API ${response.status}: ${text}`);
+  }
+
+  return {
+    bytes: await response.arrayBuffer(),
+    contentType: response.headers.get("content-type") || "application/pdf",
+  };
+}
+
 async function uploadUbl(
   type: NesDocumentType,
   input: {
@@ -234,18 +260,16 @@ export const invoiceIntegration = {
   },
 
   async getEInvoicePdf(uuid: string) {
-    return request<ArrayBuffer>(
+    return requestBinary(
       "einvoice",
       `/v1/outgoing/invoices/${encodeURIComponent(uuid)}/pdf`,
-      { headers: { Accept: "application/pdf" } },
     );
   },
 
   async getEArchivePdf(uuid: string) {
-    return request<ArrayBuffer>(
+    return requestBinary(
       "earchive",
       `/v1/invoices/${encodeURIComponent(uuid)}/pdf`,
-      { headers: { Accept: "application/pdf" } },
     );
   },
 };

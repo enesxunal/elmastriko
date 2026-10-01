@@ -50,7 +50,7 @@ export default async function AccountOrderDetail({params}:{params:Promise<{id:st
     supabase.from("order_items").select("id,product_id,product_name,sku,color,size,unit_price,quantity,line_total").eq("order_id",id),
     supabase.from("order_addresses").select("kind,full_name,company_name,phone,city,district,postal_code,address_line").eq("order_id",id),
     supabase.from("shipments").select("provider,tracking_code,tracking_url,status,created_at").eq("order_id",id).order("created_at",{ascending:false}),
-    supabase.from("invoices").select("provider,invoice_no,status,created_at").eq("order_id",id).order("created_at",{ascending:false}),
+    supabase.from("invoices").select("id,provider,invoice_no,status,created_at").eq("order_id",id).order("created_at",{ascending:false}),
   ]);
   if(!order)notFound();
 
@@ -110,7 +110,7 @@ export default async function AccountOrderDetail({params}:{params:Promise<{id:st
         </div>
         {shipment?<div className="order-info-block"><b>{shipment.provider} · {shipmentStatusLabels[shipment.status]||shipment.status}</b><p>{shipment.tracking_code||"Takip kodu bekleniyor"}</p>{shipment.tracking_url&&<a href={shipment.tracking_url} target="_blank" rel="noreferrer">Kargoyu takip et →</a>}</div>:<p className="order-muted">Kargo kaydı sipariş hazırlanınca burada görünecek.</p>}
       </article>
-      <article><div className="order-card-title"><span>FATURA</span><h2>Belge bilgileri</h2></div>{invoice?<div className="order-info-block"><b>{invoice.provider}</b><p>{invoice.invoice_no||"Fatura numarası bekleniyor"}<br/>Durum: {invoice.status}</p></div>:<p className="order-muted">Fatura henüz oluşturulmadı.</p>}</article>
+      <article><div className="order-card-title"><span>FATURA</span><h2>Belge bilgileri</h2></div>{invoice?<div className="order-info-block"><b>{invoice.provider}</b><p>{invoice.invoice_no||"Fatura numarası bekleniyor"}<br/>Durum: {invoice.status}</p>{invoice.status==="sent"&&<div className="invoice-actions"><a href={"/api/invoices/"+invoice.id+"/pdf"} target="_blank" rel="noreferrer">Faturayı Görüntüle</a><a href={"/api/invoices/"+invoice.id+"/pdf?download=1"}>PDF İndir</a></div>}</div>:<p className="order-muted">Fatura henüz oluşturulmadı.</p>}</article>
     </section>
   </main><StoreFooter/></>;
 }
