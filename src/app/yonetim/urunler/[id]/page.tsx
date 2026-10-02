@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink, ImagePlus, PackageCheck, Save, Trash2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
+import ProductTaxonomyFields from "@/components/ProductTaxonomyFields";
 import ProductMediaUploadForm from "@/components/ProductMediaUploadForm";
 import { createVariant, createVariantMatrix, deleteProduct, deleteProductImage, deleteVariant, updateProduct, updateVariant } from "../../actions";
 
@@ -16,11 +17,10 @@ export default async function ProductAdminDetail({
   const {error,created,variants_created}=await searchParams;
   const {supabase}=await requireAdmin();
 
-  const [{data:product},{data:variants},{data:images},{data:categories},{data:productOptionsRow}] = await Promise.all([
+  const [{data:product},{data:variants},{data:images},{data:productOptionsRow}] = await Promise.all([
     supabase.from("products").select("id,name,slug,gender,product_type,base_price,compare_at_price,description,category_id,is_active,is_featured").eq("id",id).maybeSingle(),
     supabase.from("product_variants").select("id,sku,color,size,price,is_active,inventory(stock,reserved)").eq("product_id",id).order("created_at"),
     supabase.from("product_images").select("id,url,alt_text,sort_order").eq("product_id",id).order("sort_order"),
-    supabase.from("categories").select("id,name").eq("is_active",true).order("sort_order"),
     supabase.from("site_settings").select("value").eq("key","product_options").maybeSingle(),
   ]);
   if(!product) notFound();
@@ -52,7 +52,7 @@ export default async function ProductAdminDetail({
       </div>
     </div>
 
-    {created&&<div className="admin-alert success"><PackageCheck size={16}/> Ürün oluşturuldu. Şimdi beden, renk ve stok varyantlarını ekleyebilirsiniz.</div>}
+    {created&&<div className="admin-alert success"><PackageCheck size={16}/> Ürün, varyantları ve başlangıç stoğuyla birlikte oluşturuldu.</div>}
     {variants_created&&<div className="admin-alert success"><PackageCheck size={16}/> {variants_created} varyant otomatik oluşturuldu.</div>}
     {error&&<div className="admin-alert error">{error}</div>}
 
@@ -68,11 +68,8 @@ export default async function ProductAdminDetail({
               <div className="product-field"><label>Satış fiyatı</label><div className="money-input"><input name="base_price" type="number" min="0" step="0.01" defaultValue={product.base_price??""}/><span>TL</span></div></div>
               <div className="product-field"><label>İndirim öncesi fiyat</label><div className="money-input"><input name="compare_at_price" type="number" min="0" step="0.01" defaultValue={product.compare_at_price??""}/><span>TL</span></div></div>
             </div>
-            <div className="product-three-cols">
-              <div className="product-field"><label>Koleksiyon</label><select name="gender" defaultValue={product.gender||"kadin"}><option value="kadin">Kadın</option><option value="erkek">Erkek</option><option value="unisex">Unisex</option></select></div>
-              <div className="product-field"><label>Kategori</label><select name="category_id" defaultValue={product.category_id||""}><option value="">Kategori seçilmedi</option>{categories?.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
-              <div className="product-field"><label>Ürün tipi</label><input name="product_type" defaultValue={product.product_type||""} placeholder="Kazak, hırka..."/></div>
-            </div>
+            <input type="hidden" name="category_id" value={product.category_id||""}/>
+            <ProductTaxonomyFields initialGender={product.gender} initialSubcategory={product.product_type}/>
             <div className="product-field"><label>URL kısa adı</label><div className="slug-input"><span>/urun/</span><input name="slug" defaultValue={product.slug} required/></div></div>
             <div className="product-setting-row">
               <label><input type="checkbox" name="is_active" defaultChecked={product.is_active}/><span><strong>Aktif</strong><small>Ürünü mağazada yayınla</small></span></label>

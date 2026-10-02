@@ -75,12 +75,14 @@ export async function createProduct(fd: FormData) {
 export async function updateProduct(fd: FormData) {
   const { supabase } = await requireAdmin();
   const id = v(fd,"id");
+  const gender = v(fd,"gender") || "kadin";
+  const { data: matchedCategory } = await supabase.from("categories").select("id").eq("slug",gender).maybeSingle();
   const { error } = await supabase.from("products").update({
     slug: v(fd,"slug"),
     name: v(fd,"name"),
     description: v(fd,"description") || null,
-    category_id: v(fd,"category_id") || null,
-    gender: v(fd,"gender") || "kadin",
+    category_id: matchedCategory?.id || v(fd,"category_id") || null,
+    gender,
     product_type: v(fd,"product_type") || null,
     base_price: num(fd,"base_price"),
     compare_at_price: num(fd,"compare_at_price"),
@@ -108,7 +110,11 @@ export async function deleteProduct(fd: FormData) {
   if(storagePaths.length) await supabase.storage.from("product-media").remove(storagePaths);
   const { error } = await supabase.from("products").delete().eq("id",id);
   if (error) redirect("/yonetim/urunler?error="+encodeURIComponent(error.message));
-  await audit("delete","product",id); revalidatePath("/yonetim/urunler");
+  await audit("delete","product",id);
+  revalidatePath("/yonetim/urunler");
+  revalidatePath("/kadin");
+  revalidatePath("/erkek");
+  redirect("/yonetim/urunler?deleted=1");
 }
 
 export async function updateOrderStatus(fd: FormData) {
