@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Boxes, FileText, Gauge, History, Mail, PackageSearch, Plug, SearchCheck, Settings, ShoppingCart, Users, ExternalLink } from "lucide-react";
+import { BarChart3, Boxes, FileText, Gauge, History, Mail, PackageSearch, Plug, SearchCheck, Settings, ShoppingCart, Users, ExternalLink, LogOut } from "lucide-react";
+import { signOut } from "@/app/auth/actions";
 
 const items = [
   ["/yonetim", "Genel Bakış", Gauge],
@@ -36,6 +37,9 @@ export default function AdminNav() {
     <div className="admin-sidebar-bottom">
       <div className="admin-status-card"><span className="admin-status-dot"/><div><b>Sistem aktif</b><small>Production bağlantısı açık</small></div></div>
       <Link href="/" className="admin-store-link">Mağazayı görüntüle <ExternalLink size={14}/></Link>
+      <form action={signOut} className="admin-logout-form">
+        <button type="submit" className="admin-logout-button"><span>Çıkış Yap</span><LogOut size={14}/></button>
+      </form>
     </div>
   </aside>;
 }
