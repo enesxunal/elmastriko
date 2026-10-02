@@ -144,6 +144,35 @@ export async function saveIntegration(fd: FormData) {
   await audit("update","integration",provider); revalidatePath("/yonetim/entegrasyonlar");
 }
 
+export async function testBasitKargoConnection() {
+  await requireAdmin();
+
+  let target = "/yonetim/entegrasyonlar?bk_status=error&bk_message=" + encodeURIComponent("BasitKargo bağlantısı doğrulanamadı.");
+  try {
+    const handlers = await basitKargo.listHandlers();
+    const surat = handlers.find(item =>
+      String(item.code || "").toUpperCase().includes("SURAT") ||
+      String(item.name || "").toLocaleUpperCase("tr-TR").includes("SÜRAT")
+    );
+
+    const params = new URLSearchParams({
+      bk_status: surat ? "ok" : "warning",
+      bk_count: String(handlers.length),
+      bk_code: surat?.code || "",
+      bk_name: surat?.name || "",
+      bk_message: surat
+        ? "BasitKargo bağlantısı başarılı. Sürat Kargo aktif."
+        : "BasitKargo bağlantısı başarılı ancak Sürat Kargo handlerı bulunamadı.",
+    });
+    target = "/yonetim/entegrasyonlar?" + params.toString();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "BasitKargo bağlantısı doğrulanamadı.";
+    target = "/yonetim/entegrasyonlar?bk_status=error&bk_message=" + encodeURIComponent(message);
+  }
+
+  redirect(target);
+}
+
 export async function createPost(fd: FormData) {
   const { supabase, user } = await requireAdmin(); const status=v(fd,"status")||"draft";
   const { data, error } = await supabase.from("blog_posts").insert({slug:v(fd,"slug"),title:v(fd,"title"),excerpt:v(fd,"excerpt")||null,content:v(fd,"content"),cover_image:v(fd,"cover_image")||null,seo_title:v(fd,"seo_title")||null,seo_description:v(fd,"seo_description")||null,status,published_at:status==='published'?new Date().toISOString():null,author_id:user.id}).select("id").single();
