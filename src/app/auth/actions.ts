@@ -9,6 +9,11 @@ function value(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
 }
 
+function accountReturn(formData: FormData, fallback = "/hesabim") {
+  const path = value(formData, "return_to");
+  return path.startsWith("/hesabim") ? path : fallback;
+}
+
 export async function signIn(formData: FormData) {
   const email = value(formData, "email");
   const password = String(formData.get("password") || "");
@@ -49,21 +54,24 @@ export async function requestPasswordReset(formData: FormData) {
 }
 
 export async function updatePassword(formData: FormData) {
+  const returnTo = accountReturn(formData, "/hesabim/guvenlik");
   const password = String(formData.get("password") || "");
   const confirm = String(formData.get("confirm_password") || "");
-  if (password.length < 8) redirect("/hesabim?reset=1&error=" + encodeURIComponent("Şifre en az 8 karakter olmalı."));
-  if (password !== confirm) redirect("/hesabim?reset=1&error=" + encodeURIComponent("Şifreler eşleşmiyor."));
+  if (password.length < 8) redirect(returnTo + "?error=" + encodeURIComponent("Şifre en az 8 karakter olmalı."));
+  if (password !== confirm) redirect(returnTo + "?error=" + encodeURIComponent("Şifreler eşleşmiyor."));
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/hesabim?error=" + encodeURIComponent("Şifre yenileme oturumu geçersiz veya süresi dolmuş."));
 
   const { error } = await supabase.auth.updateUser({ password });
-  if (error) redirect("/hesabim?reset=1&error=" + encodeURIComponent(error.message));
-  redirect("/hesabim?message=" + encodeURIComponent("Şifreniz güncellendi."));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  revalidatePath(returnTo);
+  redirect(returnTo + "?message=" + encodeURIComponent("Şifreniz güncellendi."));
 }
 
 export async function updateProfile(formData: FormData) {
+  const returnTo = accountReturn(formData, "/hesabim/profil");
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/hesabim");
@@ -74,12 +82,14 @@ export async function updateProfile(formData: FormData) {
     updated_at: new Date().toISOString(),
   }).eq("id", user.id);
 
-  if (error) redirect("/hesabim?error=" + encodeURIComponent(error.message));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  revalidatePath(returnTo);
   revalidatePath("/hesabim");
-  redirect("/hesabim?message=" + encodeURIComponent("Profil bilgileriniz güncellendi."));
+  redirect(returnTo + "?message=" + encodeURIComponent("Profil bilgileriniz güncellendi."));
 }
 
 export async function addAddress(formData: FormData) {
+  const returnTo = accountReturn(formData, "/hesabim/adresler");
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/hesabim");
@@ -97,16 +107,19 @@ export async function addAddress(formData: FormData) {
   };
 
   if (!row.title || !row.full_name || !row.city || !row.district || !row.address_line) {
-    redirect("/hesabim?error=" + encodeURIComponent("Adres alanlarını eksiksiz doldurun."));
+    redirect(returnTo + "?error=" + encodeURIComponent("Adres alanlarını eksiksiz doldurun."));
   }
 
   if (row.is_default) await supabase.from("addresses").update({ is_default: false }).eq("user_id", user.id);
   const { error } = await supabase.from("addresses").insert(row);
-  if (error) redirect("/hesabim?error=" + encodeURIComponent(error.message));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  revalidatePath(returnTo);
   revalidatePath("/hesabim");
+  redirect(returnTo + "?message=" + encodeURIComponent("Adres kaydedildi."));
 }
 
 export async function updateAddress(formData: FormData) {
+  const returnTo = accountReturn(formData, "/hesabim/adresler");
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/hesabim");
@@ -124,7 +137,7 @@ export async function updateAddress(formData: FormData) {
   };
 
   if (!id || !row.title || !row.full_name || !row.city || !row.district || !row.address_line) {
-    redirect("/hesabim?error=" + encodeURIComponent("Adres alanlarını eksiksiz doldurun."));
+    redirect(returnTo + "?error=" + encodeURIComponent("Adres alanlarını eksiksiz doldurun."));
   }
 
   if (row.is_default) {
@@ -137,18 +150,20 @@ export async function updateAddress(formData: FormData) {
     .eq("id", id)
     .eq("user_id", user.id);
 
-  if (error) redirect("/hesabim?error=" + encodeURIComponent(error.message));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  revalidatePath(returnTo);
   revalidatePath("/hesabim");
-  redirect("/hesabim?message=" + encodeURIComponent("Adresiniz güncellendi."));
+  redirect(returnTo + "?message=" + encodeURIComponent("Adresiniz güncellendi."));
 }
 
 export async function setDefaultAddress(formData: FormData) {
+  const returnTo = accountReturn(formData, "/hesabim/adresler");
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/hesabim");
 
   const id = value(formData, "id");
-  if (!id) redirect("/hesabim");
+  if (!id) redirect(returnTo);
 
   await supabase.from("addresses").update({ is_default: false }).eq("user_id", user.id);
   const { error } = await supabase
@@ -157,16 +172,20 @@ export async function setDefaultAddress(formData: FormData) {
     .eq("id", id)
     .eq("user_id", user.id);
 
-  if (error) redirect("/hesabim?error=" + encodeURIComponent(error.message));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  revalidatePath(returnTo);
   revalidatePath("/hesabim");
-  redirect("/hesabim?message=" + encodeURIComponent("Varsayılan adres güncellendi."));
+  redirect(returnTo + "?message=" + encodeURIComponent("Varsayılan adres güncellendi."));
 }
 
 export async function deleteAddress(formData: FormData) {
+  const returnTo = accountReturn(formData, "/hesabim/adresler");
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/hesabim");
   const id = value(formData, "id");
   if (id) await supabase.from("addresses").delete().eq("id", id).eq("user_id", user.id);
+  revalidatePath(returnTo);
   revalidatePath("/hesabim");
+  redirect(returnTo + "?message=" + encodeURIComponent("Adres silindi."));
 }

@@ -1,178 +1,60 @@
-import StoreHeader from "@/components/StoreHeader";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
+import AccountShell from "@/components/AccountShell";
 import { createClient } from "@/lib/supabase/server";
-import { addAddress, deleteAddress, requestPasswordReset, setDefaultAddress, signIn, signOut, signUp, updateAddress, updatePassword, updateProfile } from "@/app/auth/actions";
-
-const orderStatusLabels: Record<string, string> = {
-  draft: "Taslak",
-  awaiting_payment: "Ödeme bekliyor",
-  paid: "Ödeme alındı",
-  invoice_pending: "Hazırlanıyor",
-  ready_to_ship: "Kargoya hazır",
-  shipped: "Kargoda",
-  delivered: "Teslim edildi",
-  cancelled: "İptal edildi",
-  refunded: "İade edildi",
-};
-
-function orderStep(status: string) {
-  if (status === "delivered") return 4;
-  if (status === "shipped") return 3;
-  if (status === "ready_to_ship") return 2;
-  if (["paid", "invoice_pending"].includes(status)) return 1;
-  return 0;
-}
+import { requestPasswordReset, signIn, signUp } from "@/app/auth/actions";
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; message?: string; reset?: string }> }) {
   const params = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  if (user && params.reset === "1") redirect("/hesabim/guvenlik?reset=1");
+
   if (user) {
     const [{ data: profile }, { data: orders }, { data: addresses }] = await Promise.all([
-      supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle(),
-      supabase.from("orders").select("id, order_no, status, grand_total, currency, created_at").order("created_at", { ascending: false }).limit(10),
-      supabase.from("addresses").select("id, title, full_name, phone, city, district, postal_code, address_line, is_default").order("is_default", { ascending: false }).order("created_at", { ascending: false }),
+      supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+      supabase.from("orders").select("id, order_no, status, grand_total, currency, created_at").order("created_at", { ascending: false }).limit(3),
+      supabase.from("addresses").select("id").limit(100),
     ]);
 
-    const orderIds = (orders || []).map(order => order.id);
-    const { data: orderItems } = orderIds.length
-      ? await supabase.from("order_items").select("order_id,product_id,product_name,color,size,quantity").in("order_id", orderIds)
-      : { data: [] };
-    const productIds = Array.from(new Set((orderItems || []).map(item => item.product_id).filter(Boolean))) as string[];
-    const { data: productImages } = productIds.length
-      ? await supabase.from("product_images").select("product_id,url,alt_text,sort_order").in("product_id", productIds).order("sort_order", { ascending: true })
-      : { data: [] };
+    const delivered = (orders || []).filter(order => order.status === "delivered").length;
 
-    const imageByProduct = new Map<string,string>();
-    for (const image of productImages || []) {
-      if (image.product_id && !imageByProduct.has(image.product_id)) imageByProduct.set(image.product_id, image.url);
-    }
-    const itemsByOrder = new Map<string, typeof orderItems>();
-    for (const item of orderItems || []) {
-      const list = itemsByOrder.get(item.order_id) || [];
-      list.push(item);
-      itemsByOrder.set(item.order_id, list);
-    }
-
-    return <><StoreHeader/><main className="account-dashboard">
-      <section className="account-welcome">
-        <div className="account-welcome-copy">
-          <span>ELMAS HESABIM</span>
-          <h1>{profile?.full_name || user.email}</h1>
-          <p>{user.email}</p>
-        </div>
-        <form action={signOut}><button>Çıkış Yap</button></form>
-        <div className="account-quick-stats">
-          <div><strong>{orders?.length || 0}</strong><span>Sipariş</span></div>
-          <div><strong>{addresses?.length || 0}</strong><span>Kayıtlı adres</span></div>
-          <div><strong>{orders?.filter(order => order.status === "delivered").length || 0}</strong><span>Teslim edildi</span></div>
-        </div>
-      </section>
-
+    return <><StoreHeader/><AccountShell name={profile?.full_name || user.email || "Hesabım"} email={user.email || ""} current="/hesabim">
+      <div className="account-section-head"><span>GENEL BAKIŞ</span><h1>Hesabım</h1><p>Sipariş, adres, profil ve güvenlik akışları artık ayrı bölümlerde.</p></div>
       {(params.error || params.message) && <div className={"auth-message " + (params.error ? "error" : "")}>{params.error || params.message}</div>}
 
-      {params.reset === "1" && <section className="account-panel password-reset-panel">
-        <span>GÜVENLİK</span><h2>Yeni şifre belirle</h2><p>Hesabınız için en az 8 karakterli yeni bir şifre oluşturun.</p>
-        <form className="account-form" action={updatePassword}>
-          <input name="password" type="password" minLength={8} placeholder="Yeni şifre" autoComplete="new-password" required/>
-          <input name="confirm_password" type="password" minLength={8} placeholder="Yeni şifre tekrar" autoComplete="new-password" required/>
-          <button type="submit">Şifreyi Güncelle</button>
-        </form>
-      </section>}
+      <div className="account-overview-stats">
+        <article><span>Son siparişler</span><strong>{orders?.length || 0}</strong><small>Son 3 kayıt</small></article>
+        <article><span>Kayıtlı adres</span><strong>{addresses?.length || 0}</strong><small>Teslimat bilgileri</small></article>
+        <article><span>Teslim edildi</span><strong>{delivered}</strong><small>Son siparişler içinde</small></article>
+      </div>
 
-      <section className="account-panels">
-        <div className="account-panel account-orders">
-          <span>01</span><h2>Siparişlerim</h2>
-          {orders && orders.length > 0 ? orders.map(order => {
-            const orderProducts = itemsByOrder.get(order.id) || [];
-            const firstProduct = orderProducts[0];
-            const thumb = firstProduct?.product_id ? imageByProduct.get(firstProduct.product_id) : null;
-            const step = orderStep(order.status);
-            const terminal = ["cancelled","refunded"].includes(order.status);
-            return <Link className="order-row order-history-card" href={"/hesabim/siparis/" + order.id} key={order.id}>
-              <div className="order-history-product">
-                <div className="order-history-thumb">{thumb ? <img src={thumb} alt={firstProduct?.product_name || "Sipariş ürünü"}/> : <span>ET</span>}</div>
-                <div><b>{firstProduct?.product_name || order.order_no}</b><small>{orderProducts.length > 1 ? "+" + (orderProducts.length - 1) + " ürün daha" : firstProduct ? firstProduct.quantity + " adet" + (firstProduct.size ? " · " + firstProduct.size : "") + (firstProduct.color ? " · " + firstProduct.color : "") : new Date(order.created_at).toLocaleDateString("tr-TR")}</small><small>{order.order_no} · {new Date(order.created_at).toLocaleDateString("tr-TR")}</small></div>
-              </div>
-              <div className="order-history-meta"><span className={terminal ? "order-status danger" : "order-status"}>{orderStatusLabels[order.status] || order.status}</span><b>{Number(order.grand_total).toLocaleString("tr-TR")} {order.currency}</b></div>
-              {!terminal && <div className="order-mini-progress" aria-label="Sipariş durumu">
-                {["Sipariş","Ödeme","Hazırlık","Kargo","Teslim"].map((label,index)=><span key={label} className={index <= step ? "active" : ""}><i/>{label}</span>)}
-              </div>}
-            </Link>;
-          }) : <p>Henüz siparişiniz bulunmuyor.</p>}
-        </div>
+      <div className="account-overview-grid">
+        <Link href="/hesabim/siparisler" className="account-overview-card"><span>01</span><h2>Siparişlerim</h2><p>Aktif ve geçmiş siparişleriniz, durum adımları ve detaylar.</p><b>Siparişlere git →</b></Link>
+        <Link href="/hesabim/adresler" className="account-overview-card"><span>02</span><h2>Adreslerim</h2><p>Teslimat adreslerinizi ekleyin, düzenleyin ve varsayılan adresi seçin.</p><b>Adresleri yönet →</b></Link>
+        <Link href="/hesabim/profil" className="account-overview-card"><span>03</span><h2>Profilim</h2><p>Ad, telefon ve temel hesap bilgilerinizi güncelleyin.</p><b>Profili düzenle →</b></Link>
+        <Link href="/hesabim/guvenlik" className="account-overview-card"><span>04</span><h2>Güvenlik</h2><p>Şifrenizi ayrı ve sade bir alandan yönetin.</p><b>Güvenliğe git →</b></Link>
+      </div>
 
-        <div className="account-panel">
-          <span>02</span><h2>Profilim</h2>
-          <form className="account-form" action={updateProfile}>
-            <input name="full_name" defaultValue={profile?.full_name || ""} placeholder="Ad Soyad" required/>
-            <input name="phone" defaultValue={profile?.phone || ""} placeholder="Telefon"/>
-            <button type="submit">Bilgileri Güncelle</button>
-          </form>
-        </div>
-
-        <div className="account-panel">
-          <span>03</span><h2>Favorilerim</h2>
-          <p>Beğendiğiniz ürünler hesabınızla eşitlenir.</p>
-          <a href="/favoriler">Favori ürünleri görüntüle →</a>
-        </div>
+      <section className="account-recent">
+        <div className="account-recent-head"><div><span>SON HAREKETLER</span><h2>Son siparişler</h2></div><Link href="/hesabim/siparisler">Tümünü gör →</Link></div>
+        {orders && orders.length > 0 ? orders.map(order => <Link href={"/hesabim/siparis/" + order.id} key={order.id} className="account-recent-row">
+          <div><b>{order.order_no}</b><small>{new Date(order.created_at).toLocaleDateString("tr-TR")}</small></div>
+          <span>{order.status.replaceAll("_"," ")}</span>
+          <strong>{Number(order.grand_total).toLocaleString("tr-TR")} {order.currency}</strong>
+        </Link>) : <p>Henüz siparişiniz bulunmuyor.</p>}
       </section>
-
-      <section className="address-section">
-        <div className="address-head"><span>04 / ADRESLER</span><h2>Teslimat adresleri</h2></div>
-        <div className="address-layout">
-          <div className="address-list">
-            {addresses && addresses.length > 0 ? addresses.map(address => <article className="address-card" key={address.id}>
-              <div className="address-card-head"><div><span>{address.is_default ? "VARSAYILAN" : "ADRES"}</span><h3>{address.title}</h3></div>{address.is_default && <b>✓</b>}</div>
-              <p><b>{address.full_name}</b><br/>{address.address_line}<br/>{address.district} / {address.city}{address.postal_code ? " · " + address.postal_code : ""}{address.phone ? <><br/>{address.phone}</> : null}</p>
-              <div className="address-card-actions">
-                <details className="address-edit">
-                  <summary>Düzenle</summary>
-                  <form action={updateAddress} className="address-edit-form">
-                    <input type="hidden" name="id" value={address.id}/>
-                    <input name="title" defaultValue={address.title} placeholder="Adres başlığı" required/>
-                    <input name="full_name" defaultValue={address.full_name} placeholder="Ad Soyad" required/>
-                    <input name="phone" defaultValue={address.phone || ""} placeholder="Telefon"/>
-                    <input name="city" defaultValue={address.city} placeholder="İl" required/>
-                    <input name="district" defaultValue={address.district} placeholder="İlçe" required/>
-                    <input name="postal_code" defaultValue={address.postal_code || ""} placeholder="Posta kodu"/>
-                    <textarea name="address_line" defaultValue={address.address_line} placeholder="Açık adres" required/>
-                    <label className="check-row"><input type="checkbox" name="is_default" defaultChecked={address.is_default}/> Varsayılan adres yap</label>
-                    <button type="submit">Değişiklikleri Kaydet</button>
-                  </form>
-                </details>
-                {!address.is_default && <form action={setDefaultAddress}><input type="hidden" name="id" value={address.id}/><button type="submit">Varsayılan Yap</button></form>}
-                <form action={deleteAddress}><input type="hidden" name="id" value={address.id}/><button type="submit" className="address-delete">Sil</button></form>
-              </div>
-            </article>) : <div className="address-empty">Kayıtlı adresiniz bulunmuyor.</div>}
-          </div>
-
-          <form className="address-form" action={addAddress}>
-            <h3>Yeni adres ekle</h3>
-            <div className="form-grid">
-              <input name="title" placeholder="Adres başlığı" required/>
-              <input name="full_name" defaultValue={profile?.full_name || ""} placeholder="Ad Soyad" required/>
-              <input name="phone" defaultValue={profile?.phone || ""} placeholder="Telefon"/>
-              <input name="city" placeholder="İl" required/>
-              <input name="district" placeholder="İlçe" required/>
-              <input name="postal_code" placeholder="Posta kodu"/>
-              <input className="full" name="address_line" placeholder="Açık adres" required/>
-            </div>
-            <label className="check-row"><input type="checkbox" name="is_default"/> Varsayılan adres yap</label>
-            <button type="submit">Adresi Kaydet</button>
-          </form>
-        </div>
-      </section>
-    </main><StoreFooter/></>;
+    </AccountShell><StoreFooter/></>;
   }
 
   return <><StoreHeader/><main className="account-page">
     <div>
       <span>ELMAS HESABIM</span>
       <h1>Tekrar hoş geldiniz.</h1>
-      <p>Üyeler siparişlerini, adreslerini ve favorilerini buradan yönetebilir. Üyeliksiz alışveriş seçeneği checkout içinde açık kalacaktır.</p>
+      <p>Hesabınıza giriş yapın veya yeni hesap oluşturun.</p>
       {params.error && <div className="auth-message error">{params.error}</div>}
       {params.message && <div className="auth-message">{params.message}</div>}
       <form className="reset-form" action={requestPasswordReset}><input name="email" type="email" placeholder="Şifre yenileme için e-posta" required/><button type="submit">Şifre Bağlantısı Gönder</button></form>
