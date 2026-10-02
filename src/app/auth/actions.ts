@@ -18,8 +18,19 @@ export async function signIn(formData: FormData) {
   const email = value(formData, "email");
   const password = String(formData.get("password") || "");
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) redirect("/hesabim?error=" + encodeURIComponent(error.message));
+
+  if (data.user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    if (profile?.role === "admin") redirect("/yonetim");
+  }
+
   redirect("/hesabim");
 }
 

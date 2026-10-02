@@ -15,10 +15,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
 
   if (user) {
     const [{ data: profile }, { data: orders }, { data: addresses }] = await Promise.all([
-      supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+      supabase.from("profiles").select("full_name, role").eq("id", user.id).maybeSingle(),
       supabase.from("orders").select("id, order_no, status, grand_total, currency, created_at").order("created_at", { ascending: false }).limit(3),
       supabase.from("addresses").select("id").limit(100),
     ]);
+
+    if (profile?.role === "admin") redirect("/yonetim");
 
     const delivered = (orders || []).filter(order => order.status === "delivered").length;
 
