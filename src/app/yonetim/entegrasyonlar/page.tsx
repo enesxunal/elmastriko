@@ -1,5 +1,16 @@
 import { requireAdmin } from "@/lib/admin";
-import { saveIntegration, testBasitKargoConnection } from "../actions";
+import { basitKargo } from "@/lib/integrations/basitkargo";
+import { invoiceIntegration, isNesConfigured } from "@/lib/integrations/invoice";
+import { isToslaConfigured } from "@/lib/integrations/tosla";
+import { testBasitKargoConnection } from "../actions";
+
+type AutoStatus = {
+  key: string;
+  label: string;
+  active: boolean;
+  status: "configured" | "error" | "waiting_credentials";
+  detail: string;
+};
 
 export default async function IntegrationsAdmin({
   searchParams,
@@ -14,12 +25,75 @@ export default async function IntegrationsAdmin({
 }) {
   const params = await searchParams;
   const {supabase}=await requireAdmin();
-  const {data:items}=await supabase.from("integration_settings").select("provider,is_enabled,status,public_config,last_checked_at,updated_at").order("provider");
+
+  const [{data:items}, basitResult, nesResult] = await Promise.all([
+    supabase.from("integration_settings").select("provider,public_config,last_checked_at,updated_at").order("provider"),
+    basitKargo.listHandlers().then(
+      handlers => ({ ok: true as const, handlers }),
+      error => ({ ok: false as const, error: error instanceof Error ? error.message : "Bağlantı hatası" }),
+    ),
+    isNesConfigured()
+      ? invoiceIntegration.healthCheck().then(
+          result => ({ ok: true as const, result }),
+          error => ({ ok: false as const, error: error instanceof Error ? error.message : "Bağlantı hatası" }),
+        )
+      : Promise.resolve({ ok: false as const, error: "NES API anahtarı tanımlı değil." }),
+  ]);
+
+  const surat = basitResult.ok
+    ? basitResult.handlers.find(item =>
+        String(item.code || "").toUpperCase().includes("SURAT") ||
+        String(item.name || "").toLocaleUpperCase("tr-TR").includes("SÜRAT")
+      )
+    : undefined;
+
+  const paymentConfigured = isToslaConfigured();
+  const paymentLive = (process.env.TOSLA_MODE || "test").toLowerCase() === "live";
+
+  const statuses: AutoStatus[] = [
+    {
+      key: "BASITKARGO",
+      label: "BasitKargo / Sürat Kargo",
+      active: Boolean(basitResult.ok && surat),
+      status: basitResult.ok && surat ? "configured" : basitResult.ok ? "error" : "error",
+      detail: basitResult.ok
+        ? surat
+          ? `Bağlantı aktif · ${basitResult.handlers.length} taşıyıcı · Sürat Kargo kodu: ${surat.code}`
+          : `Bağlantı aktif ancak Sürat Kargo bulunamadı · ${basitResult.handlers.length} taşıyıcı`
+        : "BasitKargo API bağlantısı başarısız.",
+    },
+    {
+      key: "NES_PORTAL",
+      label: "NES Portal",
+      active: Boolean(nesResult.ok),
+      status: nesResult.ok ? "configured" : isNesConfigured() ? "error" : "waiting_credentials",
+      detail: nesResult.ok
+        ? "e-Fatura ve e-Arşiv API bağlantıları aktif."
+        : isNesConfigured()
+          ? "NES API anahtarı tanımlı ancak sağlık kontrolü başarısız."
+          : "NES API anahtarı tanımlı değil.",
+    },
+    {
+      key: "PAYMENT",
+      label: "Tosla Sanal POS",
+      active: Boolean(paymentConfigured && paymentLive),
+      status: paymentConfigured && paymentLive ? "configured" : paymentConfigured ? "error" : "waiting_credentials",
+      detail: paymentConfigured
+        ? paymentLive
+          ? "Production ödeme bilgileri tanımlı ve canlı mod aktif."
+          : "Ödeme bilgileri tanımlı ancak TOSLA_MODE live değil."
+        : "Tosla production bilgileri eksik.",
+    },
+  ];
+
+  const notes = new Map(
+    (items || []).map(item => [String(item.provider).toUpperCase(), (item.public_config as {note?:string})?.note || ""])
+  );
 
   return <main className="admin-page">
     <div className="admin-page-head">
       <div><span>SİSTEM</span><h1>Entegrasyonlar</h1></div>
-      <p>Ödeme, kargo ve e-fatura bağlantılarının merkezi görünümü. Gizli anahtarlar panelde gösterilmez.</p>
+      <p>Durumlar production bağlantılarından otomatik okunur. Gizli anahtarlar panelde gösterilmez.</p>
     </div>
 
     <section className="integration-test-card">
@@ -39,15 +113,16 @@ export default async function IntegrationsAdmin({
     </section>
 
     <section className="integration-grid">
-      {items?.map(i=><article key={i.provider}>
-        <div className="integration-status"><span>{i.provider}</span><b className={i.is_enabled?"ok":"wait"}>{i.status}</b></div>
-        <form action={saveIntegration}>
-          <input type="hidden" name="provider" value={i.provider}/>
-          <select name="status" defaultValue={i.status}><option>not_configured</option><option>waiting_provider</option><option>waiting_credentials</option><option>configured</option><option>error</option></select>
-          <textarea name="note" defaultValue={(i.public_config as {note?:string})?.note||""} placeholder="Operasyon notu"/>
-          <label><input type="checkbox" name="is_enabled" defaultChecked={i.is_enabled}/> Aktif</label>
-          <button>Kaydet</button>
-        </form>
+      {statuses.map(item => <article key={item.key}>
+        <div className="integration-status">
+          <span>{item.label}</span>
+          <b className={item.active ? "ok" : "wait"}>{item.status}</b>
+        </div>
+        <div className={"admin-alert " + (item.active ? "success" : item.status === "error" ? "error" : "")}>
+          <strong>{item.active ? "Aktif" : item.status === "waiting_credentials" ? "Bilgi bekleniyor" : "Kontrol gerekli"}</strong>
+          <span>{item.detail}</span>
+        </div>
+        {notes.get(item.key) && <div className="integration-note"><span>Operasyon notu</span><p>{notes.get(item.key)}</p></div>}
       </article>)}
     </section>
   </main>;
