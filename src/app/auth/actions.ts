@@ -24,6 +24,7 @@ export async function signIn(formData: FormData) {
 }
 
 export async function signUp(formData: FormData) {
+  const returnTo = accountReturn(formData, "/hesabim/kayit");
   const fullName = value(formData, "full_name");
   const email = value(formData, "email");
   const password = String(formData.get("password") || "");
@@ -31,8 +32,8 @@ export async function signUp(formData: FormData) {
   const origin = headerStore.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.com";
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName }, emailRedirectTo: origin + "/auth/callback?next=/hesabim" } });
-  if (error) redirect("/hesabim?error=" + encodeURIComponent(error.message));
-  redirect("/hesabim?message=" + encodeURIComponent("Kaydınız oluşturuldu. E-posta doğrulaması açıksa gelen kutunuzu kontrol edin."));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  redirect(returnTo + "?message=" + encodeURIComponent("Kaydınız oluşturuldu. E-posta doğrulaması açıksa gelen kutunuzu kontrol edin."));
 }
 
 export async function signOut() {
@@ -42,15 +43,16 @@ export async function signOut() {
 }
 
 export async function requestPasswordReset(formData: FormData) {
+  const returnTo = accountReturn(formData, "/hesabim/sifremi-unuttum");
   const email = value(formData, "email");
-  if (!email) redirect("/hesabim?error=" + encodeURIComponent("E-posta adresi gerekli."));
+  if (!email) redirect(returnTo + "?error=" + encodeURIComponent("E-posta adresi gerekli."));
 
   const headerStore = await headers();
   const origin = headerStore.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.vercel.app";
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: origin + "/auth/callback?next=/hesabim%3Freset%3D1" });
-  if (error) redirect("/hesabim?error=" + encodeURIComponent(error.message));
-  redirect("/hesabim?message=" + encodeURIComponent("Şifre yenileme bağlantısı e-posta adresinize gönderildi."));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  redirect(returnTo + "?message=" + encodeURIComponent("Şifre yenileme bağlantısı e-posta adresinize gönderildi."));
 }
 
 export async function updatePassword(formData: FormData) {
