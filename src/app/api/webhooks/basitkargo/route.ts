@@ -1,31 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-function mapShipmentStatus(status?: string) {
-  switch ((status || "").toUpperCase()) {
-    case "READY_TO_SHIP": return "prepared";
-    case "SHIPPED":
-    case "OUT_FOR_DELIVERY": return "shipped";
-    case "DELIVERED": return "delivered";
-    case "RETURNING":
-    case "RETURNED": return "returned";
-    case "LOST":
-    case "NEEDS_SUPPORT":
-    case "DELAYED": return "problem";
-    default: return "pending";
-  }
+function normalizedState(status?: string, lastState?: string) {
+  return ((lastState || status || "").trim()).toLocaleUpperCase("tr-TR");
 }
 
-function mapOrderStatus(status?: string) {
-  switch ((status || "").toUpperCase()) {
-    case "READY_TO_SHIP": return "ready_to_ship";
-    case "SHIPPED":
-    case "OUT_FOR_DELIVERY": return "shipped";
-    case "DELIVERED": return "delivered";
-    case "RETURNING":
-    case "RETURNED": return "returned";
-    default: return null;
-  }
+function mapShipmentStatus(status?: string, lastState?: string) {
+  const state = normalizedState(status, lastState);
+  if (state.includes("TESLİM EDİLDİ") || state === "DELIVERED" || state === "COMPLETED") return "delivered";
+  if (state.includes("DAĞIT") || state.includes("TRANSFER") || state.includes("YÖNLENDİR") || state === "SHIPPED" || state === "OUT_FOR_DELIVERY") return "shipped";
+  if (state.includes("HAZIR") || state === "READY_TO_SHIP") return "prepared";
+  if (state.includes("İADE") || state === "RETURNING" || state === "RETURNED") return "returned";
+  if (state.includes("KAYIP") || state.includes("SORUN") || state.includes("GECİK") || state === "LOST" || state === "NEEDS_SUPPORT" || state === "DELAYED") return "problem";
+  return "pending";
+}
+
+function mapOrderStatus(status?: string, lastState?: string) {
+  const state = normalizedState(status, lastState);
+  if (state.includes("TESLİM EDİLDİ") || state === "DELIVERED" || state === "COMPLETED") return "delivered";
+  if (state.includes("DAĞIT") || state.includes("TRANSFER") || state.includes("YÖNLENDİR") || state === "SHIPPED" || state === "OUT_FOR_DELIVERY") return "shipped";
+  if (state.includes("HAZIR") || state === "READY_TO_SHIP") return "ready_to_ship";
+  if (state.includes("İADE") || state === "RETURNING" || state === "RETURNED") return "returned";
+  return null;
 }
 
 export async function POST(request: NextRequest) {
@@ -54,7 +50,17 @@ export async function POST(request: NextRequest) {
   const handlerShipmentCode = String(
     payload.handlerShipmentCode || shipmentInfo?.handlerShipmentCode || "",
   );
+  const trackingLink = String(shipmentInfo?.handlerShipmentTrackingLink || "");
+  const lastState = String(shipmentInfo?.lastState || "");
+  const handler = shipmentInfo?.handler && typeof shipmentInfo.handler === "object"
+    ? shipmentInfo.handler as Record<string, unknown>
+    : null;
+  const handlerCode = String(handler?.code || "").toUpperCase();
   const status = String(payload.status || "");
+
+  if (handlerCode && !handlerCode.includes("SURAT")) {
+    return NextResponse.json({ ok: true, ignored: true, reason: "non_surat_handler" }, { status: 202 });
+  }
 
   if (!providerReference && !barcode && !handlerShipmentCode) {
     return NextResponse.json({ error: "Shipment identifier is missing." }, { status: 400 });
@@ -65,7 +71,7 @@ export async function POST(request: NextRequest) {
   let shipmentQuery = supabase
     .from("shipments")
     .select("id,order_id,tracking_code")
-    .eq("provider", "BasitKargo");
+    .in("provider", ["Sürat Kargo","BasitKargo"]);
 
   if (providerReference) {
     shipmentQuery = shipmentQuery.eq("provider_reference", providerReference);
@@ -79,7 +85,7 @@ export async function POST(request: NextRequest) {
     const fallback = await supabase
       .from("shipments")
       .select("id,order_id,tracking_code")
-      .eq("provider", "BasitKargo")
+      .in("provider", ["Sürat Kargo","BasitKargo"])
       .eq("tracking_code", handlerShipmentCode || barcode)
       .limit(1)
       .maybeSingle();
@@ -91,20 +97,22 @@ export async function POST(request: NextRequest) {
   }
 
   const trackingCode = handlerShipmentCode || barcode || shipment.tracking_code || null;
-  const mappedStatus = mapShipmentStatus(status);
+  const mappedStatus = mapShipmentStatus(status, lastState);
 
   await supabase
     .from("shipments")
     .update({
+      provider: "Sürat Kargo",
       provider_reference: providerReference || null,
       tracking_code: trackingCode,
+      tracking_url: trackingLink || null,
       status: mappedStatus,
       raw_response: payload,
       updated_at: new Date().toISOString(),
     })
     .eq("id", shipment.id);
 
-  const orderStatus = mapOrderStatus(status);
+  const orderStatus = mapOrderStatus(status, lastState);
   if (orderStatus) {
     await supabase
       .from("orders")
