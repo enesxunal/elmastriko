@@ -321,7 +321,7 @@ export async function createCategory(fd: FormData) {
 export async function createBasitKargoShipment(fd: FormData) {
   const { supabase } = await requireAdmin();
   const orderId = v(fd,"order_id");
-  const handlerCode = v(fd,"handler_code") || "ECONOMIC";
+  const handlerCode = "SURAT";
   const height = Math.max(1, Number(v(fd,"height") || 10));
   const width = Math.max(1, Number(v(fd,"width") || 15));
   const depth = Math.max(1, Number(v(fd,"depth") || 5));
@@ -339,6 +339,10 @@ export async function createBasitKargoShipment(fd: FormData) {
   if (!items?.length) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("Sipariş ürünü bulunamadı."));
 
   try {
+    const handlers = await basitKargo.listHandlers();
+    const suratEnabled = handlers.some(handler => String(handler.code || "").toUpperCase() === handlerCode);
+    if (!suratEnabled) throw new Error("Sürat Kargo BasitKargo hesabında aktif değil.");
+
     const response = await basitKargo.createShipment({
       orderNo: order.order_no,
       handlerCode,
@@ -364,7 +368,7 @@ export async function createBasitKargoShipment(fd: FormData) {
     const existing = await supabase.from("shipments").select("id").eq("order_id",orderId).order("created_at",{ascending:false}).limit(1).maybeSingle();
     const payload = {
       order_id: orderId,
-      provider: "BasitKargo",
+      provider: "Sürat Kargo",
       provider_reference: providerReference || null,
       tracking_code: trackingCode,
       tracking_url: trackingUrl,
@@ -380,7 +384,7 @@ export async function createBasitKargoShipment(fd: FormData) {
     }
 
     await supabase.from("orders").update({status:"ready_to_ship",updated_at:new Date().toISOString()}).eq("id",orderId);
-    await audit("create","shipment",orderId,{provider:"BasitKargo",providerReference,handlerCode});
+    await audit("create","shipment",orderId,{provider:"Sürat Kargo",integration:"BasitKargo",providerReference,handlerCode});
   } catch (error) {
     const message = error instanceof Error ? error.message : "BasitKargo gönderisi oluşturulamadı.";
     redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent(message));
@@ -394,7 +398,7 @@ export async function createBasitKargoShipment(fd: FormData) {
 export async function saveShipment(fd: FormData) {
   const { supabase }=await requireAdmin(); const orderId=v(fd,"order_id");
   const existing=await supabase.from("shipments").select("id").eq("order_id",orderId).order("created_at",{ascending:false}).limit(1).maybeSingle();
-  const payload={order_id:orderId,provider:v(fd,"provider")||"BasitKargo",tracking_code:v(fd,"tracking_code")||null,tracking_url:v(fd,"tracking_url")||null,status:v(fd,"status")||"pending",updated_at:new Date().toISOString()};
+  const payload={order_id:orderId,provider:"Sürat Kargo",tracking_code:v(fd,"tracking_code")||null,tracking_url:v(fd,"tracking_url")||null,status:v(fd,"status")||"pending",updated_at:new Date().toISOString()};
   if(existing.data?.id) await supabase.from("shipments").update(payload).eq("id",existing.data.id); else await supabase.from("shipments").insert(payload);
   await audit("update","shipment",orderId,payload); revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`);
 }

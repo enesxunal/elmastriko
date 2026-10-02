@@ -47,7 +47,7 @@ function getConfig() {
     token: process.env.BASITKARGO_API_TOKEN || "",
     addressId: process.env.BASITKARGO_ADDRESS_ID || "",
     brandId: process.env.BASITKARGO_BRAND_ID || "",
-    handlerCode: process.env.BASITKARGO_HANDLER_CODE || "ECONOMIC",
+    handlerCode: "SURAT",
   };
 }
 
