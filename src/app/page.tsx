@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import NewsletterForm from "@/components/NewsletterForm";
+import FavoriteButton from "@/components/FavoriteButton";
 import { useStore } from "@/components/StoreProvider";
 import { ArrowRight, Heart, Search, ShoppingBag, UserRound, Camera, Plus } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -241,7 +242,7 @@ export default function Home() {
                 </div>
                 <div className="price-row">
                   <strong>{displayPrice(product.price)}</strong>
-                  <button aria-label={product.name + " favorilere ekle"}><Heart size={17} strokeWidth={1.4}/></button>
+                  <FavoriteButton slug={product.slug}/>
                 </div>
               </div>
             </article>

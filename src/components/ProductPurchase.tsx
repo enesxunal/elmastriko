@@ -88,7 +88,7 @@ export default function ProductPurchase({ product }: { product: Product }) {
       >
         {product.price === null ? "Fiyat bekleniyor" : outOfStock ? "Stokta Yok" : added ? "Sepete Eklendi" : "Sepete Ekle"}
       </button>
-      <button type="button" className={"fav-btn " + (isFavorite ? "active" : "")} onClick={() => toggleFavorite(product.slug)} aria-label="Favorilere ekle"><Heart size={19} fill={isFavorite ? "currentColor" : "none"}/></button>
+      <button type="button" className={"fav-btn " + (isFavorite ? "active" : "")} onClick={() => toggleFavorite(product.slug)} aria-label={isFavorite ? product.name + " favorilerden çıkar" : product.name + " favorilere ekle"} aria-pressed={isFavorite}><Heart size={19} fill={isFavorite ? "currentColor" : "none"}/></button>
     </div>
     {added && <Link className="go-cart" href="/sepet">Sepete git →</Link>}
 
