@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import { basitKargo } from "@/lib/integrations/basitkargo";
 import { createNesInvoiceForOrder } from "@/lib/integrations/nes-order-invoice";
+import { BANK_TRANSFER } from "@/lib/payments/bank-transfer";
 
 function v(fd: FormData, key: string) { return String(fd.get(key) || "").trim(); }
 function num(fd: FormData, key: string) { const x = v(fd,key); return x === "" ? null : Number(x); }
@@ -457,11 +458,53 @@ export async function saveInvoice(fd: FormData) {
 
 export async function savePaymentRecord(fd: FormData) {
   const { supabase }=await requireAdmin(); const orderId=v(fd,"order_id");
-  const existing=await supabase.from("payments").select("id").eq("order_id",orderId).order("created_at",{ascending:false}).limit(1).maybeSingle();
+  const existing=await supabase.from("payments").select("id,status").eq("order_id",orderId).order("created_at",{ascending:false}).limit(1).maybeSingle();
   const payload={order_id:orderId,provider:v(fd,"provider")||"manual",provider_reference:v(fd,"provider_reference")||null,amount:Number(v(fd,"amount")||0),status:v(fd,"status")||"pending",updated_at:new Date().toISOString()};
   if(existing.data?.id) await supabase.from("payments").update(payload).eq("id",existing.data.id); else await supabase.from("payments").insert(payload);
-  await supabase.from("orders").update({payment_status:payload.status,updated_at:new Date().toISOString()}).eq("id",orderId);
-  await audit("update","payment",orderId,payload); revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`);
+  await supabase.from("orders").update({
+    payment_provider: payload.provider,
+    payment_status:payload.status,
+    status:payload.status==="paid"?"paid":"awaiting_payment",
+    updated_at:new Date().toISOString()
+  }).eq("id",orderId);
+  await audit("update","payment",orderId,payload);
+  if(payload.status==="paid"&&existing.data?.status!=="paid"){
+    try{await createNesInvoiceForOrder(orderId);}catch(error){console.error("NES invoice creation failed after manual payment approval:",error);}
+  }
+  revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`); revalidatePath("/yonetim/siparisler");
+}
+
+export async function approveBankTransfer(fd: FormData) {
+  const { supabase }=await requireAdmin();
+  const orderId=v(fd,"order_id");
+  const {data:order}=await supabase.from("orders").select("id,order_no,grand_total,payment_status").eq("id",orderId).maybeSingle();
+  if(!order) redirect("/yonetim/siparisler?error="+encodeURIComponent("Sipariş bulunamadı."));
+  const {data:payment}=await supabase.from("payments").select("id,provider,status,raw_response").eq("order_id",orderId).eq("provider",BANK_TRANSFER.provider).order("created_at",{ascending:false}).limit(1).maybeSingle();
+  if(!payment) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("EFT/Havale ödeme kaydı bulunamadı."));
+  const now=new Date().toISOString();
+  const raw=(payment.raw_response||{}) as Record<string,unknown>;
+  await supabase.from("payments").update({status:"paid",raw_response:{...raw,adminApprovedAt:now},updated_at:now}).eq("id",payment.id);
+  await supabase.from("orders").update({payment_provider:BANK_TRANSFER.provider,payment_status:"paid",status:"paid",updated_at:now}).eq("id",orderId);
+  await audit("approve","bank_transfer_payment",orderId,{orderNo:order.order_no});
+  if(order.payment_status!=="paid"){
+    try{await createNesInvoiceForOrder(orderId);}catch(error){console.error("NES invoice creation failed after EFT approval:",error);}
+  }
+  revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`); revalidatePath("/yonetim/siparisler");
+  redirect(`/yonetim/siparisler/${orderId}?payment=approved`);
+}
+
+export async function rejectBankTransfer(fd: FormData) {
+  const { supabase }=await requireAdmin();
+  const orderId=v(fd,"order_id");
+  const {data:payment}=await supabase.from("payments").select("id,raw_response").eq("order_id",orderId).eq("provider",BANK_TRANSFER.provider).order("created_at",{ascending:false}).limit(1).maybeSingle();
+  if(!payment) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("EFT/Havale ödeme kaydı bulunamadı."));
+  const now=new Date().toISOString();
+  const raw=(payment.raw_response||{}) as Record<string,unknown>;
+  await supabase.from("payments").update({status:"rejected",raw_response:{...raw,adminRejectedAt:now},updated_at:now}).eq("id",payment.id);
+  await supabase.from("orders").update({payment_provider:BANK_TRANSFER.provider,payment_status:"rejected",status:"awaiting_payment",updated_at:now}).eq("id",orderId);
+  await audit("reject","bank_transfer_payment",orderId);
+  revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`); revalidatePath("/yonetim/siparisler");
+  redirect(`/yonetim/siparisler/${orderId}?payment=rejected`);
 }
 
 export async function updatePost(fd: FormData) {

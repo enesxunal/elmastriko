@@ -19,7 +19,7 @@ export default async function OrdersAdmin(){
 
   const list=orders||[];
   const paid=list.filter(o=>o.payment_status==="paid").length;
-  const waiting=list.filter(o=>o.payment_status==="pending"||o.status==="awaiting_payment").length;
+  const waiting=list.filter(o=>["pending","customer_notified","rejected"].includes(o.payment_status)||o.status==="awaiting_payment").length;
   const shipping=list.filter(o=>["ready_to_ship","shipped"].includes(o.status)).length;
   const revenue=list.filter(o=>o.payment_status==="paid"&&!["cancelled","refunded"].includes(o.status)).reduce((sum,o)=>sum+Number(o.grand_total||0),0);
 
@@ -41,7 +41,7 @@ export default async function OrdersAdmin(){
         <div className="admin-order-identity"><Link href={"/yonetim/siparisler/"+o.id}><b>{o.order_no}</b></Link><small>{new Date(o.created_at).toLocaleString("tr-TR")}</small></div>
         <div className="admin-order-customer"><span>{o.guest_email||"Üye kullanıcı"}</span><small>{o.guest_phone||"Telefon yok"}</small></div>
         <strong className="admin-order-price">{Number(o.grand_total).toLocaleString("tr-TR")} {o.currency}</strong>
-        <span className={"status-badge "+(o.payment_status==="paid"?"active":"")}>{o.payment_status==="paid"?"Ödendi":o.payment_status}</span>
+        <span className={"status-badge "+(o.payment_status==="paid"?"active":"")}>{o.payment_status==="paid"?"Ödendi":o.payment_status==="customer_notified"?"Ödeme bildirildi":o.payment_status==="rejected"?"Ödeme bulunamadı":o.payment_status==="pending"?"Ödeme bekliyor":o.payment_status}</span>
         <form action={updateOrderStatus} className="admin-order-status-form">
           <input type="hidden" name="id" value={o.id}/>
           <select name="status" defaultValue={o.status}>{statuses.map(s=><option key={s} value={s}>{statusLabel(s)}</option>)}</select>

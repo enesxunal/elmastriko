@@ -1,6 +1,7 @@
 "use client";
 
 import StoreHeader from "@/components/StoreHeader";
+import BankTransferPaymentCard from "@/components/BankTransferPaymentCard";
 import Link from "next/link";
 import { formatPrice } from "@/lib/catalog";
 import { useStore } from "@/components/StoreProvider";
@@ -69,6 +70,8 @@ export default function CheckoutPage() {
   const { freeShippingThreshold, shippingFee, loading: commerceLoading } = useCommerceSettings();
   const formRef = useRef<HTMLFormElement>(null);
   const [invoiceType, setInvoiceType] = useState<"individual" | "company">("individual");
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "eft">("card");
+  const [eftOrder, setEftOrder] = useState<{ orderId: string; orderNo: string; status: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [paymentSuccess] = useState<{ orderNo: string } | null>(() => {
@@ -202,6 +205,29 @@ export default function CheckoutPage() {
         throw new Error(orderBody.error || "Sipariş oluşturulamadı.");
       }
 
+      if (paymentMethod === "eft") {
+        const eftResponse = await fetch("/api/payments/eft/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: orderBody.orderId,
+            orderNo: orderBody.orderNo,
+          }),
+        });
+        const eft = await readJsonResponse<{ status?: string }>(eftResponse);
+        if (!eftResponse.ok) {
+          throw new Error(eft.error || "EFT/Havale ödeme kaydı oluşturulamadı.");
+        }
+        clearCart();
+        setEftOrder({
+          orderId: orderBody.orderId,
+          orderNo: orderBody.orderNo,
+          status: eft.status || "pending",
+        });
+        setSubmitting(false);
+        return;
+      }
+
       const paymentResponse = await fetch("/api/payments/tosla/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -245,15 +271,39 @@ export default function CheckoutPage() {
     </main></>;
   }
 
+  if (eftOrder) {
+    return <><StoreHeader/><main className="checkout-page eft-checkout-result">
+      <section className="checkout-main">
+        <span className="checkout-kicker">SİPARİŞ ALINDI</span>
+        <h1>EFT / Havale bilgileri</h1>
+        <p className="checkout-intro">Siparişiniz oluşturuldu. Ödemenizi aşağıdaki hesaba yaptıktan sonra “Ödemeyi yaptım” butonuna basın.</p>
+        <BankTransferPaymentCard orderId={eftOrder.orderId} orderNo={eftOrder.orderNo} initialStatus={eftOrder.status}/>
+        <Link href="/hesabim/siparisler">Siparişlerimi görüntüle →</Link>
+      </section>
+    </main></>;
+  }
+
   return <><StoreHeader/><main className="checkout-page">
     <form ref={formRef} id="checkout-form" className="checkout-main" onSubmit={handleSubmit}>
       <Link href="/sepet" className="checkout-back">← Sepete dön</Link>
       <div className="checkout-progress"><span className="done">01 Sepet</span><span className="active">02 Bilgiler</span><span>03 Ödeme</span></div>
-      <span className="checkout-kicker">GÜVENLİ ÖDEME</span><h1>Sipariş bilgileri</h1><p className="checkout-intro">Teslimat ve fatura bilgilerinizi kontrol edin. Sonraki adımda Tosla 3D Secure ödeme ekranına yönlendirileceksiniz.</p>
+      <span className="checkout-kicker">GÜVENLİ ÖDEME</span><h1>Sipariş bilgileri</h1><p className="checkout-intro">Teslimat ve fatura bilgilerinizi kontrol edin, ardından kart veya EFT / Havale ödeme yöntemini seçin.</p>
       <div className="checkout-step"><span>01</span><div><h2>İletişim</h2><div className="form-grid"><input required name="firstName" autoComplete="given-name" placeholder="Ad"/><input required name="lastName" autoComplete="family-name" placeholder="Soyad"/><input required name="email" type="email" autoComplete="email" placeholder="E-posta"/><input required name="phone" autoComplete="tel" placeholder="Telefon"/></div></div></div>
       <div className="checkout-step"><span>02</span><div><h2>Teslimat adresi</h2><div className="form-grid"><input required name="addressLine" autoComplete="street-address" className="full" placeholder="Adres"/><input required name="city" autoComplete="address-level1" placeholder="İl"/><input required name="district" autoComplete="address-level2" placeholder="İlçe"/><input name="postalCode" autoComplete="postal-code" placeholder="Posta kodu"/><input name="addressTitle" placeholder="Adres başlığı"/></div></div></div>
       <div className="checkout-step"><span>03</span><div><h2>Fatura</h2><div className="invoice-type-switch"><button type="button" className={invoiceType === "individual" ? "selected" : ""} onClick={() => setInvoiceType("individual")}>Bireysel</button><button type="button" className={invoiceType === "company" ? "selected" : ""} onClick={() => setInvoiceType("company")}>Kurumsal</button></div>{invoiceType === "company" && <div className="form-grid invoice-company-fields"><input required name="companyName" placeholder="Firma unvanı"/><input required name="taxOffice" placeholder="Vergi dairesi"/><input required name="taxNumber" placeholder="Vergi / T.C. no"/><input name="invoiceEmail" type="email" placeholder="E-fatura e-posta"/></div>}<label className="check-row"><input name="sameBilling" type="checkbox" defaultChecked/> Fatura adresi teslimat adresi ile aynı</label><p className="checkout-note">Ödeme tamamlandıktan sonra fatura kaydı NES Portal entegrasyonuna aktarılacak.</p></div></div>
-      <div className="checkout-step payment-step"><span>04</span><div><h2>Ödeme</h2><div className="provider-waiting"><b>Tosla İşim Sanal POS</b><p>Ödemeler 3D Secure destekli güvenli kart ödeme akışıyla alınır. Visa, Mastercard ve TROY kartları desteklenir.</p></div></div></div>
+      <div className="checkout-step payment-step"><span>04</span><div><h2>Ödeme yöntemi</h2>
+        <div className="payment-method-grid">
+          <button type="button" className={paymentMethod==="card"?"payment-method-card selected":"payment-method-card"} onClick={()=>setPaymentMethod("card")}>
+            <b>Kredi / Banka Kartı</b><small>Tosla İşim Sanal POS · 3D Secure</small>
+          </button>
+          <button type="button" className={paymentMethod==="eft"?"payment-method-card selected":"payment-method-card"} onClick={()=>setPaymentMethod("eft")}>
+            <b>EFT / Havale</b><small>Türkiye Finans Bankası · Manuel ödeme onayı</small>
+          </button>
+        </div>
+        {paymentMethod==="card"
+          ? <div className="provider-waiting"><b>Tosla İşim Sanal POS</b><p>Ödemeler 3D Secure destekli güvenli kart ödeme akışıyla alınır. Visa, Mastercard ve TROY kartları desteklenir.</p></div>
+          : <div className="provider-waiting eft-preview"><b>EFT / Havale</b><p>Siparişiniz oluşturulduktan sonra banka bilgileri ve açıklamaya yazmanız gereken sipariş kodu gösterilecek. Ödeme, yönetici kontrolünden sonra onaylanır.</p></div>}
+      </div></div>
     </form>
     <aside className="checkout-summary premium-checkout-summary">
       <div className="summary-kicker">SİPARİŞ ÖZETİ</div><h3>Ödemeniz</h3>
@@ -262,11 +312,13 @@ export default function CheckoutPage() {
       <p><span>Ara toplam</span><b>{hasUnknownPrice ? "Fiyat listesi bekleniyor" : formatPrice(subtotal)}</b></p>
       <p><span>Kargo</span><b>{commerceLoading ? "Hesaplanıyor" : freeShipping ? "Ücretsiz" : hasUnknownPrice ? "Hesaplanacak" : effectiveShippingFee === null ? "Kargo tutarı onayda" : formatPrice(effectiveShippingFee)}</b></p>
       <p className="checkout-grand-total"><span>Toplam</span><b>{hasUnknownPrice ? "—" : commerceLoading ? "Hesaplanıyor" : total === null ? "Kargo tutarı onayda" : formatPrice(total)}</b></p>
-      <button type="submit" form="checkout-form" disabled={submitting || loading || commerceLoading || !lines.length || hasUnknownPrice || total === null}>{submitting ? "Ödeme hazırlanıyor..." : "Tosla ile Güvenli Öde"}</button>
+      <button type="submit" form="checkout-form" disabled={submitting || loading || commerceLoading || !lines.length || hasUnknownPrice || total === null}>{submitting ? "Sipariş hazırlanıyor..." : paymentMethod === "eft" ? "EFT / Havale ile Sipariş Oluştur" : "Tosla ile Güvenli Öde"}</button>
       {submitError && <p className="checkout-error-box">{submitError}</p>}
       <div className="checkout-trust">
-        <span><b>3D Secure koruması</b><small>Kart bilgileriniz Elmas Triko sunucularında tutulmaz.</small></span>
-        <span><b>NES e-Arşiv</b><small>Ödeme sonrası faturanız otomatik oluşturulur.</small></span>
+        {paymentMethod === "card"
+          ? <span><b>3D Secure koruması</b><small>Kart bilgileriniz Elmas Triko sunucularında tutulmaz.</small></span>
+          : <span><b>Manuel ödeme kontrolü</b><small>EFT/Havale ödemesi banka hesabı kontrol edildikten sonra onaylanır.</small></span>}
+        <span><b>NES e-Arşiv</b><small>Ödeme onaylandıktan sonra faturanız oluşturulur.</small></span>
       </div>
     </aside>
   </main></>;

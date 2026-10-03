@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
-import { createBasitKargoShipment, createNesInvoice, saveInvoice, savePaymentRecord, saveShipment, updateOrderStatus } from "../../actions";
+import { approveBankTransfer, createBasitKargoShipment, createNesInvoice, rejectBankTransfer, saveInvoice, savePaymentRecord, saveShipment, updateOrderStatus } from "../../actions";
+import { BANK_TRANSFER, bankTransferStatusLabel } from "@/lib/payments/bank-transfer";
 
 const orderStatuses=["draft","awaiting_payment","paid","invoice_pending","ready_to_ship","shipped","delivered","cancelled","refunded"];
-const paymentStatuses=["pending","paid","failed","refunded","cancelled"];
+const paymentStatuses=["pending","customer_notified","paid","rejected","failed","refunded","cancelled"];
 export default async function AdminOrderDetail({params}:{params:Promise<{id:string}>}){
   const {id}=await params;const {supabase}=await requireAdmin();
   const [{data:order},{data:items},{data:addresses},{data:payment},{data:shipment},{data:invoice}] = await Promise.all([
@@ -28,6 +29,23 @@ export default async function AdminOrderDetail({params}:{params:Promise<{id:stri
       </article>
       <article><h2>Fatura</h2><form action={createNesInvoice} className="admin-editor"><input type="hidden" name="order_id" value={id}/><button type="submit" disabled={order.payment_status!=="paid"||invoice?.status==="sent"}>{invoice?.status==="sent"?"NES faturası gönderildi":"NES faturası oluştur ve gönder"}</button>{order.payment_status!=="paid"&&<small>Ödeme tamamlanınca aktif olur.</small>}{invoice?.invoice_no&&<small>Fatura no: {invoice.invoice_no}</small>}{invoice?.status==="sent"&&<div className="invoice-actions admin-invoice-actions"><a href={"/api/invoices/"+invoice.id+"/pdf"} target="_blank" rel="noreferrer">Faturayı Görüntüle</a><a href={"/api/invoices/"+invoice.id+"/pdf?download=1"}>PDF İndir</a></div>}</form><hr/><form action={saveInvoice}><input type="hidden" name="order_id" value={id}/><input name="provider" defaultValue={invoice?.provider||"NES Portal"}/><input name="invoice_no" defaultValue={invoice?.invoice_no||""} placeholder="Fatura no"/><select name="status" defaultValue={invoice?.status||"pending"}><option>pending</option><option>created</option><option>sent</option><option>cancelled</option><option>error</option></select><button>Manuel kaydet</button></form></article>
     </section>
-    <section className="admin-section"><div className="admin-section-head"><h2>Ödeme Kaydı</h2></div><form action={savePaymentRecord} className="admin-form-grid"><input type="hidden" name="order_id" value={id}/><input name="provider" defaultValue={payment?.provider||"manual"} placeholder="Provider"/><input name="provider_reference" defaultValue={payment?.provider_reference||""} placeholder="Referans"/><input name="amount" type="number" step="0.01" defaultValue={payment?.amount??order.grand_total}/><select name="status" defaultValue={payment?.status||order.payment_status}>{paymentStatuses.map(s=><option key={s}>{s}</option>)}</select><button>Ödemeyi Güncelle</button></form></section>
+    <section className="admin-section"><div className="admin-section-head"><h2>Ödeme Kaydı</h2></div>
+      {payment?.provider===BANK_TRANSFER.provider&&<div className="admin-bank-transfer-card">
+        <div><span>EFT / HAVALE</span><h3>{bankTransferStatusLabel(payment.status)}</h3></div>
+        <div className="admin-bank-transfer-details">
+          <p><span>Banka</span><b>{BANK_TRANSFER.bankName}</b></p>
+          <p><span>Hesap sahibi</span><b>{BANK_TRANSFER.accountHolder}</b></p>
+          <p><span>IBAN</span><b>{BANK_TRANSFER.iban}</b></p>
+          <p><span>Açıklama / Sipariş kodu</span><b>{order.order_no}</b></p>
+          <p><span>Tutar</span><b>{Number(payment.amount||order.grand_total).toLocaleString("tr-TR")} {order.currency}</b></p>
+        </div>
+        {payment.status==="customer_notified"&&<div className="admin-alert warning"><b>Müşteri ödeme yaptığını bildirdi.</b><span>Banka hesabını kontrol edip aşağıdan onaylayın veya ödeme bulunamadı olarak işaretleyin.</span></div>}
+        {payment.status!=="paid"&&<div className="admin-bank-transfer-actions">
+          <form action={approveBankTransfer}><input type="hidden" name="order_id" value={id}/><button className="admin-primary-button">Ödemeyi onayla</button></form>
+          <form action={rejectBankTransfer}><input type="hidden" name="order_id" value={id}/><button className="danger-button">Ödeme bulunamadı</button></form>
+        </div>}
+      </div>}
+      <form action={savePaymentRecord} className="admin-form-grid"><input type="hidden" name="order_id" value={id}/><input name="provider" defaultValue={payment?.provider||"manual"} placeholder="Provider"/><input name="provider_reference" defaultValue={payment?.provider_reference||""} placeholder="Referans"/><input name="amount" type="number" step="0.01" defaultValue={payment?.amount??order.grand_total}/><select name="status" defaultValue={payment?.status||order.payment_status}>{paymentStatuses.map(s=><option key={s} value={s}>{bankTransferStatusLabel(s)}</option>)}</select><button>Ödemeyi Güncelle</button></form>
+    </section>
   </main>;
 }

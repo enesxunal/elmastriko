@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
+import BankTransferPaymentCard from "@/components/BankTransferPaymentCard";
 import { createClient } from "@/lib/supabase/server";
 
 const customerFlow=["Sipariş alındı","Ödeme onaylandı","Hazırlanıyor","Kargoya verildi","Teslim edildi"];
@@ -46,7 +47,7 @@ export default async function AccountOrderDetail({params}:{params:Promise<{id:st
   const {id}=await params; const supabase=await createClient();
   const {data:{user}}=await supabase.auth.getUser(); if(!user)redirect("/hesabim");
   const [{data:order},{data:items},{data:addresses},{data:shipments},{data:invoices}] = await Promise.all([
-    supabase.from("orders").select("id,order_no,status,payment_status,subtotal,shipping_fee,discount_total,grand_total,currency,created_at").eq("id",id).maybeSingle(),
+    supabase.from("orders").select("id,order_no,status,payment_provider,payment_status,subtotal,shipping_fee,discount_total,grand_total,currency,created_at").eq("id",id).maybeSingle(),
     supabase.from("order_items").select("id,product_id,product_name,sku,color,size,unit_price,quantity,line_total").eq("order_id",id),
     supabase.from("order_addresses").select("kind,full_name,company_name,phone,city,district,postal_code,address_line").eq("order_id",id),
     supabase.from("shipments").select("provider,tracking_code,tracking_url,status,created_at").eq("order_id",id).order("created_at",{ascending:false}),
@@ -73,7 +74,7 @@ export default async function AccountOrderDetail({params}:{params:Promise<{id:st
 
     <div className="order-detail-head">
       <div><span>SİPARİŞ</span><h1>{order.order_no}</h1><p>Siparişinizin tüm aşamalarını ve belgelerini buradan takip edebilirsiniz.</p></div>
-      <div><b className={"customer-status-badge "+(order.payment_status==="paid"?"success":"")+(terminal?" danger":"")}>{terminal ? statusLabels[order.status] : order.payment_status==="paid"?"Ödeme Onaylandı":"Ödeme Bekliyor"}</b><span>{statusLabels[order.status]||order.status}</span></div>
+      <div><b className={"customer-status-badge "+(order.payment_status==="paid"?"success":"")+(terminal?" danger":"")}>{terminal ? statusLabels[order.status] : order.payment_status==="paid"?"Ödeme Onaylandı":order.payment_status==="customer_notified"?"Ödeme Kontrol Ediliyor":order.payment_status==="rejected"?"Ödeme Bulunamadı":"Ödeme Bekliyor"}</b><span>{statusLabels[order.status]||order.status}</span></div>
     </div>
 
     {!terminal && <section className="order-progress-card">
@@ -83,6 +84,7 @@ export default async function AccountOrderDetail({params}:{params:Promise<{id:st
       </div>)}
     </section>}
     {terminal && <div className="order-terminal-note">{order.status==="cancelled"?"Bu sipariş iptal edildi.":"Bu sipariş için iade işlemi oluşturuldu."}</div>}
+    {order.payment_provider==="bank_transfer" && <BankTransferPaymentCard orderId={order.id} orderNo={order.order_no} initialStatus={order.payment_status} compact/>}
 
     <section className="order-detail-grid">
       <div className="order-detail-main">
