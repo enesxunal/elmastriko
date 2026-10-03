@@ -51,21 +51,37 @@ export default function ProductPurchase({ product }: { product: Product }) {
     <div className="product-main-price">{formatPrice(selectedPrice)}</div>
     <p className="product-desc">{product.description}</p>
 
-    <div className="product-option">
-      <label>Renk</label>
+    {product.colors.length > 0 && <div className="product-option">
+      <div className="product-option-head"><label>Renk</label><span>{color}</span></div>
       <div className="option-pills">{product.colors.map(c => {
         const enabled = colorHasStock(c);
-        return <button type="button" disabled={!enabled} aria-disabled={!enabled} className={color === c ? "selected" : ""} onClick={() => { setColor(c); setQty(1); setAdded(false); }} key={c}>{c}{!enabled ? " · Tükendi" : ""}</button>;
+        return <button
+          type="button"
+          disabled={!enabled}
+          aria-disabled={!enabled}
+          aria-pressed={color === c}
+          className={color === c ? "selected" : ""}
+          onClick={() => { setColor(c); setQty(1); setAdded(false); }}
+          key={c}
+        ><span>{c}</span>{!enabled && <small>Tükendi</small>}</button>;
       })}</div>
-    </div>
+    </div>}
 
-    <div className="product-option">
-      <label>Beden</label>
+    {product.sizes.length > 0 && <div className="product-option">
+      <div className="product-option-head"><label>Beden</label><span>{size}</span></div>
       <div className="size-pills">{product.sizes.map(s => {
         const enabled = sizeHasStock(s);
-        return <button type="button" disabled={!enabled} aria-disabled={!enabled} className={size === s ? "selected" : ""} onClick={() => { setSize(s); setQty(1); setAdded(false); }} key={s}>{s}</button>;
+        return <button
+          type="button"
+          disabled={!enabled}
+          aria-disabled={!enabled}
+          aria-pressed={size === s}
+          className={size === s ? "selected" : ""}
+          onClick={() => { setSize(s); setQty(1); setAdded(false); }}
+          key={s}
+        ><span>{s}</span>{!enabled && <small>Tükendi</small>}</button>;
       })}</div>
-    </div>
+    </div>}
 
     {available !== null && <div className={"stock-message " + (outOfStock ? "out" : available <= 5 ? "low" : "ok")}>
       {outOfStock ? "Bu varyant şu anda stokta yok." : available <= 5 ? `Son ${available} adet` : "Stokta"}

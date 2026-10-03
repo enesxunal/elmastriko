@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import ProductPurchase from "@/components/ProductPurchase";
+import ProductGallery from "@/components/ProductGallery";
 import ProductCard from "@/components/ProductCard";
 import { getProductBySlug, getProducts } from "@/lib/catalog-db";
 
@@ -78,7 +79,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}/>
     <StoreHeader/>
     <main className="product-page">
-      <section className="product-gallery">{product.images.map((src, i) => <img src={src} alt={product.name + " " + (i + 1)} loading={i === 0 ? "eager" : "lazy"} key={src + i}/>)}</section>
+      <ProductGallery images={product.images} name={product.name}/>
       <aside className="product-detail"><ProductPurchase product={product}/></aside>
     </main>
     {related.length > 0 && <section className="related-section"><div className="related-head"><span>TAMAMLAYAN PARÇALAR</span><h2>Bunları da sevebilirsiniz.</h2></div><div className="catalog-grid">{related.map(p => <ProductCard key={p.slug} product={p}/>)}</div></section>}
