@@ -625,3 +625,301 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
 .bank-transfer-card{margin:20px 0;background:#fff;border:1px solid #dcd5cb;border-radius:16px;padding:22px;box-shadow:0 10px 28px rgba(38,31,24,.04)}.bank-transfer-card.compact{margin:18px 0}.bank-transfer-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.bank-transfer-head span{font-size:8px;letter-spacing:.16em;color:#857c72}.bank-transfer-head h3{margin:5px 0 0;font-size:24px}.bank-transfer-status{display:inline-flex;padding:6px 9px;border-radius:999px;background:#f1ede6;color:#746b61;font-size:8px}.bank-transfer-status.notified{background:#fff3d6;color:#886a23}.bank-transfer-status.paid{background:#e4f1e7;color:#2f6542}.bank-transfer-details{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:18px 0}.bank-transfer-details p{margin:0;padding:12px;border:1px solid #ece6dd;border-radius:10px;background:#fbfaf7;display:grid;gap:5px}.bank-transfer-details span{font-size:8px;color:#8a8177}.bank-transfer-details strong{font-size:11px;word-break:break-word}.bank-transfer-iban{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.02em}.bank-transfer-note{padding:12px 14px;border-radius:10px;background:#f5f0e8;color:#5d564f;font-size:9px;line-height:1.6}.bank-transfer-notify{width:100%;height:52px;margin-top:14px;border:1px solid #173d31;border-radius:12px;background:#173d31;color:#fff;font-size:10px;font-weight:700;letter-spacing:.08em;cursor:pointer;transition:background .18s ease,transform .18s ease,box-shadow .18s ease}.bank-transfer-notify:hover:not(:disabled){background:#1d4a3c;box-shadow:0 8px 20px rgba(23,61,49,.12);transform:translateY(-1px)}.bank-transfer-notify:disabled{background:#aeb6b1;border-color:#aeb6b1;cursor:default}.bank-transfer-help{margin:10px 0 0;font-size:9px;color:#6f685f}.bank-transfer-help.warning{color:#8b6132}.bank-transfer-help.success{color:#2f6542}
 .admin-bank-transfer-card{margin:0 0 16px;padding:16px;border:1px solid #dfe4df;border-radius:12px;background:#fbfcfa;display:grid;gap:12px}.admin-bank-transfer-card>div:first-child span{font-size:8px;letter-spacing:.14em;color:#7e8981}.admin-bank-transfer-card h3{margin:4px 0 0;font-size:18px}.admin-bank-transfer-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.admin-bank-transfer-details p{margin:0;padding:10px;border:1px solid #e7ebe7;border-radius:8px;background:#fff;display:grid;gap:4px}.admin-bank-transfer-details span{font-size:7px;color:#8b938d}.admin-bank-transfer-details b{font-size:9px;word-break:break-word}.admin-bank-transfer-actions{display:flex;gap:8px;flex-wrap:wrap}.admin-bank-transfer-actions form{margin:0}.admin-bank-transfer-actions button{min-height:36px;padding:0 12px}
 @media(max-width:700px){.payment-method-grid,.bank-transfer-details,.admin-bank-transfer-details{grid-template-columns:1fr}.bank-transfer-head{display:grid}.bank-transfer-card{padding:16px}}
+
+/* Product detail — final storefront pass */
+.product-page{
+  width:min(1440px,calc(100% - 48px));
+  margin:0 auto;
+  padding:26px 0 72px;
+  display:grid;
+  grid-template-columns:minmax(0,1.06fr) minmax(460px,.94fr);
+  gap:28px;
+  align-items:start;
+  background:transparent;
+}
+.product-gallery{
+  min-width:0;
+  background:transparent;
+}
+.product-gallery-stage{
+  border:1px solid #e2dcd2;
+  border-radius:18px;
+  background:#f1ece4;
+  overflow:hidden;
+  box-shadow:0 12px 38px rgba(38,31,24,.045);
+}
+.product-gallery-slide{
+  display:grid;
+  place-items:center;
+  background:#f1ece4;
+}
+.product-gallery-slide img{
+  width:100%;
+  height:590px;
+  min-height:0;
+  object-fit:contain;
+  background:#f1ece4;
+}
+.product-gallery-thumbs{
+  gap:9px;
+  padding:12px 2px 0;
+  background:transparent;
+}
+.product-gallery-thumbs button{
+  flex:0 0 70px;
+  height:86px;
+  border:1px solid #ddd6cb;
+  border-radius:10px;
+  background:#f1ece4;
+  opacity:.58;
+}
+.product-gallery-thumbs button.active{
+  border-color:#173d31;
+  box-shadow:0 0 0 2px rgba(23,61,49,.08);
+  opacity:1;
+}
+.product-gallery-thumbs img{
+  object-fit:cover;
+}
+.product-gallery-arrow{
+  width:42px;
+  height:42px;
+  border-color:#d8d0c5;
+  box-shadow:0 8px 22px rgba(23,23,20,.08);
+}
+.product-gallery-arrow.prev{left:14px}
+.product-gallery-arrow.next{right:14px}
+.product-gallery-counter{
+  right:14px;
+  bottom:14px;
+  padding:6px 9px;
+  font-size:8px;
+}
+
+.product-detail{
+  position:sticky;
+  top:138px;
+  align-self:start;
+  padding:28px 30px 26px;
+  background:#fff;
+  border:1px solid #e2dcd2;
+  border-radius:18px;
+  box-shadow:0 12px 38px rgba(38,31,24,.045);
+}
+.product-category{
+  display:block;
+  margin-bottom:8px;
+  font-size:8px;
+  letter-spacing:.17em;
+  color:#8a8178;
+}
+.product-detail h1{
+  max-width:560px;
+  margin:0 0 10px;
+  font:400 clamp(34px,3vw,44px)/1.02 Georgia,serif;
+  letter-spacing:-.035em;
+}
+.product-main-price{
+  margin:0 0 16px;
+  font-size:15px;
+  font-weight:700;
+  color:#24251f;
+}
+.product-desc{
+  max-width:610px;
+  margin:0;
+  font-size:11px;
+  line-height:1.68;
+  color:#736b61;
+}
+.product-option{
+  margin:18px 0 0;
+  padding-top:16px;
+  border-top:1px solid #e3dcd2;
+}
+.product-option-head{
+  margin-bottom:10px;
+}
+.product-option-head label{
+  font-size:8px;
+  letter-spacing:.17em;
+}
+.product-option-head>span{
+  font-size:9px;
+}
+.option-pills,.size-pills{
+  gap:8px;
+}
+.option-pills button,.size-pills button{
+  min-height:40px;
+  border-radius:10px;
+  padding:0 13px;
+  font-size:10px;
+  box-shadow:none;
+}
+.size-pills button{
+  min-width:46px;
+}
+.option-pills button.selected,.size-pills button.selected{
+  box-shadow:0 5px 13px rgba(23,61,49,.12);
+}
+.stock-message{
+  margin-top:12px;
+  font-size:9px;
+}
+.product-buy-row{
+  grid-template-columns:124px minmax(0,1fr) 52px;
+  gap:9px;
+  margin-top:18px;
+}
+.qty,.add-cart,.fav-btn{
+  height:52px;
+}
+.qty{
+  grid-template-columns:36px 1fr 36px;
+  border-radius:11px;
+}
+.qty button{
+  width:36px;
+  height:50px;
+}
+.qty span{
+  font-size:14px;
+}
+.add-cart{
+  border-radius:11px;
+}
+.fav-btn{
+  width:52px;
+  border-radius:11px;
+}
+.go-cart{
+  display:inline-flex;
+  margin-top:10px;
+  font-size:9px;
+  font-weight:700;
+  color:#173d31;
+}
+.product-assurances{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin-top:18px;
+  padding-top:16px;
+  border-top:1px solid #e3dcd2;
+}
+.product-assurances>div{
+  min-width:0;
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap:8px;
+  padding:10px;
+  border:1px solid #ebe5dc;
+  border-radius:10px;
+  background:#faf8f4;
+}
+.product-assurances svg{
+  flex:0 0 auto;
+  margin-top:1px;
+  color:#173d31;
+}
+.product-assurances span{
+  display:grid;
+  gap:3px;
+  min-width:0;
+  color:inherit;
+}
+.product-assurances b{
+  font-size:8px;
+  line-height:1.2;
+}
+.product-assurances small{
+  font-size:7px;
+  line-height:1.35;
+  color:#8a8177;
+}
+.related-section{
+  margin-top:18px;
+}
+
+@media(max-width:1180px){
+  .product-page{
+    width:min(1120px,calc(100% - 32px));
+    grid-template-columns:minmax(0,1fr) minmax(420px,.9fr);
+    gap:20px;
+  }
+  .product-gallery-slide img{height:540px}
+  .product-detail{padding:24px}
+  .product-detail h1{font-size:36px}
+  .product-assurances{grid-template-columns:1fr}
+  .product-assurances>div{padding:8px 10px}
+}
+
+@media(max-width:900px){
+  .product-page{
+    width:100%;
+    padding:0 0 54px;
+    grid-template-columns:1fr;
+    gap:0;
+  }
+  .product-gallery-stage{
+    border:0;
+    border-radius:0;
+    box-shadow:none;
+  }
+  .product-gallery-slide img{
+    height:min(82vw,680px);
+    max-height:none;
+  }
+  .product-gallery-thumbs{
+    padding:10px 14px 0;
+  }
+  .product-detail{
+    position:static;
+    margin:16px 14px 0;
+    padding:24px 20px;
+    border-radius:16px;
+  }
+  .product-assurances{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+}
+
+@media(max-width:600px){
+  .product-gallery-slide img{
+    height:112vw;
+    max-height:620px;
+  }
+  .product-gallery-thumbs button{
+    flex-basis:58px;
+    height:72px;
+  }
+  .product-detail{
+    margin:12px 10px 0;
+    padding:22px 16px 20px;
+  }
+  .product-detail h1{
+    font-size:34px;
+  }
+  .product-desc{
+    font-size:10px;
+  }
+  .product-buy-row{
+    grid-template-columns:102px minmax(0,1fr) 50px;
+    gap:7px;
+  }
+  .qty{
+    grid-template-columns:30px 1fr 30px;
+  }
+  .qty button{
+    width:30px;
+  }
+  .fav-btn{
+    width:50px;
+  }
+  .product-assurances{
+    grid-template-columns:1fr;
+    gap:7px;
+  }
+}

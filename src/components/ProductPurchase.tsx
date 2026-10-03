@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Minus, Plus } from "lucide-react";
+import { Heart, Minus, Plus, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import { Product, formatPrice } from "@/lib/catalog";
 import { useStore } from "./StoreProvider";
 import { useMemo, useState } from "react";
@@ -109,8 +109,9 @@ export default function ProductPurchase({ product }: { product: Product }) {
     {added && <Link className="go-cart" href="/sepet">Sepete git →</Link>}
 
     <div className="product-assurances">
-      <div><b>5.000 TL üzeri ücretsiz kargo</b><span>BasitKargo ile gönderim</span></div>
-      <div><b>Kolay iade</b><span>Standart iade süreci</span></div>
+      <div><Truck size={17}/><span><b>Ücretsiz kargo</b><small>5.000 TL üzeri siparişlerde</small></span></div>
+      <div><RotateCcw size={17}/><span><b>Kolay iade</b><small>Standart iade süreci</small></span></div>
+      <div><ShieldCheck size={17}/><span><b>Güvenli ödeme</b><small>3D Secure kart ve EFT</small></span></div>
     </div>
   </>;
 }
