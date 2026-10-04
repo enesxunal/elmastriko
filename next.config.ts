@@ -43,17 +43,6 @@ const nextConfig: NextConfig = {
       { source: "/hesabim/:path*", headers: protectedHeaders },
     ];
   },
-  async redirects() {
-    return [
-      { source: "/urun/elmas-urun-1", destination: "/urun/zincir-detayli-triko-etek-takim", permanent: true },
-      { source: "/urun/elmas-urun-2", destination: "/urun/bordo-lacivert-baklava-desenli-hirka", permanent: true },
-      { source: "/urun/elmas-urun-4", destination: "/urun/gri-beyaz-dokulu-dugmeli-hirka", permanent: true },
-      { source: "/urun/elmas-urun-6", destination: "/urun/ekru-vizon-cicek-desenli-kapusonlu-hirka", permanent: true },
-      { source: "/urun/elmas-urun-7", destination: "/urun/vizon-geometrik-desenli-dokulu-hirka", permanent: true },
-      { source: "/urun/elmas-urun-8", destination: "/urun/lacivert-ekru-cizgili-dugmeli-hirka", permanent: true },
-      { source: "/urun/elmas-urun-9", destination: "/urun/ekru-bej-cicek-desenli-yumusak-kazak", permanent: true },
-    ];
-  },
 };
 
 export default nextConfig;
