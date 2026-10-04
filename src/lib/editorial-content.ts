@@ -79,6 +79,52 @@ Tüylenme oluştuğunda kumaşı çekiştirmek yerine tekstil yüzeyleri için t
 Saklama sırasında trikoyu temiz, kuru ve katlanmış halde tutmak formun korunmasına yardımcı olur. Ağır örgüleri uzun süre askıda bırakmak yalnızca omuz formunu değil, yüzey gerilimini de etkileyebilir.
 
 Doğru yıkama, daha düşük sürtünme ve düzenli saklama alışkanlıkları trikonun görünümünü daha uzun süre korumaya yardımcı olur. Elmas Triko ürünlerinde özel bakım gerektiren bir detay varsa ürün üzerindeki bakım etiketini esas alın.`
+  },
+  {
+    slug: "kadin-triko-kazak-secimi",
+    title: "Kadın Triko Kazak Seçerken Nelere Dikkat Edilmeli?",
+    excerpt: "Kadın triko kazak seçiminde kalıp, renk, yaka, doku ve kullanım alanını birlikte değerlendirerek doğru modeli seçmek için pratik öneriler.",
+    cover_image: "/images/signature-knit.webp",
+    seo_title: "Kadın Triko Kazak Seçimi: Kalıp, Renk ve Stil Rehberi",
+    seo_description: "Kadın triko kazak seçerken kalıp, yaka, renk, doku ve kullanım alanında nelere dikkat edilmeli? Günlük kombinler için pratik seçim rehberi.",
+    published_at: "2026-10-04T12:15:00+03:00",
+    updated_at: "2026-10-04T12:15:00+03:00",
+    content: `Kadın triko kazak seçerken yalnızca renk veya desen değil, kalıp, yaka formu, örgü dokusu ve ürünü hangi parçalarla kullanacağınız da önemlidir. Günlük kullanım için doğru seçim yapmak, kazaktan daha fazla kombin üretmeyi kolaylaştırır.
+
+Kalıp seçiminde mevcut gardırobunuz iyi bir başlangıç noktasıdır. Daha dar alt parçalarla rahat ve hacimli triko kazaklar dengeli bir görünüm oluşturabilir. Geniş paça pantolon veya daha hacimli eteklerle ise daha kontrollü ve vücuda yakın üst formlar tercih edilebilir.
+
+Yaka tipi de görünümü belirler. Yuvarlak yaka sade ve kolay katmanlanan bir seçenektir. V yaka modeller gömlek veya ince üstlerle birlikte kullanılabilir. Dik ya da yüksek yakalı trikolar ise tek başına daha belirgin bir üst silueti oluşturur.
+
+Renk seçerken dolabınızda en çok kullandığınız alt parçaları düşünmek işinizi kolaylaştırır. Ekru, gri, siyah, lacivert ve toprak tonları farklı kombinlerde tekrar kullanılabilir. Daha güçlü desen veya kontrast renk içeren bir kazakta diğer parçaları daha sade tutmak ürünü öne çıkarır.
+
+Doku ve desen, trikonun karakterini doğrudan etkiler. Belirgin örgü, jakar veya çiçek desenli ürünlerde aksesuarları daha sınırlı kullanmak daha dengeli bir görünüm sağlayabilir. Daha sade yüzeyli kazaklar ise takı, çanta ve dış giyimle farklı yönlere taşınabilir.
+
+Beden seçiminde ürün sayfasındaki mevcut varyasyonları ve ölçü bilgilerini kontrol etmek gerekir. Aynı beden etiketi farklı kalıplarda farklı durabilir. Bu nedenle yalnızca alışılmış beden numarasına göre değil, ürünün kesimine ve kullanım amacına göre karar vermek daha doğru olur.
+
+Elmas Triko kadın triko kazak koleksiyonunda mevcut modellerin renk, beden, fiyat ve stok seçeneklerini karşılaştırabilir; ürün detay sayfalarındaki görseller üzerinden modelin formunu daha yakından inceleyebilirsiniz.`
+  },
+  {
+    slug: "triko-takim-nasil-kombinlenir",
+    title: "Triko Takım Nasıl Kombinlenir? Şık ve Dengeli Stil Önerileri",
+    excerpt: "Triko takım kombinlerinde ayakkabı, çanta, dış giyim ve aksesuar seçimini dengeli kurmak için pratik stil önerileri.",
+    cover_image: "/images/edit-soft-structure.webp",
+    seo_title: "Triko Takım Nasıl Kombinlenir? Kadın Stil Rehberi",
+    seo_description: "Triko takım kombinleri için ayakkabı, çanta, dış giyim ve aksesuar seçiminde dengeli stil önerileri. Günlük ve şık kullanım fikirleri.",
+    published_at: "2026-10-04T12:20:00+03:00",
+    updated_at: "2026-10-04T12:20:00+03:00",
+    content: `Triko takım, üst ve alt parçanın aynı doku ve renk diliyle bir araya gelmesi sayesinde tek adımda bütünlüklü bir görünüm sağlar. Kombini kişiselleştirmenin en kolay yolu ayakkabı, çanta, dış giyim ve aksesuar seçimidir.
+
+Takımın deseni veya metal detayları güçlü ise aksesuarları daha sade tutmak denge sağlar. Düz renkli bir takımda ise çanta, ayakkabı veya takıyla kontrast eklemek daha kolaydır. Özellikle siyah, ekru, vizon ve lacivert gibi tonlar hem benzer renklerle hem de zıt vurgularla kullanılabilir.
+
+Günlük kullanımda düz tabanlı ayakkabılar, sade sneaker veya loafer tarzı seçenekler triko takımın rahat yönünü destekler. Daha şık bir görünüm için topuklu ayakkabı veya daha yapılandırılmış bir çanta tercih edilebilir.
+
+Dış giyim seçiminde takımın boyu ve hacmi önemlidir. Uzun etekli bir triko takımda kısa ceket veya bel hizasında biten dış giyim daha net bir oran oluşturabilir. Daha sade bir takımın üzerine uzun kaban eklemek ise tek renkli ve akıcı bir siluet yaratabilir.
+
+Takım parçalarını ayrı ayrı kullanmak da gardırobun kullanım alanını genişletir. Triko üstü farklı bir pantolonla, eteği ise gömlek veya daha sade bir kazakla eşleştirebilirsiniz. Böylece tek bir takım yalnızca birlikte değil, ayrı kombinlerde de kullanılabilir.
+
+Aksesuar seçiminde ürün üzerindeki düğme, zincir veya kontrast şerit gibi detayları referans almak faydalıdır. Altın renk detaylı bir takımda benzer tonda küçük aksesuarlar bütünlük sağlayabilir; ancak güçlü detaylı ürünlerde aksesuar sayısını sınırlamak görünümü daha temiz tutar.
+
+Elmas Triko kadın triko takım modellerinde güncel renk, beden, fiyat ve stok bilgilerini ürün sayfalarından inceleyebilir; farklı takım seçeneklerini kadın koleksiyonu içinde karşılaştırabilirsiniz.`
   }
 ];
 

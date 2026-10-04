@@ -77,7 +77,9 @@ export default async function WomenPage({ searchParams }: { searchParams: Promis
           <Link href="/kadin/hirka">Kadın triko hırkalar</Link>
           <Link href="/kadin/takim">Kadın triko takımlar</Link>
           <Link href="/kadin/kazak">Kadın triko kazaklar</Link>
-          <Link href="/blog/kadin-triko-hirka-nasil-kombinlenir">Triko kombin rehberi</Link>
+          <Link href="/blog/kadin-triko-hirka-nasil-kombinlenir">Hırka kombin rehberi</Link>
+          <Link href="/blog/kadin-triko-kazak-secimi">Kazak seçim rehberi</Link>
+          <Link href="/blog/triko-takim-nasil-kombinlenir">Triko takım kombin rehberi</Link>
         </div>
       </section>
     </main>

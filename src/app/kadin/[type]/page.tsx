@@ -16,6 +16,8 @@ const categories = {
     heading: "Kadın Triko Hırka Modelleri",
     intro: "Yeni sezon kadın triko hırka modellerini renk, beden ve stok seçenekleriyle inceleyin.",
     copy: "Kadın triko hırkalar katmanlı giyimde ve günlük kombinlerde farklı kullanım seçenekleri sunar. Elmas Triko hırka koleksiyonunda mevcut ürünlerin renk, beden, fiyat ve stok bilgilerini karşılaştırabilir; ürün detay sayfalarından görselleri ve varyasyonları inceleyebilirsiniz.",
+    guideHref: "/blog/kadin-triko-hirka-nasil-kombinlenir",
+    guideLabel: "Triko hırka kombin rehberi",
   },
   kazak: {
     type: "Kazak",
@@ -24,6 +26,8 @@ const categories = {
     heading: "Kadın Triko Kazak Modelleri",
     intro: "Yeni sezon kadın triko kazak seçeneklerini Elmas Triko koleksiyonunda keşfedin.",
     copy: "Kadın triko kazak seçiminde model, renk ve beden seçeneklerini birlikte değerlendirmek günlük kullanım için doğru parçayı bulmayı kolaylaştırır. Elmas Triko ürün sayfalarında mevcut varyasyonları, güncel stok ve fiyat bilgisini görebilirsiniz.",
+    guideHref: "/blog/kadin-triko-kazak-secimi",
+    guideLabel: "Triko kazak seçim rehberi",
   },
   takim: {
     type: "Takım",
@@ -32,6 +36,8 @@ const categories = {
     heading: "Kadın Triko Takım Modelleri",
     intro: "Kadın triko takım modellerini renk, beden ve ürün detaylarıyla online inceleyin.",
     copy: "Triko takımlar üst ve alt parçayı aynı doku ve renk diliyle bir araya getirir. Elmas Triko kadın triko takım ürünlerinde mevcut renk ve beden seçeneklerini ürün sayfasından kontrol ederek güncel stok ve fiyat bilgisine ulaşabilirsiniz.",
+    guideHref: "/blog/triko-takim-nasil-kombinlenir",
+    guideLabel: "Triko takım kombin rehberi",
   },
   triko: {
     type: "Triko",
@@ -40,6 +46,8 @@ const categories = {
     heading: "Kadın Triko Modelleri",
     intro: "Elmas Triko kadın triko koleksiyonundaki güncel modelleri keşfedin.",
     copy: "Kadın triko modellerinde doku, renk ve kalıp seçimi kullanım alanını belirleyen temel unsurlardır. Elmas Triko ürün detaylarında mevcut görselleri, beden ve renk varyasyonlarını, fiyat ve stok bilgisini birlikte inceleyebilirsiniz.",
+    guideHref: "/blog/triko-nasil-yikanir-bakim-rehberi",
+    guideLabel: "Triko bakım rehberi",
   },
 } as const;
 
@@ -122,7 +130,8 @@ export default async function WomenTypePage({ params }: { params: Promise<{ type
           <Link href="/kadin">Kadın triko modelleri</Link>
           <Link href="/kadin/hirka">Kadın triko hırkalar</Link>
           <Link href="/yeni-gelenler">Yeni gelenler</Link>
-          <Link href="/blog">Triko bakım ve kombin rehberi</Link>
+          <Link href={category.guideHref}>{category.guideLabel}</Link>
+          <Link href="/blog">Tüm triko rehberleri</Link>
         </div>
       </section>
     </main>
