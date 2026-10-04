@@ -923,3 +923,28 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
     gap:7px;
   }
 }
+
+/* Product gallery frame follows real product image ratio (1121x1403 ≈ 4:5) */
+@media(min-width:901px){
+  .product-page{
+    grid-template-columns:minmax(520px,660px) minmax(0,1fr);
+    justify-content:center;
+  }
+  .product-gallery{
+    width:min(100%,660px);
+    justify-self:center;
+  }
+  .product-gallery-stage{
+    width:100%;
+    aspect-ratio:1121 / 1403;
+  }
+  .product-gallery-rail,
+  .product-gallery-slide{
+    height:100%;
+  }
+  .product-gallery-slide img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+}
