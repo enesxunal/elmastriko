@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HomePageClient from "@/components/HomePageClient";
+import { getProducts } from "@/lib/catalog-db";
 
 export const metadata: Metadata = {
   title: "Elmas Triko | Kadın ve Erkek Triko Online Mağaza",
@@ -22,6 +23,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function HomePage() {
-  return <HomePageClient/>;
+export default async function HomePage() {
+  const initialProducts = (await getProducts()).slice(0, 4).map(product => ({
+    slug: product.slug,
+    name: product.name,
+    price: product.price,
+    image: product.image,
+    colors: product.colors,
+    badge: product.badge,
+  }));
+  return <HomePageClient initialProducts={initialProducts}/>;
 }

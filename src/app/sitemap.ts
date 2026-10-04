@@ -6,14 +6,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = "https://www.elmastriko.com";
   const supabase=await createClient();
   const [{data:products},{data:posts}] = await Promise.all([
-    supabase.from("products").select("slug,updated_at,gender").eq("is_active",true),
+    supabase.from("products").select("slug,updated_at,gender,product_type").eq("is_active",true),
     supabase.from("blog_posts").select("slug,updated_at").eq("status","published")
   ]);
 
   const hasMen=(products||[]).some(product=>product.gender==="erkek");
+  const womenTypes=new Set((products||[]).filter(product=>product.gender==="kadin").map(product=>product.product_type));
+  const womenCategoryRoutes=[
+    ["Hırka","/kadin/hirka"],
+    ["Kazak","/kadin/kazak"],
+    ["Takım","/kadin/takim"],
+    ["Triko","/kadin/triko"],
+  ] as const;
   const staticRoutes = [
     {path:"",priority:1,changeFrequency:"daily" as const},
     {path:"/kadin",priority:.9,changeFrequency:"daily" as const},
+    ...womenCategoryRoutes.filter(([type])=>womenTypes.has(type)).map(([,path])=>({path,priority:.86,changeFrequency:"daily" as const})),
     ...(hasMen?[{path:"/erkek",priority:.8,changeFrequency:"weekly" as const}]:[]),
     {path:"/yeni-gelenler",priority:.85,changeFrequency:"daily" as const},
     {path:"/blog",priority:.7,changeFrequency:"weekly" as const},

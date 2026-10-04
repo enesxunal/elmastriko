@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-html-link-for-pages */
 "use client";
 
 import Image from "next/image";
@@ -6,7 +7,7 @@ import NewsletterForm from "@/components/NewsletterForm";
 import FavoriteButton from "@/components/FavoriteButton";
 import { useStore } from "@/components/StoreProvider";
 import { ArrowRight, Heart, Search, ShoppingBag, UserRound, Camera, Plus } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type HomeProduct = {
   slug: string;
@@ -39,24 +40,9 @@ const social = [
   "/images/product-pattern-cardigan.webp",
 ];
 
-export default function Home() {
+export default function Home({ initialProducts = [] }: { initialProducts?: HomeProduct[] }) {
   const { cartCount, favorites } = useStore();
-  const [products, setProducts] = useState<HomeProduct[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    fetch("/api/catalog", { cache: "no-store" })
-      .then(response => response.ok ? response.json() : Promise.reject(new Error("catalog_fetch_failed")))
-      .then(data => {
-        if (!cancelled) setProducts((data.products || []).slice(0, 4));
-      })
-      .catch(() => {
-        if (!cancelled) setProducts([]);
-      });
-
-    return () => { cancelled = true; };
-  }, []);
+  const [products] = useState<HomeProduct[]>(initialProducts);
 
   return (
     <main>
@@ -74,7 +60,7 @@ export default function Home() {
             <div className="mobile-menu-group">
               <a className="mobile-menu-parent" href="/kadin">Kadın <ArrowRight size={16}/></a>
               <div className="mobile-subgrid">
-                <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/arama?type=Hırka">Hırkalar</a><a href="/arama?type=Kazak">Kazaklar</a>
+                <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/kadin/hirka">Hırkalar</a><a href="/kadin/kazak">Kazaklar</a>
                 <a href="/arama?type=Ceket">Ceketler</a><a href="/arama?q=fermuarlı">Fermuarlı Triko</a><a href="/arama?q=desenli">Desenli Triko</a>
               </div>
             </div>
@@ -103,7 +89,7 @@ export default function Home() {
                 <div className="mega-kicker">Kadın Koleksiyonu</div>
                 <div className="mega-column">
                   <h4>Giyim</h4>
-                  <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/arama?type=Hırka">Hırkalar</a><a href="/arama?type=Kazak">Kazaklar</a><a href="/arama?type=Ceket">Ceketler</a><a href="/arama?q=fermuarlı">Fermuarlı Triko</a>
+                  <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/kadin/hirka">Hırkalar</a><a href="/kadin/kazak">Kazaklar</a><a href="/arama?type=Ceket">Ceketler</a><a href="/arama?q=fermuarlı">Fermuarlı Triko</a>
                 </div>
                 <div className="mega-column">
                   <h4>Keşfet</h4>

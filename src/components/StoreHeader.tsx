@@ -26,8 +26,8 @@ export default function StoreHeader() {
               <Link className="mobile-menu-parent" href="/kadin">Kadın <ArrowRight size={16}/></Link>
               <div className="mobile-subgrid">
                 <Link href="/yeni-gelenler">Yeni Gelenler</Link>
-                <Link href="/arama?type=Hırka">Hırkalar</Link>
-                <Link href="/arama?type=Kazak">Kazaklar</Link>
+                <Link href="/kadin/hirka">Hırkalar</Link>
+                <Link href="/kadin/kazak">Kazaklar</Link>
                 <Link href="/arama?type=Ceket">Ceketler</Link>
                 <Link href="/arama?q=fermuarlı">Fermuarlı Triko</Link>
                 <Link href="/arama?q=desenli">Desenli Triko</Link>
@@ -68,8 +68,8 @@ export default function StoreHeader() {
                 <div className="mega-column">
                   <h4>Giyim</h4>
                   <Link href="/yeni-gelenler">Yeni Gelenler</Link>
-                  <Link href="/arama?type=Hırka">Hırkalar</Link>
-                  <Link href="/arama?type=Kazak">Kazaklar</Link>
+                  <Link href="/kadin/hirka">Hırkalar</Link>
+                  <Link href="/kadin/kazak">Kazaklar</Link>
                   <Link href="/arama?type=Ceket">Ceketler</Link>
                   <Link href="/arama?q=fermuarlı">Fermuarlı Triko</Link>
                 </div>

@@ -74,8 +74,8 @@ export default async function WomenPage({ searchParams }: { searchParams: Promis
         <p>Elmas Triko kadın koleksiyonunda hırka, takım ve farklı örgü yüzeylerine sahip triko modelleri bir arada sunulur. Ürün sayfalarında renk ve beden seçeneklerini, stok bilgisini ve ürün detaylarını karşılaştırarak günlük kullanıma veya daha şık kombinlere uygun parçayı seçebilirsiniz.</p>
         <div className="seo-category-links">
           <Link href="/yeni-gelenler">Yeni sezon triko modelleri</Link>
-          <Link href="/arama?type=Hırka">Kadın triko hırkalar</Link>
-          <Link href="/arama?type=Takım">Kadın triko takımlar</Link>
+          <Link href="/kadin/hirka">Kadın triko hırkalar</Link>
+          <Link href="/kadin/takim">Kadın triko takımlar</Link>
         </div>
       </section>
     </main>
