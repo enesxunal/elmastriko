@@ -180,8 +180,10 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
         <p>Elmas Triko; kadın ve erkek triko, hırka, kazak ve takım modellerini modern detaylar ve zamansız formlarla bir araya getirir. Yeni sezon ürünlerini inceleyebilir, renk ve beden seçeneklerini karşılaştırarak online sipariş verebilirsiniz.</p>
         <div>
           <Link href="/kadin">Kadın triko modelleri <ArrowRight size={14}/></Link>
-          <Link href="/erkek">Erkek triko modelleri <ArrowRight size={14}/></Link>
+          <Link href="/kadin/hirka">Kadın triko hırkalar <ArrowRight size={14}/></Link>
+          <Link href="/kadin/kazak">Kadın triko kazaklar <ArrowRight size={14}/></Link>
           <Link href="/yeni-gelenler">Yeni gelenler <ArrowRight size={14}/></Link>
+          <Link href="/blog">Triko bakım ve stil rehberi <ArrowRight size={14}/></Link>
         </div>
       </section>
 

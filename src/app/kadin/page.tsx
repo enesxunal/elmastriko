@@ -9,8 +9,8 @@ import { getProducts, getProductTypes } from "@/lib/catalog-db";
 const siteUrl = "https://www.elmastriko.com";
 
 export const metadata: Metadata = {
-  title: "Kadın Triko Modelleri, Hırka ve Takımlar",
-  description: "Elmas Triko kadın triko modellerini keşfedin. Yeni sezon kadın hırka, triko takım ve zamansız örgü modellerini renk, beden ve fiyat seçenekleriyle online inceleyin.",
+  title: "Kadın Triko Modelleri | Hırka, Kazak ve Takım",
+  description: "Elmas Triko kadın triko modellerini keşfedin. Yeni sezon hırka, kazak ve triko takım seçeneklerini güncel renk, beden, fiyat ve stok bilgileriyle online inceleyin.",
   alternates: { canonical: "/kadin" },
   openGraph: {
     title: "Kadın Triko Modelleri | Elmas Triko",
@@ -76,6 +76,8 @@ export default async function WomenPage({ searchParams }: { searchParams: Promis
           <Link href="/yeni-gelenler">Yeni sezon triko modelleri</Link>
           <Link href="/kadin/hirka">Kadın triko hırkalar</Link>
           <Link href="/kadin/takim">Kadın triko takımlar</Link>
+          <Link href="/kadin/kazak">Kadın triko kazaklar</Link>
+          <Link href="/blog/kadin-triko-hirka-nasil-kombinlenir">Triko kombin rehberi</Link>
         </div>
       </section>
     </main>

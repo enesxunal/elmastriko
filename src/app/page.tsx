@@ -3,14 +3,14 @@ import HomePageClient from "@/components/HomePageClient";
 import { getProducts } from "@/lib/catalog-db";
 
 export const metadata: Metadata = {
-  title: "Elmas Triko | Kadın ve Erkek Triko Online Mağaza",
-  description: "Elmas Triko resmi online mağazası. Kadın ve erkek triko, hırka, kazak ve yeni sezon koleksiyonlarını keşfedin; güvenli ödeme ve hızlı gönderimle online sipariş verin.",
+  title: "Elmas Triko | Resmi Online Mağaza ve Triko Modelleri",
+  description: "Elmas Triko resmi online mağazası. Kadın triko, hırka, kazak, takım ve yeni sezon koleksiyonlarını keşfedin; güncel renk, beden ve stok seçeneklerini inceleyin.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "tr_TR",
     siteName: "Elmas Triko",
-    title: "Elmas Triko | Kadın ve Erkek Triko Online Mağaza",
+    title: "Elmas Triko | Resmi Online Mağaza ve Triko Modelleri",
     description: "Elmas Triko kadın ve erkek triko koleksiyonlarını, yeni sezon hırka ve kazak modellerini online keşfedin.",
     url: "https://www.elmastriko.com",
     images: [{ url: "/images/hero-banner.webp", alt: "Elmas Triko yeni sezon triko koleksiyonu" }],

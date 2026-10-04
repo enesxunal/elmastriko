@@ -7,8 +7,8 @@ import "./globals.css";
 const siteUrl = "https://www.elmastriko.com";
 
 export async function generateMetadata(): Promise<Metadata> {
-  let title = "Elmas Triko | Kadın ve Erkek Triko Online Mağaza";
-  let description = "Elmas Triko resmi online mağazası. Kadın ve erkek triko, hırka, kazak ve yeni sezon koleksiyonlarını keşfedin.";
+  let title = "Elmas Triko | Resmi Online Mağaza ve Triko Modelleri";
+  let description = "Elmas Triko resmi online mağazası. Kadın triko, hırka, kazak, takım ve yeni sezon koleksiyonlarını keşfedin; güncel renk, beden ve stok seçeneklerini inceleyin.";
   try {
     const supabase = createPublicClient();
     const { data } = await supabase.from("site_settings").select("value").eq("key","seo").maybeSingle();
@@ -40,12 +40,16 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const organization = {
     "@context":"https://schema.org",
-    "@type":"Organization",
+    "@type":["Organization","OnlineStore"],
     "@id": `${siteUrl}/#organization`,
     name:"Elmas Triko",
+    alternateName:"Elmas Triko Online Mağaza",
     legalName:"ELMAS TRİKO SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+    description:"Kadın ve erkek triko, hırka, kazak ve takım koleksiyonları sunan Elmas Triko resmi online mağazası.",
     url:siteUrl,
-    logo:`${siteUrl}/elmas-triko.png`,
+    logo:{ "@type":"ImageObject", url:`${siteUrl}/elmas-triko.png` },
+    image:`${siteUrl}/images/hero-banner.webp`,
+    brand:{ "@type":"Brand", name:"Elmas Triko" },
     sameAs:["https://www.instagram.com/elmas_triko/"],
     address:{
       "@type":"PostalAddress",
@@ -61,6 +65,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     "@id": `${siteUrl}/#website`,
     url:siteUrl,
     name:"Elmas Triko",
+    alternateName:"Elmas Triko Resmi Online Mağaza",
     publisher:{ "@id": `${siteUrl}/#organization` },
     inLanguage:"tr-TR",
     potentialAction:{
