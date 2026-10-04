@@ -328,6 +328,19 @@ export async function addProductImages(fd: FormData) {
   revalidatePath("/yonetim/urunler");
 }
 
+export async function updateProductImageVariant(fd: FormData) {
+  const { supabase }=await requireAdmin();
+  const productId=v(fd,"product_id"), id=v(fd,"id");
+  const variantId=v(fd,"variant_id") || null;
+  const { error }=await supabase.from("product_images").update({variant_id:variantId}).eq("id",id).eq("product_id",productId);
+  if(error) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent(error.message));
+  await audit("update","product_image",id,{productId,variantId});
+  revalidatePath(`/yonetim/urunler/${productId}`);
+  revalidatePath("/yonetim/urunler");
+  revalidatePath("/kadin");
+  revalidatePath("/erkek");
+}
+
 export async function deleteProductImage(fd: FormData) {
   const { supabase }=await requireAdmin();
   const productId=v(fd,"product_id"), id=v(fd,"id");

@@ -13,7 +13,7 @@ type DbProduct = {
   is_active: boolean;
   is_featured: boolean;
   created_at: string;
-  product_images?: { url: string; sort_order: number; alt_text: string | null }[];
+  product_images?: { url: string; sort_order: number; alt_text: string | null; variant_id: string | null }[];
   product_variants?: {
     id: string;
     sku: string | null;
@@ -34,11 +34,16 @@ function optimizedImage(url: string) {
 }
 
 function mapDbProduct(row: DbProduct): Product {
-  const images = [...(row.product_images || [])]
-    .sort((a, b) => a.sort_order - b.sort_order)
-    .map(x => optimizedImage(x.url));
-
   const variants = (row.product_variants || []).filter(v => v.is_active);
+  const colorByVariantId = new Map(variants.map(v => [v.id, v.color || null]));
+  const media = [...(row.product_images || [])]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map(x => ({
+      url: optimizedImage(x.url),
+      color: x.variant_id ? (colorByVariantId.get(x.variant_id) || null) : null,
+    }));
+  const images = media.map(item => item.url);
+
   const variantPrice = variants.map(v => v.price).find(v => v !== null && v !== undefined);
   const numericPrice = row.base_price ?? variantPrice ?? null;
   const mappedVariants = variants.map(variant => {
@@ -65,6 +70,7 @@ function mapDbProduct(row: DbProduct): Product {
     price: numericPrice === null ? null : Number(numericPrice),
     image: images[0] || "/images/product-cream-set.webp",
     images: images.length ? images : ["/images/product-cream-set.webp"],
+    media: media.length ? media : [{ url: "/images/product-cream-set.webp", color: null }],
     colors: unique(variants.map(v => v.color)).length ? unique(variants.map(v => v.color)) : ["Standart"],
     sizes: unique(variants.map(v => v.size)).length ? unique(variants.map(v => v.size)) : ["Standart"],
     badge: row.is_featured ? "Öne Çıkan" : undefined,
@@ -80,7 +86,7 @@ async function fetchDbProducts() {
     .select(`
       id, slug, name, description, gender, product_type, base_price, compare_at_price,
       is_active, is_featured, created_at,
-      product_images(url, sort_order, alt_text),
+      product_images(url, sort_order, alt_text, variant_id),
       product_variants(id, sku, color, size, price, is_active, inventory(stock, reserved))
     `)
     .eq("is_active", true)

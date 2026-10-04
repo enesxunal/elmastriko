@@ -6,7 +6,7 @@ import { ImagePlus, Loader2 } from "lucide-react";
 import ProductImagePicker from "./ProductImagePicker";
 import { createClient } from "@/lib/supabase/client";
 
-export default function ProductMediaUploadForm({productId,productName,startOrder}:{productId:string;productName:string;startOrder:number}) {
+export default function ProductMediaUploadForm({productId,productName,startOrder,colorVariants=[]}:{productId:string;productName:string;startOrder:number;colorVariants?:Array<{id:string;color:string}>}) {
   const router=useRouter();
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState("");
@@ -20,6 +20,7 @@ export default function ProductMediaUploadForm({productId,productName,startOrder
     const form=event.currentTarget;
     const fd=new FormData(form);
     const alt=String(fd.get("alt_text")||"").trim()||productName;
+    const variantId=String(fd.get("variant_id")||"").trim()||null;
     const files=fd.getAll("images").filter((item):item is File=>item instanceof File&&item.size>0).slice(0,8);
     if(!files.length){
       setError("En az bir görsel seçin.");
@@ -43,6 +44,7 @@ export default function ProductMediaUploadForm({productId,productName,startOrder
           product_id:productId,
           url,
           alt_text:alt,
+          variant_id:variantId,
           sort_order:startOrder+index,
         }).select("id").single();
         if(imageError) throw imageError;
@@ -65,6 +67,7 @@ export default function ProductMediaUploadForm({productId,productName,startOrder
     <ProductImagePicker/>
     <div className="product-media-meta">
       <div className="product-field"><label>Görsel alt metni</label><input name="alt_text" placeholder={productName+" ürün görseli"}/></div>
+      <div className="product-field"><label>Görsel rengi</label><select name="variant_id" defaultValue=""><option value="">Tüm renklerde göster</option>{colorVariants.map(item=><option key={item.id} value={item.id}>{item.color}</option>)}</select></div>
       <button className="admin-primary-button" type="submit" disabled={busy}>{busy?<><Loader2 size={15} className="spin"/> Yükleniyor...</>:<><ImagePlus size={15}/> Seçilenleri yükle</>}</button>
     </div>
   </form>;

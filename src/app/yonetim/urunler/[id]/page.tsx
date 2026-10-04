@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import ProductTaxonomyFields from "@/components/ProductTaxonomyFields";
 import ProductMediaUploadForm from "@/components/ProductMediaUploadForm";
-import { createVariant, createVariantMatrix, deleteProduct, deleteProductImage, deleteVariant, updateProduct, updateVariant } from "../../actions";
+import { createVariant, createVariantMatrix, deleteProduct, deleteProductImage, deleteVariant, updateProduct, updateProductImageVariant, updateVariant } from "../../actions";
 
 export default async function ProductAdminDetail({
   params,
@@ -20,7 +20,7 @@ export default async function ProductAdminDetail({
   const [{data:product},{data:variants},{data:images},{data:productOptionsRow}] = await Promise.all([
     supabase.from("products").select("id,name,slug,gender,product_type,base_price,compare_at_price,description,category_id,is_active,is_featured").eq("id",id).maybeSingle(),
     supabase.from("product_variants").select("id,sku,color,size,price,is_active,inventory(stock,reserved)").eq("product_id",id).order("created_at"),
-    supabase.from("product_images").select("id,url,alt_text,sort_order").eq("product_id",id).order("sort_order"),
+    supabase.from("product_images").select("id,url,alt_text,sort_order,variant_id").eq("product_id",id).order("sort_order"),
     supabase.from("site_settings").select("value").eq("key","product_options").maybeSingle(),
   ]);
   if(!product) notFound();
@@ -28,6 +28,7 @@ export default async function ProductAdminDetail({
   const productOptions=(productOptionsRow?.value||{}) as {colors?:string[];sizes?:string[]};
   const optionColors=Array.isArray(productOptions.colors)&&productOptions.colors.length?productOptions.colors:["Siyah","Beyaz","Ekru","Lacivert","Bordo","Yeşil","Haki","Gri","Vizon","Bej","Mürdüm"];
   const optionSizes=Array.isArray(productOptions.sizes)&&productOptions.sizes.length?productOptions.sizes:["S","M","L","XL","XXL"];
+  const colorVariants=[...new Map((variants||[]).filter(vr=>vr.color).map(vr=>[vr.color,vr])).values()];
 
   const totalStock=(variants||[]).reduce((sum,variant)=>{
     const inv=Array.isArray(variant.inventory)?variant.inventory[0]:variant.inventory;
@@ -82,7 +83,7 @@ export default async function ProductAdminDetail({
         <section className="product-editor-card">
           <div className="product-editor-card-head"><div><span>2</span><div><h2>Görseller</h2><p>İlk görsel kapak görselidir. Bir seferde en fazla 8 görsel yükleyebilirsiniz.</p></div></div><b>{images?.length||0} görsel</b></div>
 
-          <ProductMediaUploadForm productId={id} productName={product.name} startOrder={(images?.at(-1)?.sort_order??-1)+1}/>
+          <ProductMediaUploadForm productId={id} productName={product.name} startOrder={(images?.at(-1)?.sort_order??-1)+1} colorVariants={colorVariants.map(vr=>({id:vr.id,color:vr.color||"Standart"}))}/>
 
           <div className="product-gallery-admin">
             {images?.map((img,index)=>{
@@ -90,6 +91,7 @@ export default async function ProductAdminDetail({
               return <article key={img.id}>
                 <div className="product-gallery-image"><img src={url} alt={img.alt_text||product.name}/>{index===0&&<span>Kapak</span>}</div>
                 <div className="product-gallery-info"><div><strong>{img.alt_text||"Alt metin yok"}</strong><small>Sıra: {img.sort_order}</small></div><form action={deleteProductImage}><input type="hidden" name="product_id" value={id}/><input type="hidden" name="id" value={img.id}/><button className="icon-danger" aria-label="Görseli sil"><Trash2 size={15}/></button></form></div>
+                <form action={updateProductImageVariant} className="product-image-color-map"><input type="hidden" name="product_id" value={id}/><input type="hidden" name="id" value={img.id}/><label>Bu görsel hangi renge ait?</label><div><select name="variant_id" defaultValue={img.variant_id||""}><option value="">Tüm renklerde göster</option>{colorVariants.map(vr=><option key={vr.id} value={vr.id}>{vr.color}</option>)}</select><button className="admin-secondary-button" type="submit">Kaydet</button></div></form>
               </article>;
             })}
             {!images?.length&&<div className="product-gallery-empty"><ImagePlus size={28}/><strong>Henüz görsel yok</strong><span>Yukarıdan ürün görsellerini sürükleyip bırakabilirsiniz.</span></div>}

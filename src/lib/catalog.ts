@@ -6,6 +6,7 @@ export type Product = {
   price: number | null;
   image: string;
   images: string[];
+  media?: Array<{ url: string; color?: string | null }>;
   colors: string[];
   sizes: string[];
   badge?: string;

@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
-import ProductPurchase from "@/components/ProductPurchase";
-import ProductGallery from "@/components/ProductGallery";
+import ProductDetailClient from "@/components/ProductDetailClient";
 import ProductCard from "@/components/ProductCard";
 import { getProductBySlug, getProducts } from "@/lib/catalog-db";
 
@@ -79,8 +78,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}/>
     <StoreHeader/>
     <main className="product-page">
-      <ProductGallery images={product.images} name={product.name}/>
-      <aside className="product-detail"><ProductPurchase product={product}/></aside>
+      <ProductDetailClient product={product}/>
     </main>
     {related.length > 0 && <section className="related-section"><div className="related-head"><span>TAMAMLAYAN PARÇALAR</span><h2>Bunları da sevebilirsiniz.</h2></div><div className="catalog-grid">{related.map(p => <ProductCard key={p.slug} product={p}/>)}</div></section>}
     <StoreFooter/>

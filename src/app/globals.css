@@ -981,3 +981,5 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
     width:100%;
   }
 }
+
+.product-image-color-map{display:grid;gap:6px;padding:10px 12px 12px;border-top:1px solid #ece6dd}.product-image-color-map label{font-size:8px;font-weight:700;letter-spacing:.08em;color:#766e64}.product-image-color-map>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.product-image-color-map select{min-width:0;height:38px;border:1px solid #d8d1c7;border-radius:9px;background:#fff;padding:0 10px;font-size:9px;color:#353631}.product-image-color-map .admin-secondary-button{height:38px;padding:0 12px}

@@ -6,11 +6,13 @@ import { Product, formatPrice } from "@/lib/catalog";
 import { useStore } from "./StoreProvider";
 import { useMemo, useState } from "react";
 
-export default function ProductPurchase({ product }: { product: Product }) {
+export default function ProductPurchase({ product, selectedColor, onColorChange }: { product: Product; selectedColor?: string; onColorChange?: (color: string) => void }) {
   const { addToCart, favorites, toggleFavorite } = useStore();
   const initialVariant = product.variants?.find(variant => variant.available > 0) || product.variants?.[0];
   const [size, setSize] = useState(initialVariant?.size || product.sizes[0] || "");
-  const [color, setColor] = useState(initialVariant?.color || product.colors[0] || "");
+  const [internalColor, setInternalColor] = useState(initialVariant?.color || product.colors[0] || "");
+  const color = selectedColor ?? internalColor;
+  const setColor = (next: string) => { setInternalColor(next); onColorChange?.(next); };
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const isFavorite = favorites.includes(product.slug);
