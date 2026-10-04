@@ -8,17 +8,22 @@ import { getProducts, getProductTypes } from "@/lib/catalog-db";
 
 const siteUrl = "https://www.elmastriko.com";
 
-export const metadata: Metadata = {
-  title: "Kadın Triko Modelleri | Hırka, Kazak ve Takım",
-  description: "Elmas Triko kadın triko modellerini keşfedin. Yeni sezon hırka, kazak ve triko takım seçeneklerini güncel renk, beden, fiyat ve stok bilgileriyle online inceleyin.",
-  alternates: { canonical: "/kadin" },
-  openGraph: {
-    title: "Kadın Triko Modelleri | Elmas Triko",
-    description: "Yeni sezon kadın triko, hırka ve takım modellerini Elmas Triko online mağazada keşfedin.",
-    url: `${siteUrl}/kadin`,
-    type: "website",
-  },
-};
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ type?: string; sort?: string }> }): Promise<Metadata> {
+  const params = await searchParams;
+  const filtered = Boolean(params.type || params.sort);
+  return {
+    title: "Kadın Triko Modelleri | Hırka, Kazak ve Takım",
+    description: "Elmas Triko kadın triko modellerini keşfedin. Yeni sezon hırka, kazak ve triko takım seçeneklerini güncel renk, beden, fiyat ve stok bilgileriyle online inceleyin.",
+    alternates: { canonical: "/kadin" },
+    robots: filtered ? { index: false, follow: true } : { index: true, follow: true },
+    openGraph: {
+      title: "Kadın Triko Modelleri | Elmas Triko",
+      description: "Yeni sezon kadın triko, hırka ve takım modellerini Elmas Triko online mağazada keşfedin.",
+      url: `${siteUrl}/kadin`,
+      type: "website",
+    },
+  };
+}
 
 export default async function WomenPage({ searchParams }: { searchParams: Promise<{ type?: string; sort?: "newest" | "price-asc" | "price-desc" }> }) {
   const params = await searchParams;

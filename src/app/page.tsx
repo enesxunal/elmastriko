@@ -3,7 +3,7 @@ import HomePageClient from "@/components/HomePageClient";
 import { getProducts } from "@/lib/catalog-db";
 
 export const metadata: Metadata = {
-  title: "Elmas Triko | Resmi Online Mağaza ve Triko Modelleri",
+  title: { absolute: "Elmas Triko | Resmi Online Mağaza ve Triko Modelleri" },
   description: "Elmas Triko resmi online mağazası. Kadın triko, hırka, kazak, takım ve yeni sezon koleksiyonlarını keşfedin; güncel renk, beden ve stok seçeneklerini inceleyin.",
   alternates: { canonical: "/" },
   openGraph: {

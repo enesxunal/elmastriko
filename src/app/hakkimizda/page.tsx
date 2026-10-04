@@ -6,7 +6,7 @@ import { company } from "@/lib/company";
 const siteUrl = "https://www.elmastriko.com";
 
 export const metadata: Metadata = {
-  title: "Elmas Triko Hakkında | Resmi Marka ve Online Mağaza",
+  title: "Hakkımızda | Resmi Marka ve Online Mağaza",
   description: "Elmas Triko markasını, kadın ve erkek triko koleksiyonlarını ve resmi şirket bilgilerini keşfedin. Elmas Triko resmi online mağazası hakkında bilgi alın.",
   alternates: { canonical: "/hakkimizda" },
   openGraph: {

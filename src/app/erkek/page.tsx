@@ -5,14 +5,15 @@ import ProductCard from "@/components/ProductCard";
 import CatalogFilters from "@/components/CatalogFilters";
 import { getProducts, getProductTypes } from "@/lib/catalog-db";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const products=await getProducts({gender:"erkek"});
+export async function generateMetadata({ searchParams }: { searchParams: Promise<{ type?: string; sort?: string }> }): Promise<Metadata> {
+  const [products, params]=await Promise.all([getProducts({gender:"erkek"}), searchParams]);
   const hasProducts=products.length>0;
+  const filtered=Boolean(params.type||params.sort);
   return {
     title:"Erkek Triko Modelleri ve Yeni Sezon Koleksiyonu",
     description:"Elmas Triko erkek triko modelleri: yeni sezon kazak, hırka ve zamansız örgü parçaları online keşfedin.",
     alternates:{canonical:"/erkek"},
-    robots:hasProducts?{index:true,follow:true}:{index:false,follow:true}
+    robots:hasProducts&&!filtered?{index:true,follow:true}:{index:false,follow:true}
   };
 }
 
