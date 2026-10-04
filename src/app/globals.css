@@ -948,3 +948,36 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
     object-fit:cover;
   }
 }
+
+/* Product gallery viewport-fit correction */
+@media(min-width:901px){
+  .product-page{
+    grid-template-columns:minmax(460px,620px) minmax(0,1fr);
+    gap:30px;
+  }
+  .product-gallery{
+    width:fit-content;
+    max-width:100%;
+    justify-self:center;
+  }
+  .product-gallery-stage{
+    height:min(72vh,700px);
+    width:auto;
+    max-width:100%;
+    aspect-ratio:1121 / 1403;
+  }
+  .product-gallery-rail,
+  .product-gallery-slide{
+    width:100%;
+    height:100%;
+  }
+  .product-gallery-slide img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    object-position:center;
+  }
+  .product-gallery-thumbs{
+    width:100%;
+  }
+}
