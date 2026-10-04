@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const product = await getProductBySlug(slug);
   if (!product) return {};
   const title = product.name;
-  const description = product.description || `${product.name} - Elmas Triko kadın ve erkek triko koleksiyonları.`;
+  const description = product.description ? `${product.description} Elmas Triko online mağazada renk, beden ve stok seçeneklerini inceleyin.` : `${product.name} - Elmas Triko ${product.type.toLocaleLowerCase("tr-TR")} modeli. Renk, beden, fiyat ve stok seçeneklerini online inceleyin.`;
   return {
     title,
     description,
@@ -50,12 +50,20 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     image: product.images.map(src => src.startsWith("http") ? src : siteUrl + src),
     category: product.type,
     brand: { "@type": "Brand", name: "Elmas Triko" },
+    color: product.colors.join(", "),
+    size: product.sizes.join(", "),
+    additionalProperty: [
+      { "@type": "PropertyValue", name: "Cinsiyet", value: product.category === "kadin" ? "Kadın" : "Erkek" },
+      { "@type": "PropertyValue", name: "Ürün Tipi", value: product.type },
+    ],
     ...(product.price !== null ? {
       offers: {
         "@type": "Offer",
         url: `${siteUrl}/urun/${product.slug}`,
         priceCurrency: "TRY",
         price: product.price,
+        seller: { "@type": "Organization", name: "Elmas Triko", url: siteUrl },
+        itemCondition: "https://schema.org/NewCondition",
         ...(inStock !== undefined ? {
           availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
         } : {}),
@@ -80,6 +88,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <main className="product-page">
       <ProductDetailClient product={product}/>
     </main>
+    <section className="product-seo-copy" aria-labelledby="product-seo-heading">
+      <span>ELMAS TRİKO ÜRÜN DETAYI</span>
+      <h2 id="product-seo-heading">{product.name} hakkında</h2>
+      <p>{product.description} Bu {product.category === "kadin" ? "kadın" : "erkek"} {product.type.toLocaleLowerCase("tr-TR")} modeli {product.colors.join(", ")} renk seçenekleri ve {product.sizes.join(", ")} beden seçenekleriyle sunulur. Güncel stok ve fiyat bilgisini ürün seçim alanından kontrol edebilirsiniz.</p>
+    </section>
     {related.length > 0 && <section className="related-section"><div className="related-head"><span>TAMAMLAYAN PARÇALAR</span><h2>Bunları da sevebilirsiniz.</h2></div><div className="catalog-grid">{related.map(p => <ProductCard key={p.slug} product={p}/>)}</div></section>}
     <StoreFooter/>
   </>;
