@@ -40,18 +40,36 @@ export default async function BlogDetail({params}:{params:Promise<{slug:string}>
   const articleSchema={
     "@context":"https://schema.org",
     "@type":"Article",
+    "@id":`${siteUrl}/blog/${post.slug}#article`,
     headline:post.title,
     description:post.seo_description||post.excerpt||undefined,
     image:post.cover_image?[post.cover_image.startsWith("http")?post.cover_image:siteUrl+post.cover_image]:undefined,
     datePublished:post.published_at||undefined,
     dateModified:post.updated_at||post.published_at||undefined,
-    mainEntityOfPage:`${siteUrl}/blog/${post.slug}`,
-    author:{"@type":"Organization","name":"Elmas Triko"},
-    publisher:{"@type":"Organization","name":"Elmas Triko","logo":{"@type":"ImageObject","url":`${siteUrl}/elmas-triko.png`}}
+    mainEntityOfPage:{"@type":"WebPage","@id":`${siteUrl}/blog/${post.slug}`},
+    author:{"@id":`${siteUrl}/#organization`},
+    publisher:{"@id":`${siteUrl}/#organization`},
+    isPartOf:{"@id":`${siteUrl}/#website`},
+    about:[
+      {"@type":"Thing","name":"Triko"},
+      {"@type":"Brand","name":"Elmas Triko"}
+    ],
+    inLanguage:"tr-TR"
+  };
+
+  const breadcrumbSchema={
+    "@context":"https://schema.org",
+    "@type":"BreadcrumbList",
+    itemListElement:[
+      {"@type":"ListItem",position:1,name:"Ana Sayfa",item:siteUrl},
+      {"@type":"ListItem",position:2,name:"Elmas Journal",item:`${siteUrl}/blog`},
+      {"@type":"ListItem",position:3,name:post.title,item:`${siteUrl}/blog/${post.slug}`}
+    ]
   };
 
   return <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(articleSchema)}}/>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(breadcrumbSchema)}}/>
     <StoreHeader/>
     <main className="article-page">
       <header>

@@ -24,7 +24,8 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const initialProducts = (await getProducts()).slice(0, 4).map(product => ({
+  const products = await getProducts();
+  const initialProducts = products.slice(0, 4).map(product => ({
     slug: product.slug,
     name: product.name,
     price: product.price,
@@ -32,5 +33,40 @@ export default async function HomePage() {
     colors: product.colors,
     badge: product.badge,
   }));
-  return <HomePageClient initialProducts={initialProducts}/>;
+
+  const homeSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": "https://www.elmastriko.com/#webpage",
+    url: "https://www.elmastriko.com",
+    name: "Elmas Triko | Resmi Online Mağaza ve Triko Modelleri",
+    description: metadata.description,
+    isPartOf: { "@id": "https://www.elmastriko.com/#website" },
+    about: { "@id": "https://www.elmastriko.com/#organization" },
+    primaryImageOfPage: {
+      "@type": "ImageObject",
+      url: "https://www.elmastriko.com/images/hero-banner.webp",
+    },
+    inLanguage: "tr-TR",
+  };
+
+  const featuredProductsSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Elmas Triko öne çıkan ürünler",
+    numberOfItems: initialProducts.length,
+    itemListElement: initialProducts.map((product, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: `https://www.elmastriko.com/urun/${product.slug}`,
+      name: product.name,
+      image: product.image.startsWith("http") ? product.image : `https://www.elmastriko.com${product.image}`,
+    })),
+  };
+
+  return <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homeSchema) }}/>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(featuredProductsSchema) }}/>
+    <HomePageClient initialProducts={initialProducts}/>
+  </>;
 }

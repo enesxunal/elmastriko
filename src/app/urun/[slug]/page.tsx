@@ -41,13 +41,51 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   const related = (await getProducts({ gender: product.category })).filter(p => p.slug !== product.slug).slice(0, 4);
   const inStock = product.variants?.length ? product.variants.some(variant => variant.available > 0) : undefined;
-
-  const productSchema = {
-    "@context": "https://schema.org",
+  const absoluteImages = product.images.map(src => src.startsWith("http") ? src : siteUrl + src);
+  const variantSchemas = (product.variants || []).map(variant => ({
     "@type": "Product",
+    name: [product.name, variant.color, variant.size].filter(Boolean).join(" - "),
+    sku: variant.sku || undefined,
+    color: variant.color || undefined,
+    size: variant.size || undefined,
+    image: absoluteImages,
+    brand: { "@type": "Brand", name: "Elmas Triko" },
+    offers: {
+      "@type": "Offer",
+      url: `${siteUrl}/urun/${product.slug}`,
+      priceCurrency: "TRY",
+      price: variant.price ?? product.price ?? undefined,
+      availability: variant.available > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      itemCondition: "https://schema.org/NewCondition",
+      seller: { "@id": `${siteUrl}/#organization` },
+    },
+  }));
+
+  const productSchema = product.variants?.length ? {
+    "@context": "https://schema.org",
+    "@type": "ProductGroup",
+    "@id": `${siteUrl}/urun/${product.slug}#product`,
     name: product.name,
     description: product.description,
-    image: product.images.map(src => src.startsWith("http") ? src : siteUrl + src),
+    url: `${siteUrl}/urun/${product.slug}`,
+    image: absoluteImages,
+    category: product.type,
+    brand: { "@type": "Brand", name: "Elmas Triko" },
+    productGroupID: product.slug,
+    variesBy: ["https://schema.org/color", "https://schema.org/size"],
+    hasVariant: variantSchemas,
+    additionalProperty: [
+      { "@type": "PropertyValue", name: "Cinsiyet", value: product.category === "kadin" ? "Kadın" : "Erkek" },
+      { "@type": "PropertyValue", name: "Ürün Tipi", value: product.type },
+    ],
+  } : {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "@id": `${siteUrl}/urun/${product.slug}#product`,
+    name: product.name,
+    description: product.description,
+    url: `${siteUrl}/urun/${product.slug}`,
+    image: absoluteImages,
     category: product.type,
     brand: { "@type": "Brand", name: "Elmas Triko" },
     color: product.colors.join(", "),
@@ -62,7 +100,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
         url: `${siteUrl}/urun/${product.slug}`,
         priceCurrency: "TRY",
         price: product.price,
-        seller: { "@type": "Organization", name: "Elmas Triko", url: siteUrl },
+        seller: { "@id": `${siteUrl}/#organization` },
         itemCondition: "https://schema.org/NewCondition",
         ...(inStock !== undefined ? {
           availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",

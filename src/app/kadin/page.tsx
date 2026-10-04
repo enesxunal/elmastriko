@@ -44,9 +44,12 @@ export default async function WomenPage({ searchParams }: { searchParams: Promis
   const collectionSchema = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
+    "@id": `${siteUrl}/kadin#collection`,
     name: "Elmas Triko Kadın Triko Koleksiyonu",
     url: `${siteUrl}/kadin`,
     description: "Kadın triko, hırka ve takım modellerinden oluşan Elmas Triko koleksiyonu.",
+    isPartOf: { "@id": `${siteUrl}/#website` },
+    about: { "@id": `${siteUrl}/#organization` },
     mainEntity: {
       "@type": "ItemList",
       numberOfItems: list.length,
@@ -59,9 +62,35 @@ export default async function WomenPage({ searchParams }: { searchParams: Promis
     },
   };
 
+  const faqs = [
+    {
+      question: "Kadın triko seçerken nelere dikkat edilmeli?",
+      answer: "Modelin kalıbını, kullanılacağı mevsimi, renk seçeneklerini ve beden bilgisini birlikte değerlendirin. Elmas Triko ürün sayfalarında mevcut renk, beden, fiyat ve stok seçeneklerini karşılaştırabilirsiniz.",
+    },
+    {
+      question: "Triko hırka ve kazak arasında nasıl seçim yapılır?",
+      answer: "Hırkalar katmanlı kullanım ve açılıp kapanabilen kombinler için daha esnek bir seçenek sunarken, kazaklar tek parça üst giyim olarak öne çıkar. Seçimi kullanım alışkanlığınıza ve kombinlemek istediğiniz alt parçalara göre yapabilirsiniz.",
+    },
+    {
+      question: "Elmas Triko kadın ürünlerinde renk ve beden seçenekleri nereden görülür?",
+      answer: "Her ürünün detay sayfasında güncel renk ve beden seçenekleri, stok durumu, ürün görselleri ve fiyat bilgisi birlikte gösterilir.",
+    },
+  ];
+
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map(item => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
+  };
+
   return <>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}/>
     <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionSchema) }}/>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}/>
     <StoreHeader/>
     <main className="listing-page">
       <div className="listing-hero women-listing">
@@ -85,6 +114,9 @@ export default async function WomenPage({ searchParams }: { searchParams: Promis
           <Link href="/blog/kadin-triko-hirka-nasil-kombinlenir">Hırka kombin rehberi</Link>
           <Link href="/blog/kadin-triko-kazak-secimi">Kazak seçim rehberi</Link>
           <Link href="/blog/triko-takim-nasil-kombinlenir">Triko takım kombin rehberi</Link>
+        </div>
+        <div className="seo-faq-grid">
+          {faqs.map(item => <article key={item.question}><h3>{item.question}</h3><p>{item.answer}</p></article>)}
         </div>
       </section>
     </main>
