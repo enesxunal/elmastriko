@@ -72,7 +72,7 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
             </div>
             <div className="mobile-feature-links">
               <a href="/yeni-gelenler">Yeni Gelenler <ArrowRight size={14}/></a>
-              <a href="#koleksiyon">Elmas Seçkisi <ArrowRight size={14}/></a>
+              <a href="/yeni-gelenler">Elmas Seçkisi <ArrowRight size={14}/></a>
             </div>
             <div className="mobile-menu-secondary">
               <a href="/hesabim">Hesabım</a><a href="/favoriler">Favoriler</a><a href="/siparis-takip">Sipariş Takibi</a>
@@ -132,14 +132,14 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
 
         <div className="header-right">
           <div className="mega-trigger collection-trigger">
-            <a className="collection-link mega-link" href="#koleksiyon">Koleksiyonlar</a>
+            <a className="collection-link mega-link" href="/yeni-gelenler">Koleksiyonlar</a>
             <div className="mega-menu">
               <div className="mega-menu-inner collections-mega">
                 <div className="mega-kicker">Elmas Edit</div>
                 <a className="collection-tile" href="/yeni-gelenler"><span>01</span><strong>Yeni Sezon</strong><small>Son eklenen parçalar</small></a>
-                <a className="collection-tile" href="/arama?q=desenli"><span>02</span><strong>Signature Knit</strong><small>Desen ve jakar seçkisi</small></a>
-                <a className="collection-tile" href="/arama?q=klasik"><span>03</span><strong>Modern Klasikler</strong><small>Zamansız triko parçalar</small></a>
-                <a className="collection-tile dark" href="#koleksiyon"><span>04</span><strong>Tüm Koleksiyonlar</strong><small>Elmas dünyasını keşfet</small></a>
+                <a className="collection-tile" href="/kadin"><span>02</span><strong>Signature Knit</strong><small>Kadın koleksiyonunu keşfet</small></a>
+                <a className="collection-tile" href="/erkek"><span>03</span><strong>Modern Klasikler</strong><small>Erkek koleksiyonunu keşfet</small></a>
+                <a className="collection-tile dark" href="/yeni-gelenler"><span>04</span><strong>Tüm Koleksiyonlar</strong><small>Güncel ürünleri keşfet</small></a>
               </div>
             </div>
           </div>
@@ -254,7 +254,7 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
           <p className="eyebrow">SIGNATURE KNIT</p>
           <h2>Desen,<br/>Elmas’ın<br/><em>imzası.</em></h2>
           <p>Geometrik yüzeyler, klasik örgü teknikleri ve modern renk birliktelikleri. Markanın karakterini taşıyan güçlü parçalar.</p>
-          <a href="/arama?q=desenli" className="text-link">Desenli trikoları keşfet <ArrowRight size={16}/></a>
+          <a href="/kadin" className="text-link">Kadın koleksiyonunu keşfet <ArrowRight size={16}/></a>
         </div>
         <div className="signature-visual">
           <img src="/images/signature-knit.webp" alt="Elmas Triko desen seçkisi"/>

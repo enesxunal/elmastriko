@@ -44,7 +44,7 @@ export default function StoreHeader() {
 
             <div className="mobile-feature-links">
               <Link href="/yeni-gelenler">Yeni Gelenler <ArrowRight size={14}/></Link>
-              <Link href="/arama">Elmas Seçkisi <ArrowRight size={14}/></Link>
+              <Link href="/yeni-gelenler">Elmas Seçkisi <ArrowRight size={14}/></Link>
             </div>
 
             <div className="mobile-menu-secondary">
@@ -114,14 +114,14 @@ export default function StoreHeader() {
 
         <div className="header-right">
           <div className="mega-trigger collection-trigger">
-            <Link className="collection-link mega-link" href="/arama">Koleksiyonlar</Link>
+            <Link className="collection-link mega-link" href="/yeni-gelenler">Koleksiyonlar</Link>
             <div className="mega-menu">
               <div className="mega-menu-inner collections-mega">
                 <div className="mega-kicker">Elmas Edit</div>
                 <Link className="collection-tile" href="/yeni-gelenler"><span>01</span><strong>Yeni Sezon</strong><small>Son eklenen parçalar</small></Link>
-                <Link className="collection-tile" href="/arama?q=desenli"><span>02</span><strong>Signature Knit</strong><small>Desen ve jakar seçkisi</small></Link>
-                <Link className="collection-tile" href="/arama?q=klasik"><span>03</span><strong>Modern Klasikler</strong><small>Zamansız triko parçalar</small></Link>
-                <Link className="collection-tile dark" href="/arama"><span>04</span><strong>Tüm Koleksiyonlar</strong><small>Elmas dünyasını keşfet</small></Link>
+                <Link className="collection-tile" href="/kadin"><span>02</span><strong>Signature Knit</strong><small>Kadın koleksiyonunu keşfet</small></Link>
+                <Link className="collection-tile" href="/erkek"><span>03</span><strong>Modern Klasikler</strong><small>Erkek koleksiyonunu keşfet</small></Link>
+                <Link className="collection-tile dark" href="/yeni-gelenler"><span>04</span><strong>Tüm Koleksiyonlar</strong><small>Güncel ürünleri keşfet</small></Link>
               </div>
             </div>
           </div>
