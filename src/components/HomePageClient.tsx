@@ -28,9 +28,9 @@ function displayPrice(price: number | null) {
 }
 
 const edits = [
-  { title: "Modern Klasikler", eyebrow: "01 / KADIN", image: "/images/edit-modern-classics.webp" },
-  { title: "Yeni Erkek", eyebrow: "02 / ERKEK", image: "/images/edit-new-men.webp" },
-  { title: "Desen Seçkisi", eyebrow: "03 / JAKAR", image: "/images/edit-pattern-selection.webp" },
+  { title: "Kadın Koleksiyonu", eyebrow: "01 / KADIN", image: "/images/edit-modern-classics.webp", href: "/kadin" },
+  { title: "Erkek Koleksiyonu", eyebrow: "02 / ERKEK", image: "/images/edit-new-men.webp", href: "/erkek" },
+  { title: "Yeni Gelenler", eyebrow: "03 / YENİ", image: "/images/edit-pattern-selection.webp", href: "/yeni-gelenler" },
 ];
 
 const social = [
@@ -270,7 +270,7 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
         </div>
         <div className="edits-grid">
           {edits.map((edit, i) => (
-            <a className={"edit-card edit-" + (i + 1)} href={"/arama?q=" + encodeURIComponent(edit.title)} key={edit.title}>
+            <a className={"edit-card edit-" + (i + 1)} href={edit.href} key={edit.title}>
               <img src={edit.image} alt={edit.title}/>
               <div className="edit-shade"/>
               <span>{edit.eyebrow}</span>
