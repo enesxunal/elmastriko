@@ -28,9 +28,8 @@ export default function StoreHeader() {
                 <Link href="/yeni-gelenler">Yeni Gelenler</Link>
                 <Link href="/kadin/hirka">Hırkalar</Link>
                 <Link href="/kadin/kazak">Kazaklar</Link>
-                <Link href="/arama?type=Ceket">Ceketler</Link>
-                <Link href="/arama?q=fermuarlı">Fermuarlı Triko</Link>
-                <Link href="/arama?q=desenli">Desenli Triko</Link>
+                <Link href="/kadin/takim">Takımlar</Link>
+                <Link href="/kadin/triko">Triko</Link>
               </div>
             </div>
 
@@ -39,9 +38,6 @@ export default function StoreHeader() {
               <div className="mobile-subgrid">
                 <Link href="/yeni-gelenler">Yeni Gelenler</Link>
                 <Link href="/arama?type=Kazak">Kazaklar</Link>
-                <Link href="/arama?type=Hırka">Hırkalar</Link>
-                <Link href="/arama?q=fermuarlı">Fermuarlı Modeller</Link>
-                <Link href="/arama?q=desenli">Desenli Modeller</Link>
                 <Link href="/erkek">Tüm Erkek</Link>
               </div>
             </div>
@@ -70,14 +66,12 @@ export default function StoreHeader() {
                   <Link href="/yeni-gelenler">Yeni Gelenler</Link>
                   <Link href="/kadin/hirka">Hırkalar</Link>
                   <Link href="/kadin/kazak">Kazaklar</Link>
-                  <Link href="/arama?type=Ceket">Ceketler</Link>
-                  <Link href="/arama?q=fermuarlı">Fermuarlı Triko</Link>
+                  <Link href="/kadin/takim">Takımlar</Link>
+                  <Link href="/kadin/triko">Triko</Link>
                 </div>
                 <div className="mega-column">
                   <h4>Keşfet</h4>
-                  <Link href="/arama?q=desenli">Desenli Triko</Link>
-                  <Link href="/arama?q=düz">Düz & Zamansız</Link>
-                  <Link href="/yeni-gelenler">Çok Satanlar</Link>
+                  <Link href="/yeni-gelenler">Yeni Gelenler</Link>
                   <Link href="/kadin">Tüm Kadın</Link>
                 </div>
                 <Link className="mega-editorial" href="/kadin">
@@ -97,19 +91,14 @@ export default function StoreHeader() {
                   <h4>Giyim</h4>
                   <Link href="/yeni-gelenler">Yeni Gelenler</Link>
                   <Link href="/arama?type=Kazak">Kazaklar</Link>
-                  <Link href="/arama?type=Hırka">Hırkalar</Link>
-                  <Link href="/arama?q=fermuarlı">Fermuarlı Modeller</Link>
-                  <Link href="/arama?q=desenli">Desenli Modeller</Link>
                 </div>
                 <div className="mega-column">
                   <h4>Keşfet</h4>
-                  <Link href="/arama?q=günlük">Günlük Triko</Link>
-                  <Link href="/arama?q=klasik">Klasik Seçki</Link>
-                  <Link href="/yeni-gelenler">Çok Satanlar</Link>
+                  <Link href="/yeni-gelenler">Yeni Gelenler</Link>
                   <Link href="/erkek">Tüm Erkek</Link>
                 </div>
                 <Link className="mega-editorial" href="/erkek">
-                  <img src="/images/category-men.webp" alt="Erkek koleksiyonu"/>
+                  <img src="/images/elmas-triko-erkek-krem-polo.webp" alt="Erkek koleksiyonu"/>
                   <div><span>Yeni sezon</span><strong>Erkek / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
                 </Link>
               </div>

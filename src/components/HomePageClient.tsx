@@ -61,14 +61,13 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
               <a className="mobile-menu-parent" href="/kadin">Kadın <ArrowRight size={16}/></a>
               <div className="mobile-subgrid">
                 <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/kadin/hirka">Hırkalar</a><a href="/kadin/kazak">Kazaklar</a>
-                <a href="/arama?type=Ceket">Ceketler</a><a href="/arama?q=fermuarlı">Fermuarlı Triko</a><a href="/arama?q=desenli">Desenli Triko</a>
+                <a href="/kadin/takim">Takımlar</a><a href="/kadin/triko">Triko</a>
               </div>
             </div>
             <div className="mobile-menu-group">
               <a className="mobile-menu-parent" href="/erkek">Erkek <ArrowRight size={16}/></a>
               <div className="mobile-subgrid">
-                <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/arama?type=Kazak">Kazaklar</a><a href="/arama?type=Hırka">Hırkalar</a>
-                <a href="/arama?q=fermuarlı">Fermuarlı Modeller</a><a href="/arama?q=desenli">Desenli Modeller</a><a href="/erkek">Tüm Erkek</a>
+                <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/arama?type=Kazak">Kazaklar</a><a href="/erkek">Tüm Erkek</a>
               </div>
             </div>
             <div className="mobile-feature-links">
@@ -89,11 +88,11 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
                 <div className="mega-kicker">Kadın Koleksiyonu</div>
                 <div className="mega-column">
                   <h4>Giyim</h4>
-                  <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/kadin/hirka">Hırkalar</a><a href="/kadin/kazak">Kazaklar</a><a href="/arama?type=Ceket">Ceketler</a><a href="/arama?q=fermuarlı">Fermuarlı Triko</a>
+                  <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/kadin/hirka">Hırkalar</a><a href="/kadin/kazak">Kazaklar</a><a href="/kadin/takim">Takımlar</a><a href="/kadin/triko">Triko</a>
                 </div>
                 <div className="mega-column">
                   <h4>Keşfet</h4>
-                  <a href="/arama?q=desenli">Desenli Triko</a><a href="/arama?q=düz">Düz & Zamansız</a><a href="/yeni-gelenler">Çok Satanlar</a><a href="/kadin">Tüm Kadın</a>
+                  <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/kadin">Tüm Kadın</a>
                 </div>
                 <a className="mega-editorial" href="/kadin">
                   <img src="/images/category-women.webp" alt="Kadın koleksiyonu"/>
@@ -110,14 +109,14 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
                 <div className="mega-kicker">Erkek Koleksiyonu</div>
                 <div className="mega-column">
                   <h4>Giyim</h4>
-                  <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/arama?type=Kazak">Kazaklar</a><a href="/arama?type=Hırka">Hırkalar</a><a href="/arama?q=fermuarlı">Fermuarlı Modeller</a><a href="/arama?q=desenli">Desenli Modeller</a>
+                  <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/arama?type=Kazak">Kazaklar</a>
                 </div>
                 <div className="mega-column">
                   <h4>Keşfet</h4>
-                  <a href="/arama?q=günlük">Günlük Triko</a><a href="/arama?q=klasik">Klasik Seçki</a><a href="/yeni-gelenler">Çok Satanlar</a><a href="/erkek">Tüm Erkek</a>
+                  <a href="/yeni-gelenler">Yeni Gelenler</a><a href="/erkek">Tüm Erkek</a>
                 </div>
                 <a className="mega-editorial" href="/erkek">
-                  <img src="/images/category-men.webp" alt="Erkek koleksiyonu"/>
+                  <img src="/images/elmas-triko-erkek-krem-polo.webp" alt="Erkek koleksiyonu"/>
                   <div><span>Yeni sezon</span><strong>Erkek / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
                 </a>
               </div>
@@ -207,7 +206,7 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
           <div className="gender-bottom"><h3>Kadın</h3><span>Koleksiyonu keşfet <ArrowRight size={16}/></span></div>
         </a>
         <a className="gender-card men" id="erkek" href="/erkek">
-          <img src="/images/category-men.webp" alt="Erkek koleksiyonu" />
+          <img src="/images/elmas-triko-erkek-krem-polo.webp" alt="Erkek koleksiyonu" />
           <div className="gender-overlay" />
           <div className="gender-top"><span>02</span><span>MEN</span></div>
           <div className="gender-bottom"><h3>Erkek</h3><span>Koleksiyonu keşfet <ArrowRight size={16}/></span></div>
