@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendNewOrderEmails } from "@/lib/mail";
 
 type OrderPayload = {
   email: string;
@@ -92,6 +93,10 @@ export async function POST(request: NextRequest) {
         result.grandTotal = grandTotal;
       }
     }
+  }
+
+  if (result.orderId) {
+    try { await sendNewOrderEmails(result.orderId); } catch (mailError) { console.error("New order mail failed:", mailError); }
   }
 
   return NextResponse.json(result, { status: 201 });

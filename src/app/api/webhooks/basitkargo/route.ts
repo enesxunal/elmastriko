@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendShipmentEmail } from "@/lib/mail";
 
 function normalizedState(status?: string, lastState?: string) {
   return ((lastState || status || "").trim()).toLocaleUpperCase("tr-TR");
@@ -70,7 +71,7 @@ export async function POST(request: NextRequest) {
 
   let shipmentQuery = supabase
     .from("shipments")
-    .select("id,order_id,tracking_code")
+    .select("id,order_id,tracking_code,status")
     .in("provider", ["Sürat Kargo","BasitKargo"]);
 
   if (providerReference) {
@@ -84,7 +85,7 @@ export async function POST(request: NextRequest) {
   if (!shipment && (handlerShipmentCode || barcode)) {
     const fallback = await supabase
       .from("shipments")
-      .select("id,order_id,tracking_code")
+      .select("id,order_id,tracking_code,status")
       .in("provider", ["Sürat Kargo","BasitKargo"])
       .eq("tracking_code", handlerShipmentCode || barcode)
       .limit(1)
@@ -118,6 +119,10 @@ export async function POST(request: NextRequest) {
       .from("orders")
       .update({ status: orderStatus, updated_at: new Date().toISOString() })
       .eq("id", shipment.order_id);
+  }
+
+  if (shipment.status !== mappedStatus) {
+    try { await sendShipmentEmail(shipment.order_id); } catch (mailError) { console.error("BasitKargo status mail failed:",mailError); }
   }
 
   return NextResponse.json({ ok: true });

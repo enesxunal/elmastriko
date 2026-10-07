@@ -6,6 +6,8 @@ import { requireAdmin } from "@/lib/admin";
 import { basitKargo } from "@/lib/integrations/basitkargo";
 import { createNesInvoiceForOrder } from "@/lib/integrations/nes-order-invoice";
 import { BANK_TRANSFER } from "@/lib/payments/bank-transfer";
+import { encryptMailPassword } from "@/lib/mail/crypto";
+import { sendOrderStatusEmail, sendShipmentEmail, verifyMailAccount, type MailAccountKey } from "@/lib/mail";
 
 function v(fd: FormData, key: string) { return String(fd.get(key) || "").trim(); }
 function num(fd: FormData, key: string) { const x = v(fd,key); return x === "" ? null : Number(x); }
@@ -122,7 +124,11 @@ export async function updateOrderStatus(fd: FormData) {
   const { supabase } = await requireAdmin(); const id=v(fd,"id"), status=v(fd,"status");
   const { error } = await supabase.from("orders").update({status,updated_at:new Date().toISOString()}).eq("id",id);
   if (error) redirect("/yonetim/siparisler?error="+encodeURIComponent(error.message));
-  await audit("status_change","order",id,{status}); revalidatePath("/yonetim/siparisler");
+  await audit("status_change","order",id,{status});
+  try { await sendOrderStatusEmail(id); } catch (mailError) { console.error("Order status mail failed:",mailError); }
+  revalidatePath("/yonetim/siparisler");
+  revalidatePath(`/yonetim/siparisler/${id}`);
+  revalidatePath(`/hesabim/siparis/${id}`);
 }
 
 export async function setUserRole(fd: FormData) {
@@ -428,6 +434,7 @@ export async function createBasitKargoShipment(fd: FormData) {
 
     await supabase.from("orders").update({status:"ready_to_ship",updated_at:new Date().toISOString()}).eq("id",orderId);
     await audit("create","shipment",orderId,{provider:"Sürat Kargo",integration:"BasitKargo",providerReference,handlerCode});
+    try { await sendShipmentEmail(orderId); } catch (mailError) { console.error("Shipment mail failed:",mailError); }
   } catch (error) {
     const message = error instanceof Error ? error.message : "BasitKargo gönderisi oluşturulamadı.";
     redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent(message));
@@ -443,7 +450,9 @@ export async function saveShipment(fd: FormData) {
   const existing=await supabase.from("shipments").select("id").eq("order_id",orderId).order("created_at",{ascending:false}).limit(1).maybeSingle();
   const payload={order_id:orderId,provider:"Sürat Kargo",tracking_code:v(fd,"tracking_code")||null,tracking_url:v(fd,"tracking_url")||null,status:v(fd,"status")||"pending",updated_at:new Date().toISOString()};
   if(existing.data?.id) await supabase.from("shipments").update(payload).eq("id",existing.data.id); else await supabase.from("shipments").insert(payload);
-  await audit("update","shipment",orderId,payload); revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`);
+  await audit("update","shipment",orderId,payload);
+  try { await sendShipmentEmail(orderId); } catch (mailError) { console.error("Shipment mail failed:",mailError); }
+  revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`);
 }
 
 export async function createNesInvoice(fd: FormData) {
@@ -484,6 +493,7 @@ export async function savePaymentRecord(fd: FormData) {
   if(payload.status==="paid"&&existing.data?.status!=="paid"){
     try{await createNesInvoiceForOrder(orderId);}catch(error){console.error("NES invoice creation failed after manual payment approval:",error);}
   }
+  try { await sendOrderStatusEmail(orderId, payload.status==="paid" ? "Ödemeniz onaylandı" : "Ödeme durumunuz güncellendi"); } catch (mailError) { console.error("Payment mail failed:",mailError); }
   revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`); revalidatePath("/yonetim/siparisler");
 }
 
@@ -502,6 +512,7 @@ export async function approveBankTransfer(fd: FormData) {
   if(order.payment_status!=="paid"){
     try{await createNesInvoiceForOrder(orderId);}catch(error){console.error("NES invoice creation failed after EFT approval:",error);}
   }
+  try { await sendOrderStatusEmail(orderId, "Ödemeniz onaylandı"); } catch (mailError) { console.error("Bank transfer approval mail failed:",mailError); }
   revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`); revalidatePath("/yonetim/siparisler");
   redirect(`/yonetim/siparisler/${orderId}?payment=approved`);
 }
@@ -516,6 +527,7 @@ export async function rejectBankTransfer(fd: FormData) {
   await supabase.from("payments").update({status:"rejected",raw_response:{...raw,adminRejectedAt:now},updated_at:now}).eq("id",payment.id);
   await supabase.from("orders").update({payment_provider:BANK_TRANSFER.provider,payment_status:"rejected",status:"awaiting_payment",updated_at:now}).eq("id",orderId);
   await audit("reject","bank_transfer_payment",orderId);
+  try { await sendOrderStatusEmail(orderId, "Ödeme bildiriminiz kontrol edildi"); } catch (mailError) { console.error("Bank transfer rejection mail failed:",mailError); }
   revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`); revalidatePath("/yonetim/siparisler");
   redirect(`/yonetim/siparisler/${orderId}?payment=rejected`);
 }
@@ -550,4 +562,71 @@ export async function saveContactSettings(fd: FormData) {
   const value={email:v(fd,"email"),phone:v(fd,"phone"),whatsapp:v(fd,"whatsapp"),instagram:v(fd,"instagram")};
   await supabase.from("site_settings").upsert({key:"contact",value,updated_by:user.id,updated_at:new Date().toISOString()});
   await audit("update","site_setting","contact",value); revalidatePath("/yonetim/ayarlar"); revalidatePath("/iletisim");
+}
+
+export async function saveMailSettings(fd: FormData) {
+  const { supabase, user } = await requireAdmin();
+  const accountKey = v(fd,"account_key") as MailAccountKey;
+  if (!["sales","support"].includes(accountKey)) redirect("/yonetim/ayarlar?mail_error="+encodeURIComponent("Geçersiz mail hesabı."));
+
+  const email = v(fd,"email");
+  const smtpHost = v(fd,"smtp_host") || "mail.webaltyapi.com";
+  const smtpPort = Number(v(fd,"smtp_port") || 587);
+  const smtpSecure = v(fd,"smtp_security") === "ssl";
+  const smtpUser = v(fd,"smtp_user") || email;
+  const password = String(fd.get("smtp_password") || "");
+  const settingKey = "mail_" + accountKey;
+  const existing = await supabase.from("site_settings").select("value").eq("key",settingKey).maybeSingle();
+  const existingValue = (existing.data?.value || {}) as Record<string,unknown>;
+  const encryptedPassword = password ? encryptMailPassword(password) : String(existingValue.smtp_password_encrypted || "");
+
+  if (!email || !smtpUser || !encryptedPassword) {
+    redirect("/yonetim/ayarlar?mail_error="+encodeURIComponent("E-posta, kullanıcı adı ve şifre zorunlu."));
+  }
+
+  const value = {
+    account_key: accountKey,
+    email,
+    smtp_host: smtpHost,
+    smtp_port: smtpPort,
+    smtp_secure: smtpSecure,
+    smtp_user: smtpUser,
+    smtp_password_encrypted: encryptedPassword,
+    imap_host: v(fd,"imap_host") || "mail.webaltyapi.com",
+    imap_port: Number(v(fd,"imap_port") || 993),
+    is_enabled: fd.get("is_enabled") === "on",
+    last_tested_at: existingValue.last_tested_at || null,
+    last_test_status: existingValue.last_test_status || null,
+  };
+  const { error } = await supabase.from("site_settings").upsert({
+    key: settingKey,
+    value,
+    updated_by: user.id,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) redirect("/yonetim/ayarlar?mail_error="+encodeURIComponent(error.message));
+
+  await audit("update","mail_setting",accountKey,{email,smtpHost,smtpPort,smtpSecure});
+  revalidatePath("/yonetim/ayarlar");
+  redirect("/yonetim/ayarlar?mail_saved="+accountKey);
+}
+
+export async function testMailSettings(fd: FormData) {
+  const { supabase, user } = await requireAdmin();
+  const accountKey = v(fd,"account_key") as MailAccountKey;
+  if (!["sales","support"].includes(accountKey)) redirect("/yonetim/ayarlar?mail_error="+encodeURIComponent("Geçersiz mail hesabı."));
+  const settingKey = "mail_" + accountKey;
+  let errorMessage = "";
+  let status = "ok";
+  try {
+    await verifyMailAccount(accountKey);
+  } catch (error) {
+    status = "error";
+    errorMessage = error instanceof Error ? error.message : "SMTP bağlantısı doğrulanamadı.";
+  }
+  const existing = await supabase.from("site_settings").select("value").eq("key",settingKey).maybeSingle();
+  const value = { ...((existing.data?.value || {}) as Record<string,unknown>), last_tested_at:new Date().toISOString(), last_test_status:status };
+  await supabase.from("site_settings").upsert({ key:settingKey, value, updated_by:user.id, updated_at:new Date().toISOString() });
+  if (errorMessage) redirect("/yonetim/ayarlar?mail_error="+encodeURIComponent(errorMessage));
+  redirect("/yonetim/ayarlar?mail_test="+accountKey);
 }

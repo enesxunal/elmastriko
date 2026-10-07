@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { sendWelcomeEmail } from "@/lib/mail";
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
@@ -44,6 +45,7 @@ export async function signUp(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName }, emailRedirectTo: origin + "/auth/callback?next=/hesabim" } });
   if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  try { await sendWelcomeEmail(email, fullName); } catch (mailError) { console.error("Welcome mail failed:",mailError); }
   redirect(returnTo + "?message=" + encodeURIComponent("Kaydınız oluşturuldu. E-posta doğrulaması açıksa gelen kutunuzu kontrol edin."));
 }
 
