@@ -27,7 +27,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
   return <article className="catalog-card">
     <Link href={"/urun/" + product.slug} className="catalog-card-image">
-      <img src={product.image} alt={product.name}/>
+      <img src={product.image} alt={`Elmas Triko ${product.name}`}/>
       {product.badge && <span>{product.badge}</span>}
     </Link>
     <div className="catalog-card-info">

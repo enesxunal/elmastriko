@@ -53,7 +53,7 @@ export default function ProductGallery({
       <div className="product-gallery-rail" ref={railRef} onScroll={handleScroll}>
         {visibleMedia.map((item, index) => (
           <div className="product-gallery-slide" key={item.url + index}>
-            <img src={item.url} alt={name + " " + (index + 1)} loading={index === 0 ? "eager" : "lazy"}/>
+            <img src={item.url} alt={`Elmas Triko ${name}${item.color ? ` - ${item.color}` : selectedColor ? ` - ${selectedColor}` : ""} ürün görseli ${index + 1}`} loading={index === 0 ? "eager" : "lazy"}/>
           </div>
         ))}
       </div>

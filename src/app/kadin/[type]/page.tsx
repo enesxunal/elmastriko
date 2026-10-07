@@ -79,7 +79,8 @@ export default async function WomenTypePage({ params }: { params: Promise<{ type
   const category = categories[type as CategorySlug];
   if (!category) notFound();
 
-  const list = await getProducts({ gender: "kadin", type: category.type });
+  const womenProducts = await getProducts({ gender: "kadin" });
+  const list = womenProducts.filter(product => product.type === category.type);
   if (!list.length) notFound();
 
   const breadcrumbSchema = {

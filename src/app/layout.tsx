@@ -50,6 +50,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     logo:{ "@type":"ImageObject", url:`${siteUrl}/elmas-triko.png` },
     image:`${siteUrl}/images/hero-banner.webp`,
     brand:{ "@type":"Brand", name:"Elmas Triko" },
+    email:"mailto:destek@elmastriko.com",
+    areaServed:"TR",
+    contactPoint:{ "@type":"ContactPoint", contactType:"customer service", email:"destek@elmastriko.com", availableLanguage:["tr"] },
     sameAs:["https://www.instagram.com/elmas_triko/"],
     address:{
       "@type":"PostalAddress",

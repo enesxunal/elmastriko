@@ -8,12 +8,28 @@ import { getProductBySlug, getProducts } from "@/lib/catalog-db";
 
 const siteUrl = "https://www.elmastriko.com";
 
+function productMetaDescription(product: {
+  name: string;
+  type: string;
+  category: "kadin" | "erkek";
+  colors: string[];
+  description: string;
+}) {
+  const audience = product.category === "kadin" ? "kadın" : "erkek";
+  const colors = product.colors.filter(Boolean).slice(0, 3).join(", ");
+  const base = product.name + " - Elmas Triko " + audience + " " + product.type.toLocaleLowerCase("tr-TR") + " modeli.";
+  const detail = colors ? " " + colors + " renk seçeneklerini, beden, fiyat ve güncel stok bilgisini online inceleyin." : " Beden, fiyat ve güncel stok bilgisini online inceleyin.";
+  const description = base + detail;
+  if (description.length <= 158) return description;
+  return description.slice(0, 155).replace(/\s+\S*$/, "").trim() + "...";
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
   if (!product) return {};
   const title = product.name;
-  const description = product.description ? `${product.description} Elmas Triko online mağazada renk, beden ve stok seçeneklerini inceleyin.` : `${product.name} - Elmas Triko ${product.type.toLocaleLowerCase("tr-TR")} modeli. Renk, beden, fiyat ve stok seçeneklerini online inceleyin.`;
+  const description = productMetaDescription(product);
   return {
     title,
     description,
@@ -50,6 +66,8 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     size: variant.size || undefined,
     image: absoluteImages,
     brand: { "@type": "Brand", name: "Elmas Triko" },
+    isVariantOf: { "@id": `${siteUrl}/urun/${product.slug}#product` },
+    audience: { "@type": "PeopleAudience", suggestedGender: product.category === "kadin" ? "female" : "male" },
     offers: {
       "@type": "Offer",
       url: `${siteUrl}/urun/${product.slug}`,
