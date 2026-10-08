@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import HomePageClient from "@/components/HomePageClient";
 import { getProducts } from "@/lib/catalog-db";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: { absolute: "Elmas Triko | Resmi Online Mağaza ve Triko Modelleri" },
   description: "Elmas Triko resmi online mağazası. Kadın triko, hırka, kazak, takım ve yeni sezon koleksiyonlarını keşfedin; güncel renk, beden ve stok seçeneklerini inceleyin.",
