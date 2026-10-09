@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { StoreProvider } from "@/components/StoreProvider";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import { createPublicClient } from "@/lib/supabase/public";
@@ -79,6 +80,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   };
 
   return <html lang="tr"><body>
+    <Script src="https://www.googletagmanager.com/gtag/js?id=G-VSQ8W1YG0W" strategy="afterInteractive" />
+    <Script id="google-analytics-init" strategy="afterInteractive">{`
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-VSQ8W1YG0W');
+    `}</Script>
     <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(organization)}}/>
     <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(website)}}/>
     <AnalyticsTracker/>
