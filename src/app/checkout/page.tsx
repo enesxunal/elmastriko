@@ -8,6 +8,7 @@ import { useStore } from "@/components/StoreProvider";
 import { useCartCatalog } from "@/hooks/useCartCatalog";
 import { useCommerceSettings } from "@/hooks/useCommerceSettings";
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { gaEvent, gaCart } from "@/lib/ga4";
 
 type CreatedOrder = {
   orderId: string;
@@ -86,6 +87,8 @@ export default function CheckoutPage() {
   const freeShipping = subtotal >= freeShippingThreshold;
   const effectiveShippingFee = lines.length === 0 ? 0 : freeShipping ? 0 : shippingFee;
   const total = effectiveShippingFee === null ? null : subtotal + effectiveShippingFee;
+  const checkoutSent=useRef(false);
+  useEffect(()=>{if(!loading && !commerceLoading && lines.length && !checkoutSent.current){checkoutSent.current=true;gaEvent("begin_checkout",gaCart(lines));}},[loading,commerceLoading,lines]);
 
   useEffect(() => {
     if (!paymentSuccess) return;
@@ -160,6 +163,9 @@ export default function CheckoutPage() {
       }
 
       const sameBilling = form.get("sameBilling") === "on";
+      const eventCart=gaCart(lines);
+      gaEvent("add_shipping_info",{...eventCart,shipping_tier:"standard"});
+      gaEvent("add_payment_info",{...eventCart,payment_type:paymentMethod === "eft" ? "bank_transfer" : "card"});
       const orderResponse = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -203,6 +209,10 @@ export default function CheckoutPage() {
       const orderBody = await readJsonResponse<CreatedOrder>(orderResponse);
       if (!orderResponse.ok || !orderBody.orderId) {
         throw new Error(orderBody.error || "Sipariş oluşturulamadı.");
+      }
+
+      if (paymentMethod === "card" && orderBody.orderNo) {
+        sessionStorage.setItem("elmas_ga_purchase_"+orderBody.orderNo,JSON.stringify({...eventCart,transaction_id:orderBody.orderNo}));
       }
 
       if (paymentMethod === "eft") {

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Heart, Minus, Plus, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import { Product, formatPrice } from "@/lib/catalog";
 import { useStore } from "./StoreProvider";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { gaEvent, gaItem } from "@/lib/ga4";
 
 export default function ProductPurchase({ product, selectedColor, onColorChange }: { product: Product; selectedColor?: string; onColorChange?: (color: string) => void }) {
   const { addToCart, favorites, toggleFavorite } = useStore();
@@ -46,6 +47,8 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
       v.available > 0
     );
   };
+
+  useEffect(() => { const item=gaItem(product); if(item) gaEvent("view_item", {currency:"TRY",value:item.price,items:[item]}); }, [product]);
 
   return <>
     <span className="product-category">{product.category === "kadin" ? "Kadın" : "Erkek"} / {product.type}</span>
@@ -101,6 +104,7 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
         onClick={() => {
           if (outOfStock || product.price === null) return;
           addToCart({ slug: product.slug, qty: safeQty, size, color });
+          const item=gaItem(product,safeQty,selectedPrice,color,size); if(item) gaEvent("add_to_cart",{currency:"TRY",value:item.price*safeQty,items:[item]});
           setAdded(true);
         }}
       >

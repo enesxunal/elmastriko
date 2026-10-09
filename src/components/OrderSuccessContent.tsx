@@ -3,11 +3,25 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { useStore } from "@/components/StoreProvider";
+import { gaEvent } from "@/lib/ga4";
 
 export default function OrderSuccessContent({ orderNo }: { orderNo: string }) {
   const { clearCart } = useStore();
 
   useEffect(() => {
+    if(orderNo) void (async()=>{
+      const key="elmas_ga_purchase_"+orderNo;
+      const raw=sessionStorage.getItem(key);
+      if(!raw || localStorage.getItem("elmas_ga_paid_"+orderNo)) return;
+      try {
+        const response=await fetch("/api/analytics/purchase?order="+encodeURIComponent(orderNo),{cache:"no-store"});
+        if(!response.ok || !(await response.json()).paid) return;
+        const payload=JSON.parse(raw);
+        if(payload.transaction_id!==orderNo || !Array.isArray(payload.items)) return;
+        gaEvent("purchase",payload);
+        localStorage.setItem("elmas_ga_paid_"+orderNo,"1");sessionStorage.removeItem(key);
+      }catch{}
+    })();
     clearCart();
   }, [clearCart]);
 
