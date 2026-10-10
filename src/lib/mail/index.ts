@@ -110,16 +110,22 @@ export async function sendOrderNotice(orderId:string, event:OrderNoticeEvent, co
  if(!email && order.user_id){ const {data:user}=await admin.auth.admin.getUserById(order.user_id);email=user.user?.email || null; }
  const title=noticeTitles[event];
  const safeNo=escapeHtml(order.order_no);
- const details=`<p><b>Sipariş:</b> ${safeNo}</p><p><b>Toplam:</b> ${Number(order.grand_total).toLocaleString("tr-TR")} ${escapeHtml(order.currency)}</p>${context?`<p>${escapeHtml(context)}</p>`:""}${event==="shipped" && shipment?.tracking_code?`<p>Takip kodu: <b>${escapeHtml(shipment.tracking_code)}</b></p>`:""}${event==="shipped" && shipment?.tracking_url && /^https:\/\//i.test(shipment.tracking_url)?`<p><a href="${escapeHtml(shipment.tracking_url)}">Kargoyu takip et</a></p>`:""}${event==="invoice_sent" && invoice?.status==="sent"?`<p><a href="https://www.elmastriko.com/api/invoices/${encodeURIComponent(invoice.id)}/pdf">Faturayı görüntüle</a></p>`:""}`;
+ const details=`<p><b>Sipariş:</b> ${safeNo}</p><p><b>Toplam:</b> ${Number(order.grand_total).toLocaleString("tr-TR")} ${escapeHtml(order.currency)}</p>${context?`<p>${escapeHtml(context)}</p>`:""}${event==="shipped" && shipment?.tracking_code?`<p>Takip kodu: <b>${escapeHtml(shipment.tracking_code)}</b></p>`:""}${event==="shipped" && shipment?.tracking_url && /^https:\/\//i.test(shipment.tracking_url)?`<p><a href="${escapeHtml(shipment.tracking_url)}">Kargoyu takip et</a></p>`:""}${event==="invoice_sent" && invoice?.status==="sent"?`<p>Fatura numarası: ${escapeHtml(invoice.invoice_no || "Hazır")}. Belgeyi hesabınıza giriş yaparak görüntüleyebilirsiniz.</p>`:""}`;
  const targets:["support"|"sales",string,string][] = [["sales","satis@elmastriko.com",`Satış bildirimi: ${title}`]];
  if(email)targets.unshift(["support",email,title]);
  for(const [account,to,subject] of targets){
    // Notification ledger is intentionally DB-backed to prevent duplicates across server instances.
    const {data:claim,error:claimError}=await admin.from("order_mail_deliveries").insert({order_id:orderId,event_key:event,recipient:to,status:"sending"}).select("id").single();
-   if(claimError){if(claimError.code==="23505")continue;throw claimError;}
+   let claimId=claim?.id;
+   if(claimError){
+     if(claimError.code!=="23505")throw claimError;
+     const {data:retry}=await admin.from("order_mail_deliveries").update({status:"sending",error_message:null}).eq("order_id",orderId).eq("event_key",event).eq("recipient",to).eq("status","failed").select("id").maybeSingle();
+     if(!retry)continue;
+     claimId=retry.id;
+   }
    try {await sendMail({account,to,subject:`Elmas Triko | ${subject} · ${order.order_no}`,html:shell(subject,details)});
-     await admin.from("order_mail_deliveries").update({status:"sent",sent_at:new Date().toISOString()}).eq("id",claim.id);
-   }catch(error){await admin.from("order_mail_deliveries").update({status:"failed",error_message:error instanceof Error?error.message.slice(0,300):"Bilinmeyen gönderim hatası"}).eq("id",claim.id);console.error("Order email delivery failed",{orderId,event,account});}
+     await admin.from("order_mail_deliveries").update({status:"sent",sent_at:new Date().toISOString()}).eq("id",claimId);
+   }catch(error){await admin.from("order_mail_deliveries").update({status:"failed",error_message:error instanceof Error?error.message.slice(0,300):"Bilinmeyen gönderim hatası"}).eq("id",claimId);console.error("Order email delivery failed",{orderId,event,account});}
  }
 }
 export async function sendOrderStatusEmail(orderId:string, customLabel?:string){

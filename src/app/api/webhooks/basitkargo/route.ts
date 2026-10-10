@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { sendShipmentEmail } from "@/lib/mail";
+import { sendOrderNotice } from "@/lib/mail";
 
 function normalizedState(status?: string, lastState?: string) {
   return ((lastState || status || "").trim()).toLocaleUpperCase("tr-TR");
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (shipment.status !== mappedStatus) {
-    try { await sendShipmentEmail(shipment.order_id); } catch (mailError) { console.error("BasitKargo status mail failed:",mailError); }
+    try { if(mappedStatus==="delivered") await sendOrderNotice(shipment.order_id,"delivered"); else if(mappedStatus==="shipped") await sendOrderNotice(shipment.order_id,"shipped");  } catch (mailError) { console.error("BasitKargo status mail failed:",mailError); }
   }
 
   return NextResponse.json({ ok: true });
