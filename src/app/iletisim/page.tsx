@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import ContactForm from "@/components/ContactForm";
 import { company } from "@/lib/company";
+
+export const metadata: Metadata = {
+  title: "İletişim",
+  description: "Elmas Triko müşteri destek ve iletişim sayfası.",
+  alternates: { canonical: "/iletisim" },
+};
 
 export default function ContactPage() {
   return <><StoreHeader/><main className="content-page">

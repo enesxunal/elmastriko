@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import { company } from "@/lib/company";
+
+export const metadata: Metadata = {
+  title: "KVKK Aydınlatma",
+  description: "Elmas Triko kişisel verilerin korunması hakkında bilgilendirme.",
+  alternates: { canonical: "/kvkk" },
+};
 
 export default function KvkkPage() {
   return <><StoreHeader/><main className="content-page legal-page">

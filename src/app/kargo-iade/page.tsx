@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/catalog";
 import { company } from "@/lib/company";
+
+export const metadata: Metadata = {
+  title: "Kargo, Teslimat ve İade",
+  description: "Elmas Triko kargo, teslimat ve iade süreçleri.",
+  alternates: { canonical: "/kargo-iade" },
+};
 
 export default function ShippingReturnsPage() {
   return <><StoreHeader/><main className="content-page">

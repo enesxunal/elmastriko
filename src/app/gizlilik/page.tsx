@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import { company } from "@/lib/company";
+
+export const metadata: Metadata = {
+  title: "Gizlilik Politikası",
+  description: "Elmas Triko gizlilik ve veri güvenliği politikası.",
+  alternates: { canonical: "/gizlilik" },
+};
 
 export default function PrivacyPage() {
   return <><StoreHeader/><main className="content-page legal-page">

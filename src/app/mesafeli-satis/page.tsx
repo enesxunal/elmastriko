@@ -1,6 +1,13 @@
+import type { Metadata } from "next";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import { company } from "@/lib/company";
+
+export const metadata: Metadata = {
+  title: "Mesafeli Satış Sözleşmesi",
+  description: "Elmas Triko mesafeli satış ve teslimat koşulları.",
+  alternates: { canonical: "/mesafeli-satis" },
+};
 
 export default function DistanceSalesPage() {
   return <><StoreHeader/><main className="content-page legal-page">
