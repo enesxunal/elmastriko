@@ -128,8 +128,8 @@ export default async function IntegrationsAdmin({
     <section className="admin-section"><div className="admin-section-head"><h2>E-posta / SMTP Bildirimleri</h2></div>
       {params.mail_error && <p className="auth-message error">{params.mail_error}</p>}{params.mail_saved && <p className="auth-message">SMTP ayarları kaydedildi.</p>}{params.mail_test && <p className="auth-message">SMTP bağlantısı başarılı.</p>}
       <p>Destek hesabı müşterilere, satış hesabı satis@elmastriko.com adresine bildirim gönderir. Şifreler şifreli saklanır; kayıttan sonra tekrar görüntülenmez.</p>
-      <div className="mail-settings-grid">{(["support","sales"] as const).map(key=>{const row=mailSettings(key);const email=key==="support"?"destek@elmastriko.com":"satis@elmastriko.com";const hasPassword=Boolean(row?.smtp_password_encrypted);return <article className="mail-settings-card" key={key}>
-        <h3>{key==="support"?"Müşteri Bildirimleri":"Satış Bildirimleri"}</h3><p>Durum: {row?.last_test_status==="ok"?"SMTP doğrulandı":row?.last_test_status==="error"?"Son test başarısız":hasPassword?"Test bekliyor":"Şifre bekleniyor"}</p>
+      <div className="mail-settings-grid">{(["support","sales"] as const).map(key=>{const row=mailSettings(key);const email=key==="support"?"destek@elmastriko.com":"satis@elmastriko.com";const hasPassword=Boolean(row?.smtp_password_encrypted);return <details className="mail-settings-card mail-settings-disclosure" key={key}>
+        <summary className="mail-settings-summary"><span className="mail-settings-summary-main"><small>E-POSTA / SMTP</small><strong>{key==="support"?"Müşteri Bildirimleri":"Satış Bildirimleri"}</strong><span>{email}</span></span><span className="mail-settings-summary-side"><b className={row?.last_test_status==="ok"?"active":row?.last_test_status==="error"?"error":"waiting"}>{row?.last_test_status==="ok"?"Bağlı":row?.last_test_status==="error"?"Bağlantı hatası":hasPassword?"Test bekliyor":"Kurulum gerekli"}</b><span className="mail-settings-chevron" aria-hidden="true">⌄</span></span></summary><div className="mail-settings-disclosure-body">
         <form action={saveMailSettings} className="mail-settings-form">
           <input type="hidden" name="account_key" value={key}/>
           <label>E-posta<input name="email" type="email" required defaultValue={String(row?.email||email)}/></label>
@@ -141,7 +141,7 @@ export default async function IntegrationsAdmin({
           <input type="hidden" name="imap_host" value={String(row?.imap_host||"mail.webaltyapi.com")}/><input type="hidden" name="imap_port" value={Number(row?.imap_port||993)}/>
           <label className="mail-toggle"><input name="is_enabled" type="checkbox" defaultChecked={row?.is_enabled!==false}/>Aktif</label><button type="submit">Ayarları kaydet</button>
         </form><form action={testMailSettings} className="mail-test-form"><input type="hidden" name="account_key" value={key}/><button disabled={!hasPassword}>SMTP bağlantısını test et</button><small>{row?.last_tested_at?`Son test: ${new Date(String(row.last_tested_at)).toLocaleString("tr-TR")}`:"Test yapılmadı"}</small></form>
-      </article>})}</div>
+      </div></details>})}</div>
     </section>
     <section className="integration-cards">
       {statuses.map(item => <article className="integration-card" key={item.key}>
