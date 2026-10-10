@@ -12,15 +12,15 @@ export async function GET(request: Request) {
   const next = safeNext(url.searchParams.get("next"));
 
   if (!code) {
-    return NextResponse.redirect(new URL("/hesabim?error=" + encodeURIComponent("Doğrulama bağlantısı geçersiz veya süresi dolmuş."), url.origin));
+    return NextResponse.redirect(new URL("/hesabim?error=" + encodeURIComponent("Doğrulama bağlantısı geçersiz veya süresi dolmuş."), "https://www.elmastriko.com"));
   }
 
   const supabase = await createClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error) {
-    return NextResponse.redirect(new URL("/hesabim?error=" + encodeURIComponent("Doğrulama tamamlanamadı. Yeni bir bağlantı isteyin."), url.origin));
+    return NextResponse.redirect(new URL("/hesabim?error=" + encodeURIComponent("Doğrulama tamamlanamadı. Yeni bir bağlantı isteyin."), "https://www.elmastriko.com"));
   }
 
-  return NextResponse.redirect(new URL(next, url.origin));
+  return NextResponse.redirect(new URL(next, "https://www.elmastriko.com"));
 }

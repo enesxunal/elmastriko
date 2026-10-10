@@ -1,3 +1,5 @@
+import { authErrorTR } from "@/lib/auth-error-tr";
+import AuthSubmitButton from "@/components/AuthSubmitButton";
 import PasswordInput from "@/components/PasswordInput";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -59,12 +61,12 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     <section className="account-auth-card">
       <span>GİRİŞ</span>
       <h2>Giriş Yap</h2>
-      {params.error && <div className="auth-message error">{params.error}</div>}
+      {params.error && <div className="auth-message error">{authErrorTR({message:params.error})}</div>}
       {params.message && <div className="auth-message">{params.message}</div>}
       <form action={signIn} className="account-auth-form">
         <input aria-label="Giriş e-posta" name="email" type="email" placeholder="E-posta" required/>
         <PasswordInput aria-label="Giriş şifre" name="password" placeholder="Şifre" minLength={6} required/>
-        <button type="submit">Giriş Yap</button>
+        <AuthSubmitButton label="Giriş Yap" pendingLabel="Giriş yapılıyor..."/>
       </form>
       <div className="account-auth-links">
         <Link href="/hesabim/kayit">Hesap oluştur</Link>

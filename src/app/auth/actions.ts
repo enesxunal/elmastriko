@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { sendWelcomeEmail } from "@/lib/mail";
 import { authErrorTR } from "@/lib/auth-error-tr";
 
 function value(formData: FormData, key: string) {
@@ -40,11 +39,10 @@ export async function signUp(formData: FormData) {
   const fullName = value(formData, "full_name");
   const email = value(formData, "email");
   const password = String(formData.get("password") || "");
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.com";
+  const origin = "https://www.elmastriko.com";
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName }, emailRedirectTo: origin + "/auth/callback?next=/hesabim" } });
   if (error) redirect(returnTo + "?error=" + encodeURIComponent(authErrorTR(error)));
-  try { await sendWelcomeEmail(email, fullName); } catch (mailError) { console.error("Welcome mail failed:",mailError); }
   redirect(returnTo + "?message=" + encodeURIComponent("Kayıt isteğiniz alındı. E-posta doğrulama bağlantısı gönderildiyse gelen kutunuzu ve spam klasörünüzü kontrol edin."));
 }
 
@@ -59,7 +57,7 @@ export async function requestPasswordReset(formData: FormData) {
   const email = value(formData, "email");
   if (!email) redirect(returnTo + "?error=" + encodeURIComponent("E-posta adresi gerekli."));
 
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.com";
+  const origin = "https://www.elmastriko.com";
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: origin + "/auth/callback?next=/hesabim%3Freset%3D1" });
   if (error) redirect(returnTo + "?error=" + encodeURIComponent(authErrorTR(error)));

@@ -1,3 +1,5 @@
+import { authErrorTR } from "@/lib/auth-error-tr";
+import AuthSubmitButton from "@/components/AuthSubmitButton";
 import PasswordInput from "@/components/PasswordInput";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -21,14 +23,14 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
     <section className="account-auth-card">
       <span>KAYIT</span>
       <h2>Hesap Oluştur</h2>
-      {params.error && <div className="auth-message error">{params.error}</div>}
+      {params.error && <div className="auth-message error">{authErrorTR({message:params.error})}</div>}
       {params.message && <div className="auth-message">{params.message}</div>}
       <form action={signUp} className="account-auth-form">
         <input type="hidden" name="return_to" value="/hesabim/kayit"/>
         <input aria-label="Kayıt ad soyad" name="full_name" placeholder="Ad Soyad" required/>
         <input aria-label="Kayıt e-posta" name="email" type="email" placeholder="E-posta" required/>
         <PasswordInput aria-label="Kayıt şifre" name="password" placeholder="Şifre (en az 6 karakter)" minLength={6} required/>
-        <button type="submit">Hesap Oluştur</button>
+        <AuthSubmitButton label="Hesap Oluştur" pendingLabel="Kaydınız oluşturuluyor..."/>
       </form>
       <div className="account-auth-links single"><Link href="/hesabim">Zaten hesabım var → Giriş yap</Link></div>
     </section>
