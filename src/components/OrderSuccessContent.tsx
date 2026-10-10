@@ -23,7 +23,7 @@ export default function OrderSuccessContent({ orderNo }: { orderNo: string }) {
       }catch{}
     })();
     clearCart();
-  }, [clearCart]);
+  }, [clearCart, orderNo]);
 
   return (
     <main style={{ minHeight: "72vh", background: "#f7f4ee", display: "grid", placeItems: "center", padding: "72px 20px" }}>
@@ -42,8 +42,8 @@ export default function OrderSuccessContent({ orderNo }: { orderNo: string }) {
           </div>
         )}
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-          <Link href="/hesabim" style={{ background: "#133f33", color: "#fff", padding: "15px 22px", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase" }}>
-            Siparişlerimi Gör
+          <Link href={orderNo ? `/siparis-takip?order=${encodeURIComponent(orderNo)}` : "/siparis-takip"} style={{ background: "#133f33", color: "#fff", padding: "15px 22px", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase" }}>
+            Siparişimi Gör
           </Link>
           <Link href="/" style={{ border: "1px solid #133f33", padding: "15px 22px", fontSize: 11, letterSpacing: ".08em", textTransform: "uppercase" }}>
             Alışverişe Devam Et

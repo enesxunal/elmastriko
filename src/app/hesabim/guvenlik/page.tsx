@@ -1,3 +1,4 @@
+import PasswordInput from "@/components/PasswordInput";
 import { redirect } from "next/navigation";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
@@ -18,8 +19,8 @@ export default async function AccountSecurityPage({ searchParams }: { searchPara
     <div className="account-panel account-page-card account-narrow-card">
       <form className="account-form" action={updatePassword}>
         <input type="hidden" name="return_to" value="/hesabim/guvenlik"/>
-        <label>Yeni şifre<input name="password" type="password" minLength={8} placeholder="En az 8 karakter" autoComplete="new-password" required/></label>
-        <label>Yeni şifre tekrar<input name="confirm_password" type="password" minLength={8} placeholder="Şifreyi tekrar girin" autoComplete="new-password" required/></label>
+        <label>Yeni şifre<PasswordInput name="password" minLength={8} placeholder="En az 8 karakter" autoComplete="new-password" required/></label>
+        <label>Yeni şifre tekrar<PasswordInput name="confirm_password" minLength={8} placeholder="Şifreyi tekrar girin" autoComplete="new-password" required/></label>
         <button type="submit">Şifreyi Güncelle</button>
       </form>
     </div>

@@ -1,0 +1,4 @@
+export const orderLabels: Record<string,string> = {draft:"Taslak",awaiting_payment:"Ödeme bekliyor",paid:"Ödendi",invoice_pending:"Fatura hazırlanıyor",ready_to_ship:"Kargoya hazır",shipped:"Kargoya verildi",delivered:"Teslim edildi",cancelled:"İptal edildi",refunded:"İade edildi"};
+export const paymentLabels: Record<string,string> = {pending:"Ödeme bekleniyor",customer_notified:"Müşteri ödeme bildirdi",paid:"Ödendi",rejected:"Reddedildi",failed:"Başarısız",refunded:"İade edildi",cancelled:"İptal edildi"};
+export const shipmentLabels: Record<string,string> = {pending:"Gönderi bekleniyor",prepared:"Hazırlandı",shipped:"Kargoya verildi",delivered:"Teslim edildi",returned:"İade edildi",problem:"Kargo sorunu"};
+export const invoiceLabels: Record<string,string> = {pending:"Bekliyor",created:"Oluşturuldu",sent:"Gönderildi",cancelled:"İptal edildi",error:"Hata"};

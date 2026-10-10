@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { sendWelcomeEmail } from "@/lib/mail";
+import { authErrorTR } from "@/lib/auth-error-tr";
 
 function value(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
@@ -20,7 +20,7 @@ export async function signIn(formData: FormData) {
   const password = String(formData.get("password") || "");
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) redirect("/hesabim?error=" + encodeURIComponent(error.message));
+  if (error) redirect("/hesabim?error=" + encodeURIComponent(authErrorTR(error)));
 
   if (data.user) {
     const { data: profile } = await supabase
@@ -40,13 +40,12 @@ export async function signUp(formData: FormData) {
   const fullName = value(formData, "full_name");
   const email = value(formData, "email");
   const password = String(formData.get("password") || "");
-  const headerStore = await headers();
-  const origin = headerStore.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.com";
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.com";
   const supabase = await createClient();
   const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName }, emailRedirectTo: origin + "/auth/callback?next=/hesabim" } });
-  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(authErrorTR(error)));
   try { await sendWelcomeEmail(email, fullName); } catch (mailError) { console.error("Welcome mail failed:",mailError); }
-  redirect(returnTo + "?message=" + encodeURIComponent("Kaydınız oluşturuldu. E-posta doğrulaması açıksa gelen kutunuzu kontrol edin."));
+  redirect(returnTo + "?message=" + encodeURIComponent("Kayıt isteğiniz alındı. E-posta doğrulama bağlantısı gönderildiyse gelen kutunuzu ve spam klasörünüzü kontrol edin."));
 }
 
 export async function signOut() {
@@ -60,11 +59,10 @@ export async function requestPasswordReset(formData: FormData) {
   const email = value(formData, "email");
   if (!email) redirect(returnTo + "?error=" + encodeURIComponent("E-posta adresi gerekli."));
 
-  const headerStore = await headers();
-  const origin = headerStore.get("origin") || process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.vercel.app";
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://elmastriko.com";
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: origin + "/auth/callback?next=/hesabim%3Freset%3D1" });
-  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(authErrorTR(error)));
   redirect(returnTo + "?message=" + encodeURIComponent("Şifre yenileme bağlantısı e-posta adresinize gönderildi."));
 }
 
@@ -80,7 +78,7 @@ export async function updatePassword(formData: FormData) {
   if (!user) redirect("/hesabim?error=" + encodeURIComponent("Şifre yenileme oturumu geçersiz veya süresi dolmuş."));
 
   const { error } = await supabase.auth.updateUser({ password });
-  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(authErrorTR(error)));
   revalidatePath(returnTo);
   redirect(returnTo + "?message=" + encodeURIComponent("Şifreniz güncellendi."));
 }
@@ -97,7 +95,7 @@ export async function updateProfile(formData: FormData) {
     updated_at: new Date().toISOString(),
   }).eq("id", user.id);
 
-  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(authErrorTR(error)));
   revalidatePath(returnTo);
   revalidatePath("/hesabim");
   redirect(returnTo + "?message=" + encodeURIComponent("Profil bilgileriniz güncellendi."));
@@ -127,7 +125,7 @@ export async function addAddress(formData: FormData) {
 
   if (row.is_default) await supabase.from("addresses").update({ is_default: false }).eq("user_id", user.id);
   const { error } = await supabase.from("addresses").insert(row);
-  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(authErrorTR(error)));
   revalidatePath(returnTo);
   revalidatePath("/hesabim");
   redirect(returnTo + "?message=" + encodeURIComponent("Adres kaydedildi."));
@@ -165,7 +163,7 @@ export async function updateAddress(formData: FormData) {
     .eq("id", id)
     .eq("user_id", user.id);
 
-  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(authErrorTR(error)));
   revalidatePath(returnTo);
   revalidatePath("/hesabim");
   redirect(returnTo + "?message=" + encodeURIComponent("Adresiniz güncellendi."));
@@ -187,7 +185,7 @@ export async function setDefaultAddress(formData: FormData) {
     .eq("id", id)
     .eq("user_id", user.id);
 
-  if (error) redirect(returnTo + "?error=" + encodeURIComponent(error.message));
+  if (error) redirect(returnTo + "?error=" + encodeURIComponent(authErrorTR(error)));
   revalidatePath(returnTo);
   revalidatePath("/hesabim");
   redirect(returnTo + "?message=" + encodeURIComponent("Varsayılan adres güncellendi."));

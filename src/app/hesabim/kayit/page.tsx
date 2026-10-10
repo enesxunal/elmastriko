@@ -1,3 +1,4 @@
+import PasswordInput from "@/components/PasswordInput";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import StoreHeader from "@/components/StoreHeader";
@@ -26,7 +27,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
         <input type="hidden" name="return_to" value="/hesabim/kayit"/>
         <input aria-label="Kayıt ad soyad" name="full_name" placeholder="Ad Soyad" required/>
         <input aria-label="Kayıt e-posta" name="email" type="email" placeholder="E-posta" required/>
-        <input aria-label="Kayıt şifre" name="password" type="password" placeholder="Şifre (en az 6 karakter)" minLength={6} required/>
+        <PasswordInput aria-label="Kayıt şifre" name="password" placeholder="Şifre (en az 6 karakter)" minLength={6} required/>
         <button type="submit">Hesap Oluştur</button>
       </form>
       <div className="account-auth-links single"><Link href="/hesabim">Zaten hesabım var → Giriş yap</Link></div>

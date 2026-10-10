@@ -1,10 +1,14 @@
+import { orderLabels, paymentLabels } from "@/lib/admin-order-labels";
+import { basitKargo } from "@/lib/integrations/basitkargo";
+import { invoiceIntegration, isNesConfigured } from "@/lib/integrations/invoice";
+import { isToslaConfigured } from "@/lib/integrations/tosla";
 import Link from "next/link";
 import { ArrowUpRight, Boxes, CircleDollarSign, Mail, PackageSearch, ShoppingCart, Users } from "lucide-react";
 import { requireAdmin } from "@/lib/admin";
 
 export default async function AdminDashboard() {
   const { supabase } = await requireAdmin();
-  const [products, orders, users, posts, messages, subscribers, recent, integrations, revenueRows, stockRows] = await Promise.all([
+  const [products, orders, users, posts, messages, subscribers, recent, revenueRows, stockRows] = await Promise.all([
     supabase.from("products").select("id", { count: "exact", head: true }),
     supabase.from("orders").select("id", { count: "exact", head: true }),
     supabase.from("profiles").select("id", { count: "exact", head: true }),
@@ -12,11 +16,23 @@ export default async function AdminDashboard() {
     supabase.from("contact_messages").select("id", { count: "exact", head: true }).eq("status","new"),
     supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }).eq("is_active",true),
     supabase.from("orders").select("id,order_no,status,payment_status,grand_total,currency,created_at,guest_email").order("created_at",{ascending:false}).limit(8),
-    supabase.from("integration_settings").select("provider,status,is_enabled,last_checked_at").order("provider"),
     supabase.from("orders").select("grand_total,status,payment_status").eq("payment_status","paid"),
     supabase.from("inventory").select("stock,reserved,product_variants(id,sku,product_id,products(id,name,slug))").lte("stock",5).order("stock").limit(20),
   ]);
 
+  // Derive health from the same services as the integration detail page, not stale manual flags.
+  const [couriers, nesHealth] = await Promise.all([
+    basitKargo.listHandlers().then(handlers => ({ok:true,handlers}), () => ({ok:false,handlers:[] as {code?:string;name?:string}[]})),
+    isNesConfigured() ? invoiceIntegration.healthCheck().then(() => true, () => false) : Promise.resolve(false),
+  ]);
+  const suratReady = couriers.ok && couriers.handlers.some(item => String(item.code || "").toUpperCase().includes("SURAT") || String(item.name || "").toLocaleUpperCase("tr-TR").includes("SÜRAT"));
+  const paymentConfigured = isToslaConfigured();
+  const paymentLive = (process.env.TOSLA_MODE || "test").toLowerCase() === "live";
+  const integrationHealth = [
+    {name:"Sürat Kargo / BasitKargo", status:suratReady?"Bağlantı doğrulandı": "Kontrol gerekli", ok:suratReady},
+    {name:"NES e-Fatura", status:nesHealth?"Bağlantı doğrulandı":"Kontrol gerekli", ok:nesHealth},
+    {name:"Ödeme / Tosla", status:paymentConfigured && paymentLive?"Canlı ayarları tanımlı (işlem testi gerekli)":paymentConfigured?"Test modu / kontrol gerekli":"Yapılandırma gerekli", ok:paymentConfigured && paymentLive},
+  ];
   const revenue=(revenueRows.data||[])
     .filter(o=>!["cancelled","refunded"].includes(o.status))
     .reduce((sum,o)=>sum+Number(o.grand_total||0),0);
@@ -58,13 +74,13 @@ export default async function AdminDashboard() {
     <section className="admin-dashboard-grid">
       <div className="admin-section admin-orders-panel">
         <div className="admin-section-head"><div><span>OPERASYON</span><h2>Son Siparişler</h2></div><Link href="/yonetim/siparisler">Tüm siparişler <ArrowUpRight size={14}/></Link></div>
-        <div className="admin-table">{recent.data?.length ? recent.data.map(o=><Link href={"/yonetim/siparisler/"+o.id} className="admin-row admin-row-link" key={o.id}><b>{o.order_no}</b><span>{o.guest_email||"Üye kullanıcı"}</span><span className="admin-pill">{o.status}</span><span className="admin-pill muted">{o.payment_status}</span><strong>{Number(o.grand_total).toLocaleString("tr-TR")} {o.currency}</strong></Link>) : <div className="admin-empty-state"><ShoppingCart size={24}/><b>Henüz sipariş yok</b><span>Yeni siparişler burada görünecek.</span></div>}</div>
+        <div className="admin-table">{recent.data?.length ? recent.data.map(o=><Link href={"/yonetim/siparisler/"+o.id} className="admin-row admin-row-link" key={o.id}><b>{o.order_no}</b><span>{o.guest_email||"Üye kullanıcı"}</span><span className="admin-pill">{orderLabels[o.status] || "Kontrol gerekli"}</span><span className="admin-pill muted">{paymentLabels[o.payment_status] || "Kontrol gerekli"}</span><strong>{Number(o.grand_total).toLocaleString("tr-TR")} {o.currency}</strong></Link>) : <div className="admin-empty-state"><ShoppingCart size={24}/><b>Henüz sipariş yok</b><span>Yeni siparişler burada görünecek.</span></div>}</div>
       </div>
 
       <div className="admin-side-stack">
         <div className="admin-section">
           <div className="admin-section-head"><div><span>SİSTEM</span><h2>Entegrasyonlar</h2></div><Link href="/yonetim/entegrasyonlar">Yönet</Link></div>
-          <div className="dashboard-integrations">{integrations.data?.map(i=><div key={i.provider}><span>{i.provider}</span><b className={i.is_enabled?"ok":"wait"}>{i.is_enabled?"Aktif":"Bekliyor"}</b></div>)}</div>
+          <div className="dashboard-integrations">{integrationHealth.map(i=><div key={i.name}><span>{i.name}</span><b className={i.ok?"ok":"wait"}>{i.status}</b></div>)}</div>
         </div>
 
         <div className="admin-section">

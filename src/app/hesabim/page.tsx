@@ -1,3 +1,4 @@
+import PasswordInput from "@/components/PasswordInput";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import StoreHeader from "@/components/StoreHeader";
@@ -62,7 +63,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       {params.message && <div className="auth-message">{params.message}</div>}
       <form action={signIn} className="account-auth-form">
         <input aria-label="Giriş e-posta" name="email" type="email" placeholder="E-posta" required/>
-        <input aria-label="Giriş şifre" name="password" type="password" placeholder="Şifre" minLength={6} required/>
+        <PasswordInput aria-label="Giriş şifre" name="password" placeholder="Şifre" minLength={6} required/>
         <button type="submit">Giriş Yap</button>
       </form>
       <div className="account-auth-links">

@@ -1,3 +1,4 @@
+import PasswordInput from "@/components/PasswordInput";
 import { requireAdmin } from "@/lib/admin";
 import { saveContactSettings, saveMailSettings, saveProductOptions, saveSeoSettings, saveSiteSetting, testMailSettings } from "../actions";
 
@@ -31,7 +32,7 @@ function MailAccountForm({row,accountKey,label,description}:{row?:MailSetting;ac
       <input type="hidden" name="account_key" value={accountKey}/>
       <label>E-posta adresi<input name="email" type="email" required defaultValue={row?.email||defaultEmail}/></label>
       <label>Kullanıcı adı<input name="smtp_user" type="email" required defaultValue={row?.smtp_user||defaultEmail}/></label>
-      <label>Şifre<input name="smtp_password" type="password" autoComplete="new-password" placeholder={hasPassword?"Kayıtlı şifreyi değiştirmek için yazın":"Mail hesabı şifresi"} required={!hasPassword}/><small>{hasPassword?"Şifre güvenli olarak kayıtlı. Boş bırakırsanız değişmez.":"Şifre tarayıcıya geri gösterilmez."}</small></label>
+      <label>Şifre<PasswordInput name="smtp_password" autoComplete="new-password" placeholder={hasPassword?"Kayıtlı şifreyi değiştirmek için yazın":"Mail hesabı şifresi"} required={!hasPassword}/><small>{hasPassword?"Şifre güvenli olarak kayıtlı. Boş bırakırsanız değişmez.":"Şifre tarayıcıya geri gösterilmez."}</small></label>
       <label>SMTP sunucusu<input name="smtp_host" required defaultValue={row?.smtp_host||"mail.webaltyapi.com"}/></label>
       <label>SMTP portu<input name="smtp_port" type="number" required defaultValue={row?.smtp_port||587}/></label>
       <label>SMTP güvenliği<select name="smtp_security" defaultValue={row?.smtp_secure?"ssl":"starttls"}><option value="starttls">STARTTLS</option><option value="ssl">SSL/TLS</option></select></label>
