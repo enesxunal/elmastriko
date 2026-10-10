@@ -1004,3 +1004,22 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
 .admin-order-product-link { color:#153e32;font-weight:700;text-decoration:underline;text-underline-offset:3px; }
 .admin-order-product > div:last-child { min-width:0; }
 .admin-order-product small { display:block;margin-top:5px; }
+
+/* Keep password eye icon independent from submit button styles. */
+.account-auth-form .password-input-wrap > button.password-visibility-toggle,
+.account-form .password-input-wrap > button.password-visibility-toggle,
+.mail-settings-form .password-input-wrap > button.password-visibility-toggle {
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  display:flex;align-items:center;justify-content:center;
+  width:34px;height:34px;min-width:34px;min-height:34px;
+  padding:0;margin:0;border:0;border-radius:6px;
+  background:transparent;color:#77746e;box-shadow:none;
+  font-size:inherit;letter-spacing:normal;text-transform:none;
+}
+.account-auth-form .password-input-wrap > button.password-visibility-toggle:hover,
+.account-form .password-input-wrap > button.password-visibility-toggle:hover,
+.mail-settings-form .password-input-wrap > button.password-visibility-toggle:hover {
+  background:transparent;color:#173d31;box-shadow:none;
+  transform:translateY(-50%);
+}
+.password-input-wrap > button.password-visibility-toggle:focus-visible {outline:2px solid #173d31;outline-offset:2px;}
