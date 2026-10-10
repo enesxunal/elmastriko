@@ -1,3 +1,4 @@
+import { sendOrderNotice } from "@/lib/mail";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { tosla, validateToslaCallback } from "@/lib/integrations/tosla";
@@ -138,6 +139,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  if (order.payment_status !== "paid") {
+    try { await sendOrderNotice(order.id, paid ? "payment_paid" : failed ? "payment_failed" : "status_updated"); }
+    catch (error) { console.error("Payment notification failed",error); }
+  }
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.elmastriko.com").replace(/\/$/, "");
   const target = paid
     ? `${siteUrl}/siparis-basarili?order=${encodeURIComponent(order.order_no)}`

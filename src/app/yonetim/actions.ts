@@ -7,7 +7,7 @@ import { basitKargo } from "@/lib/integrations/basitkargo";
 import { createNesInvoiceForOrder } from "@/lib/integrations/nes-order-invoice";
 import { BANK_TRANSFER } from "@/lib/payments/bank-transfer";
 import { encryptMailPassword } from "@/lib/mail/crypto";
-import { sendOrderStatusEmail, sendShipmentEmail, verifyMailAccount, type MailAccountKey } from "@/lib/mail";
+import { sendOrderStatusEmail, sendShipmentEmail, sendOrderNotice, verifyMailAccount, type MailAccountKey } from "@/lib/mail";
 
 function v(fd: FormData, key: string) { return String(fd.get(key) || "").trim(); }
 function num(fd: FormData, key: string) { const x = v(fd,key); return x === "" ? null : Number(x); }
@@ -475,6 +475,7 @@ export async function saveInvoice(fd: FormData) {
   const existing=await supabase.from("invoices").select("id").eq("order_id",orderId).order("created_at",{ascending:false}).limit(1).maybeSingle();
   const payload={order_id:orderId,provider:v(fd,"provider")||"NES Portal",invoice_no:v(fd,"invoice_no")||null,status:v(fd,"status")||"pending",updated_at:new Date().toISOString()};
   if(existing.data?.id) await supabase.from("invoices").update(payload).eq("id",existing.data.id); else await supabase.from("invoices").insert(payload);
+  if(payload.status==="sent") {try {await sendOrderNotice(orderId,"invoice_sent");}catch(error){console.error("Invoice notice failed",error);}}
   await audit("update","invoice",orderId,payload); revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`);
 }
 
@@ -567,7 +568,7 @@ export async function saveContactSettings(fd: FormData) {
 export async function saveMailSettings(fd: FormData) {
   const { supabase, user } = await requireAdmin();
   const accountKey = v(fd,"account_key") as MailAccountKey;
-  if (!["sales","support"].includes(accountKey)) redirect("/yonetim/ayarlar?mail_error="+encodeURIComponent("Geçersiz mail hesabı."));
+  if (!["sales","support"].includes(accountKey)) redirect("/yonetim/entegrasyonlar?mail_error="+encodeURIComponent("Geçersiz mail hesabı."));
 
   const email = v(fd,"email");
   const smtpHost = v(fd,"smtp_host") || "mail.webaltyapi.com";
@@ -581,7 +582,7 @@ export async function saveMailSettings(fd: FormData) {
   const encryptedPassword = password ? encryptMailPassword(password) : String(existingValue.smtp_password_encrypted || "");
 
   if (!email || !smtpUser || !encryptedPassword) {
-    redirect("/yonetim/ayarlar?mail_error="+encodeURIComponent("E-posta, kullanıcı adı ve şifre zorunlu."));
+    redirect("/yonetim/entegrasyonlar?mail_error="+encodeURIComponent("E-posta, kullanıcı adı ve şifre zorunlu."));
   }
 
   const value = {
@@ -604,17 +605,17 @@ export async function saveMailSettings(fd: FormData) {
     updated_by: user.id,
     updated_at: new Date().toISOString(),
   });
-  if (error) redirect("/yonetim/ayarlar?mail_error="+encodeURIComponent(error.message));
+  if (error) redirect("/yonetim/entegrasyonlar?mail_error="+encodeURIComponent(error.message));
 
   await audit("update","mail_setting",accountKey,{email,smtpHost,smtpPort,smtpSecure});
-  revalidatePath("/yonetim/ayarlar");
-  redirect("/yonetim/ayarlar?mail_saved="+accountKey);
+  revalidatePath("/yonetim/ayarlar"); revalidatePath("/yonetim/entegrasyonlar");
+  redirect("/yonetim/entegrasyonlar?mail_saved="+accountKey);
 }
 
 export async function testMailSettings(fd: FormData) {
   const { supabase, user } = await requireAdmin();
   const accountKey = v(fd,"account_key") as MailAccountKey;
-  if (!["sales","support"].includes(accountKey)) redirect("/yonetim/ayarlar?mail_error="+encodeURIComponent("Geçersiz mail hesabı."));
+  if (!["sales","support"].includes(accountKey)) redirect("/yonetim/entegrasyonlar?mail_error="+encodeURIComponent("Geçersiz mail hesabı."));
   const settingKey = "mail_" + accountKey;
   let errorMessage = "";
   let status = "ok";
@@ -627,6 +628,6 @@ export async function testMailSettings(fd: FormData) {
   const existing = await supabase.from("site_settings").select("value").eq("key",settingKey).maybeSingle();
   const value = { ...((existing.data?.value || {}) as Record<string,unknown>), last_tested_at:new Date().toISOString(), last_test_status:status };
   await supabase.from("site_settings").upsert({ key:settingKey, value, updated_by:user.id, updated_at:new Date().toISOString() });
-  if (errorMessage) redirect("/yonetim/ayarlar?mail_error="+encodeURIComponent(errorMessage));
-  redirect("/yonetim/ayarlar?mail_test="+accountKey);
+  if (errorMessage) redirect("/yonetim/entegrasyonlar?mail_error="+encodeURIComponent(errorMessage));
+  redirect("/yonetim/entegrasyonlar?mail_test="+accountKey);
 }

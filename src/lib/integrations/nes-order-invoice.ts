@@ -1,3 +1,4 @@
+import { sendOrderNotice } from "@/lib/mail";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { invoiceIntegration, isNesConfigured, type NesDocumentType } from "@/lib/integrations/invoice";
 import { buildNesUblInvoice } from "@/lib/integrations/nes-ubl";
@@ -160,6 +161,7 @@ export async function createNesInvoiceForOrder(orderId: string): Promise<Invoice
       updated_at: new Date().toISOString(),
     }).eq("id", orderId);
 
+    try { await sendOrderNotice(orderId,"invoice_sent"); } catch(error) { console.error("Invoice notification failed",error); }
     return {
       type,
       uuid: responseUuid,

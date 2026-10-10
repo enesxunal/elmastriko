@@ -16,29 +16,6 @@ type MailSettingsRow = {
   is_enabled: boolean;
 };
 
-type OrderMailData = {
-  id: string;
-  order_no: string;
-  guest_email: string | null;
-  grand_total: number | string;
-  currency: string;
-  status: string;
-  payment_status: string;
-};
-
-const statusLabels: Record<string,string> = {
-  pending: "Sipariş alındı",
-  awaiting_payment: "Ödeme bekleniyor",
-  paid: "Ödeme onaylandı",
-  processing: "Hazırlanıyor",
-  preparing: "Hazırlanıyor",
-  ready_to_ship: "Kargoya hazırlanıyor",
-  shipped: "Kargoya verildi",
-  delivered: "Teslim edildi",
-  cancelled: "İptal edildi",
-  refunded: "İade edildi",
-};
-
 function escapeHtml(value: unknown) {
   return String(value ?? "")
     .replaceAll("&","&amp;")
@@ -101,7 +78,7 @@ export async function sendMail(params: {
 }
 
 function shell(title: string, body: string) {
-  return `<!doctype html><html><body style="margin:0;background:#f6f7f4;font-family:Arial,sans-serif;color:#172018"><div style="max-width:620px;margin:0 auto;padding:36px 20px"><div style="background:#10241c;color:white;padding:18px 22px;border-radius:14px 14px 0 0"><b style="font-size:18px">ELMAS TRİKO</b></div><div style="background:white;border:1px solid #e2e6e1;border-top:0;padding:28px 22px;border-radius:0 0 14px 14px"><h1 style="font-size:24px;margin:0 0 18px">${escapeHtml(title)}</h1>${body}<p style="margin:28px 0 0;color:#7b857e;font-size:12px">Elmas Triko · elmastriko.com</p></div></div></body></html>`;
+  return `<!doctype html><html lang="tr"><body style="margin:0;background:#f7f4ee;font-family:Arial,sans-serif;color:#173d31"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:30px 12px"><table role="presentation" width="100%" style="max-width:600px;background:white;border:1px solid #e7e1d8" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:30px"><img src="https://www.elmastriko.com/elmas-triko.png" width="160" alt="Elmas Triko" style="max-width:100%;height:auto" /></td></tr><tr><td style="padding:20px 32px 40px;color:#464a43"><h1 style="font-family:Georgia,serif;color:#173d31;font-weight:normal;font-size:29px">${escapeHtml(title)}</h1>${body}<p style="margin-top:26px;font-size:12px"><a href="https://www.elmastriko.com/siparis-takip" style="color:#173d31">Sipariş takibi</a></p></td></tr><tr><td align="center" style="background:#173d31;padding:28px"><img src="https://www.elmastriko.com/elmas-triko-w.png" width="120" alt="Elmas Triko" /><p style="color:#fff;font-size:12px">www.elmastriko.com</p></td></tr></table></td></tr></table></body></html>`;
 }
 
 export async function sendWelcomeEmail(email: string, fullName?: string) {
@@ -113,68 +90,42 @@ export async function sendWelcomeEmail(email: string, fullName?: string) {
   });
 }
 
-export async function sendNewOrderEmails(orderId: string) {
-  const admin = createAdminClient();
-  const [{ data: order }, { data: items }, { data: shipping }] = await Promise.all([
-    admin.from("orders").select("id,order_no,guest_email,grand_total,currency,status,payment_status").eq("id",orderId).maybeSingle(),
-    admin.from("order_items").select("product_name,sku,quantity,unit_price,line_total").eq("order_id",orderId),
-    admin.from("order_addresses").select("full_name,city,district,address_line").eq("order_id",orderId).eq("kind","shipping").maybeSingle(),
-  ]);
-  if (!order) return;
-  const typed = order as OrderMailData;
-  const itemRows = (items || []).map(item => `<tr><td style="padding:8px 0">${escapeHtml(item.product_name)}</td><td style="padding:8px;text-align:center">${Number(item.quantity)}</td><td style="padding:8px 0;text-align:right">${Number(item.line_total ?? item.unit_price).toLocaleString("tr-TR")} ${escapeHtml(typed.currency)}</td></tr>`).join("");
-  const total = Number(typed.grand_total).toLocaleString("tr-TR");
+export async function sendNewOrderEmails(orderId:string){await sendOrderNotice(orderId,"order_created");}
 
-  await Promise.allSettled([
-    sendMail({
-      account: "sales",
-      to: "satis@elmastriko.com",
-      subject: `Yeni sipariş · ${typed.order_no}`,
-      html: shell("Yeni sipariş geldi", `<p><b>Sipariş:</b> ${escapeHtml(typed.order_no)}</p><p><b>Müşteri:</b> ${escapeHtml(shipping?.full_name || typed.guest_email || "")}</p><p><b>Teslimat:</b> ${escapeHtml([shipping?.district,shipping?.city].filter(Boolean).join(" / "))}</p><table style="width:100%;border-collapse:collapse;margin-top:18px">${itemRows}</table><p style="font-size:18px"><b>Toplam: ${total} ${escapeHtml(typed.currency)}</b></p>`),
-    }),
-    typed.guest_email ? sendMail({
-      account: "support",
-      to: typed.guest_email,
-      subject: `Siparişiniz alındı · ${typed.order_no}`,
-      html: shell("Siparişiniz alındı", `<p>Sipariş numaranız <b>${escapeHtml(typed.order_no)}</b>.</p><table style="width:100%;border-collapse:collapse;margin-top:18px">${itemRows}</table><p style="font-size:18px"><b>Toplam: ${total} ${escapeHtml(typed.currency)}</b></p><p>Sipariş hareketleri bu e-posta adresine gönderilecektir.</p>`),
-    }) : Promise.resolve(),
-  ]);
-}
+type OrderNoticeEvent = "order_created" | "payment_paid" | "payment_failed" | "preparing" | "invoice_sent" | "shipped" | "delivered" | "cancelled" | "refunded" | "status_updated";
+const noticeTitles: Record<OrderNoticeEvent,string> = {
+ order_created:"Siparişiniz alındı",payment_paid:"Ödemeniz onaylandı",payment_failed:"Ödeme tamamlanamadı",preparing:"Siparişiniz hazırlanıyor",invoice_sent:"Faturanız hazır",shipped:"Siparişiniz kargoya verildi",delivered:"Siparişiniz teslim edildi",cancelled:"Siparişiniz iptal edildi",refunded:"İade işleminiz tamamlandı",status_updated:"Sipariş durumunuz güncellendi"
+};
 
-export async function sendOrderStatusEmail(orderId: string, customLabel?: string) {
-  const admin = createAdminClient();
-  const { data: order } = await admin
-    .from("orders")
-    .select("id,order_no,guest_email,grand_total,currency,status,payment_status")
-    .eq("id",orderId)
-    .maybeSingle();
-  if (!order?.guest_email) return;
-  const label = customLabel || statusLabels[order.status] || order.status;
-  await sendMail({
-    account: "support",
-    to: order.guest_email,
-    subject: `${order.order_no} · ${label}`,
-    html: shell(label, `<p><b>${escapeHtml(order.order_no)}</b> numaralı siparişinizin durumu güncellendi.</p><p>Yeni durum: <b>${escapeHtml(label)}</b></p><p>Sipariş detaylarını Elmas Triko hesabınızdan veya sipariş takip ekranından görüntüleyebilirsiniz.</p>`),
-  });
+/** Send one notification per order, event and recipient, even when a webhook retries. */
+export async function sendOrderNotice(orderId:string, event:OrderNoticeEvent, context?:string) {
+ const admin=createAdminClient();
+ const [{data:order},{data:shipment},{data:invoice}]=await Promise.all([
+   admin.from("orders").select("id,order_no,guest_email,user_id,status,payment_status,grand_total,currency").eq("id",orderId).maybeSingle(),
+   admin.from("shipments").select("tracking_code,tracking_url").eq("order_id",orderId).order("created_at",{ascending:false}).limit(1).maybeSingle(),
+   admin.from("invoices").select("id,invoice_no,status").eq("order_id",orderId).order("created_at",{ascending:false}).limit(1).maybeSingle(),
+ ]);
+ if(!order) return;
+ let email=order.guest_email;
+ if(!email && order.user_id){ const {data:user}=await admin.auth.admin.getUserById(order.user_id);email=user.user?.email || null; }
+ const title=noticeTitles[event];
+ const safeNo=escapeHtml(order.order_no);
+ const details=`<p><b>Sipariş:</b> ${safeNo}</p><p><b>Toplam:</b> ${Number(order.grand_total).toLocaleString("tr-TR")} ${escapeHtml(order.currency)}</p>${context?`<p>${escapeHtml(context)}</p>`:""}${event==="shipped" && shipment?.tracking_code?`<p>Takip kodu: <b>${escapeHtml(shipment.tracking_code)}</b></p>`:""}${event==="shipped" && shipment?.tracking_url && /^https:\/\//i.test(shipment.tracking_url)?`<p><a href="${escapeHtml(shipment.tracking_url)}">Kargoyu takip et</a></p>`:""}${event==="invoice_sent" && invoice?.status==="sent"?`<p><a href="https://www.elmastriko.com/api/invoices/${encodeURIComponent(invoice.id)}/pdf">Faturayı görüntüle</a></p>`:""}`;
+ const targets:["support"|"sales",string,string][] = [["sales","satis@elmastriko.com",`Satış bildirimi: ${title}`]];
+ if(email)targets.unshift(["support",email,title]);
+ for(const [account,to,subject] of targets){
+   // Notification ledger is intentionally DB-backed to prevent duplicates across server instances.
+   const {data:claim,error:claimError}=await admin.from("order_mail_deliveries").insert({order_id:orderId,event_key:event,recipient:to,status:"sending"}).select("id").single();
+   if(claimError){if(claimError.code==="23505")continue;throw claimError;}
+   try {await sendMail({account,to,subject:`Elmas Triko | ${subject} · ${order.order_no}`,html:shell(subject,details)});
+     await admin.from("order_mail_deliveries").update({status:"sent",sent_at:new Date().toISOString()}).eq("id",claim.id);
+   }catch(error){await admin.from("order_mail_deliveries").update({status:"failed",error_message:error instanceof Error?error.message.slice(0,300):"Bilinmeyen gönderim hatası"}).eq("id",claim.id);console.error("Order email delivery failed",{orderId,event,account});}
+ }
 }
-
-export async function sendShipmentEmail(orderId: string) {
-  const admin = createAdminClient();
-  const [{ data: order }, { data: shipment }] = await Promise.all([
-    admin.from("orders").select("order_no,guest_email").eq("id",orderId).maybeSingle(),
-    admin.from("shipments").select("provider,tracking_code,tracking_url,status").eq("order_id",orderId).order("created_at",{ascending:false}).limit(1).maybeSingle(),
-  ]);
-  if (!order?.guest_email || !shipment) return;
-  const tracking = shipment.tracking_code
-    ? `<p>Takip kodu: <b>${escapeHtml(shipment.tracking_code)}</b></p>`
-    : "";
-  const link = shipment.tracking_url
-    ? `<p><a href="${escapeHtml(shipment.tracking_url)}">Kargonuzu takip edin</a></p>`
-    : "";
-  await sendMail({
-    account: "support",
-    to: order.guest_email,
-    subject: `${order.order_no} · Kargo güncellemesi`,
-    html: shell("Kargo güncellemesi", `<p><b>${escapeHtml(order.order_no)}</b> numaralı siparişiniz için kargo hareketi oluştu.</p><p>Kargo: <b>${escapeHtml(shipment.provider)}</b></p>${tracking}${link}`),
-  });
+export async function sendOrderStatusEmail(orderId:string, customLabel?:string){
+ const admin=createAdminClient();const {data:order}=await admin.from("orders").select("status,payment_status").eq("id",orderId).maybeSingle();if(!order)return;
+ const event:OrderNoticeEvent=customLabel?(/onaylandı/i.test(customLabel)?"payment_paid":/ödeme/i.test(customLabel)?"payment_failed":"status_updated"):
+ order.status==="shipped"?"shipped":order.status==="delivered"?"delivered":order.status==="cancelled"?"cancelled":order.status==="refunded"?"refunded":order.status==="ready_to_ship"||order.status==="invoice_pending"?"preparing":order.payment_status==="paid"?"payment_paid":"status_updated";
+ await sendOrderNotice(orderId,event,customLabel);
 }
+export async function sendShipmentEmail(orderId:string){await sendOrderNotice(orderId,"shipped");}

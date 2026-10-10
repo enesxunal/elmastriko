@@ -1,3 +1,5 @@
+import PasswordInput from "@/components/PasswordInput";
+import { saveMailSettings, testMailSettings } from "../actions";
 import { requireAdmin } from "@/lib/admin";
 import { basitKargo } from "@/lib/integrations/basitkargo";
 import { invoiceIntegration, isNesConfigured } from "@/lib/integrations/invoice";
@@ -23,6 +25,7 @@ export default async function IntegrationsAdmin({
   searchParams,
 }: {
   searchParams: Promise<{
+    mail_error?: string; mail_saved?:string;mail_test?:string;
     bk_status?: string;
     bk_message?: string;
     bk_count?: string;
@@ -47,6 +50,8 @@ export default async function IntegrationsAdmin({
       : Promise.resolve({ ok: false as const }),
   ]);
 
+  const {data:mailRows}=await supabase.from("site_settings").select("key,value").in("key",["mail_sales","mail_support"]);
+  const mailSettings=(key:string)=>(mailRows||[]).find(r=>r.key===`mail_${key}`)?.value as Record<string,unknown>|undefined;
   const surat = basitResult.ok
     ? basitResult.handlers.find(item =>
         String(item.code || "").toUpperCase().includes("SURAT") ||
@@ -120,6 +125,24 @@ export default async function IntegrationsAdmin({
         : [params.bk_name && `${params.bk_name} (${params.bk_code})`, params.bk_count && `${params.bk_count} taşıyıcı`].filter(Boolean).join(" · ")}</span>
     </div>}
 
+    <section className="admin-section"><div className="admin-section-head"><h2>E-posta / SMTP Bildirimleri</h2></div>
+      {params.mail_error && <p className="auth-message error">{params.mail_error}</p>}{params.mail_saved && <p className="auth-message">SMTP ayarları kaydedildi.</p>}{params.mail_test && <p className="auth-message">SMTP bağlantısı başarılı.</p>}
+      <p>Destek hesabı müşterilere, satış hesabı satis@elmastriko.com adresine bildirim gönderir. Şifreler şifreli saklanır; kayıttan sonra tekrar görüntülenmez.</p>
+      <div className="mail-settings-grid">{(["support","sales"] as const).map(key=>{const row=mailSettings(key);const email=key==="support"?"destek@elmastriko.com":"satis@elmastriko.com";const hasPassword=Boolean(row?.smtp_password_encrypted);return <article className="mail-settings-card" key={key}>
+        <h3>{key==="support"?"Müşteri Bildirimleri":"Satış Bildirimleri"}</h3><p>Durum: {row?.last_test_status==="ok"?"SMTP doğrulandı":row?.last_test_status==="error"?"Son test başarısız":hasPassword?"Test bekliyor":"Şifre bekleniyor"}</p>
+        <form action={saveMailSettings} className="mail-settings-form">
+          <input type="hidden" name="account_key" value={key}/>
+          <label>E-posta<input name="email" type="email" required defaultValue={String(row?.email||email)}/></label>
+          <label>SMTP kullanıcı adı<input name="smtp_user" type="email" required defaultValue={String(row?.smtp_user||email)}/></label>
+          <label>SMTP şifresi<PasswordInput name="smtp_password" autoComplete="new-password" placeholder={hasPassword?"Değiştirmek için yeni şifre girin":"SMTP şifresi"} required={!hasPassword}/></label>
+          <label>Sunucu<input name="smtp_host" required defaultValue={String(row?.smtp_host||"mail.webaltyapi.com")}/></label>
+          <label>Port<input name="smtp_port" type="number" required defaultValue={Number(row?.smtp_port||587)}/></label>
+          <label>Güvenlik<select name="smtp_security" defaultValue={row?.smtp_secure?"ssl":"starttls"}><option value="starttls">STARTTLS (587)</option><option value="ssl">SSL/TLS (465)</option></select></label>
+          <input type="hidden" name="imap_host" value={String(row?.imap_host||"mail.webaltyapi.com")}/><input type="hidden" name="imap_port" value={Number(row?.imap_port||993)}/>
+          <label className="mail-toggle"><input name="is_enabled" type="checkbox" defaultChecked={row?.is_enabled!==false}/>Aktif</label><button type="submit">Ayarları kaydet</button>
+        </form><form action={testMailSettings} className="mail-test-form"><input type="hidden" name="account_key" value={key}/><button disabled={!hasPassword}>SMTP bağlantısını test et</button><small>{row?.last_tested_at?`Son test: ${new Date(String(row.last_tested_at)).toLocaleString("tr-TR")}`:"Test yapılmadı"}</small></form>
+      </article>})}</div>
+    </section>
     <section className="integration-cards">
       {statuses.map(item => <article className="integration-card" key={item.key}>
         <div className="integration-card-top">
