@@ -16,6 +16,9 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
   const setColor = (next: string) => { setInternalColor(next); onColorChange?.(next); };
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
+  const sizeGuideImage = product.category === "kadin" ? "/beden-tablolari/kadin-beden-tablosu.png" : "/beden-tablolari/erkek-beden-tablosu.png";
+  const sizeGuideLabel = product.category === "kadin" ? "Kadın" : "Erkek";
   const isFavorite = favorites.includes(product.slug);
   const hasInventoryData = Boolean(product.variants?.length);
 
@@ -73,7 +76,7 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
     </div>}
 
     {product.sizes.length > 0 && <div className="product-option">
-      <div className="product-option-head"><label>Beden</label><span>{size}</span></div>
+      <div className="product-option-head"><label>Beden</label><button type="button" onClick={() => setSizeGuideOpen(true)} aria-haspopup="dialog" style={{ background: "none", border: 0, color: "#23513f", textDecoration: "underline", cursor: "pointer", fontSize: 14 }}>Beden Tablosu ↗</button><span>{size}</span></div>
       <div className="size-pills">{product.sizes.map(s => {
         const enabled = sizeHasStock(s);
         return <button
@@ -113,6 +116,13 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
       <button type="button" className={"fav-btn " + (isFavorite ? "active" : "")} onClick={() => toggleFavorite(product.slug)} aria-label={isFavorite ? product.name + " favorilerden çıkar" : product.name + " favorilere ekle"} aria-pressed={isFavorite}><Heart size={19} fill={isFavorite ? "currentColor" : "none"}/></button>
     </div>
     {added && <Link className="go-cart" href="/sepet">Sepete git →</Link>}
+
+    {sizeGuideOpen && <div role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSizeGuideOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.7)", display: "grid", placeItems: "center", padding: 12 }}>
+      <div role="dialog" aria-modal="true" aria-label={`${sizeGuideLabel} beden tablosu`} onKeyDown={event => { if (event.key === "Escape") setSizeGuideOpen(false); }} style={{ background: "white", borderRadius: 14, width: "min(100%, 720px)", maxHeight: "95dvh", overflow: "auto" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px" }}><strong>{sizeGuideLabel} Beden Tablosu</strong><button type="button" autoFocus onClick={() => setSizeGuideOpen(false)} aria-label="Beden tablosunu kapat" style={{ cursor: "pointer", border: 0, background: "transparent", padding: 8, fontSize: 24 }}>×</button></div>
+        <img src={sizeGuideImage} alt={`Elmas Triko ${sizeGuideLabel} beden tablosu`} style={{ display: "block", width: "100%", height: "auto" }}/>
+      </div>
+    </div>}
 
     <div className="product-assurances">
       <div><Truck size={17}/><span><b>Ücretsiz kargo</b><small>5.000 TL üzeri siparişlerde</small></span></div>
