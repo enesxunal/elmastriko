@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { createPortal } from "react-dom";
 import { Heart, Minus, Plus, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import { Product, formatPrice } from "@/lib/catalog";
 import { useStore } from "./StoreProvider";
@@ -117,12 +118,12 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
     </div>
     {added && <Link className="go-cart" href="/sepet">Sepete git →</Link>}
 
-    {sizeGuideOpen && <div role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSizeGuideOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.7)", display: "grid", placeItems: "center", padding: 12 }}>
+    {sizeGuideOpen && createPortal(<div role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSizeGuideOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.7)", display: "grid", placeItems: "center", padding: 12 }}>
       <div role="dialog" aria-modal="true" aria-label={`${sizeGuideLabel} beden tablosu`} onKeyDown={event => { if (event.key === "Escape") setSizeGuideOpen(false); }} style={{ background: "white", borderRadius: 14, width: "min(100%, 720px)", maxHeight: "95dvh", overflow: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px" }}><strong>{sizeGuideLabel} Beden Tablosu</strong><button type="button" autoFocus onClick={() => setSizeGuideOpen(false)} aria-label="Beden tablosunu kapat" style={{ cursor: "pointer", border: 0, background: "transparent", padding: 8, fontSize: 24 }}>×</button></div>
         <img src={sizeGuideImage} alt={`Elmas Triko ${sizeGuideLabel} beden tablosu`} style={{ display: "block", width: "100%", height: "auto" }}/>
       </div>
-    </div>}
+    </div>, document.body)}
 
     <div className="product-assurances">
       <div><Truck size={17}/><span><b>Ücretsiz kargo</b><small>5.000 TL üzeri siparişlerde</small></span></div>
