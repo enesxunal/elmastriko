@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { StoreProvider } from "@/components/StoreProvider";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
+import InfluencerReferralCapture from "@/components/InfluencerReferralCapture";
 import { createPublicClient } from "@/lib/supabase/public";
 import "./globals.css";
 
@@ -90,6 +91,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(organization)}}/>
     <script type="application/ld+json" dangerouslySetInnerHTML={{__html:JSON.stringify(website)}}/>
     <AnalyticsTracker/>
+    <InfluencerReferralCapture/>
     <StoreProvider>{children}</StoreProvider>
   </body></html>;
 }

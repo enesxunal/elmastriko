@@ -102,6 +102,7 @@ export async function createNesInvoiceForOrder(orderId: string): Promise<Invoice
       grossUnitPrice: Number(item.unit_price),
     })),
     shippingFee: Number(order.shipping_fee || 0),
+    discountTotal: Number(order.discount_total || 0),
     vatRate,
     shippingVatRate,
     websiteUrl: "https://www.elmastriko.com",

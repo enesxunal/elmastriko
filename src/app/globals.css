@@ -1079,3 +1079,6 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
 .mail-settings-disclosure-body{padding:0 22px 22px;border-top:1px solid #e7ebe7}
 .mail-settings-disclosure-body .mail-settings-form{padding-top:20px}
 @media(max-width:620px){.mail-settings-summary{padding:16px;min-height:94px}.mail-settings-summary-main strong{font-size:16px}.mail-settings-summary-side{gap:8px}.mail-settings-summary-side b{padding:6px 8px;font-size:10px}.mail-settings-disclosure-body{padding:0 16px 18px}}
+
+/* Influencer promo code at checkout */
+.affiliate-checkout-promo{background:#f5f7f3;padding:15px;border-radius:12px;margin:13px 0}.affiliate-checkout-promo>label{font-size:13px;font-weight:700;display:block;margin-bottom:9px}.affiliate-checkout-promo>div{display:flex;gap:8px}.affiliate-checkout-promo input{min-width:0;flex:1;border:1px solid #ccd9d0;padding:10px;border-radius:7px;font-size:14px;background:white}.affiliate-checkout-promo button{border:1px solid #173d31;background:#173d31;color:white;padding:9px 12px;border-radius:7px;font-size:12px;cursor:pointer}.affiliate-checkout-promo button:disabled{opacity:.6}.affiliate-checkout-promo small{display:block;margin-top:8px;color:#315d46;font-size:12px}.affiliate-checkout-promo .affiliate-promo-clear{background:transparent;color:#375946;margin-top:8px;border-color:#c5d7c8}

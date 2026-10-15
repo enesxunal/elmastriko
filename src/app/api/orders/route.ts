@@ -24,6 +24,7 @@ type OrderPayload = {
     addressLine?: string;
   };
   items: Array<{ slug: string; qty: number; size?: string; color?: string }>;
+  affiliateCode?: string;
 };
 
 type OrderResult = {
@@ -73,12 +74,13 @@ export async function POST(request: NextRequest) {
       ? null
       : Number(value.shippingFee);
     const subtotal = Number(result.subtotal);
-    const effectiveShippingFee = subtotal >= threshold
+    const discountedSubtotal = subtotal - Number(result.discountTotal || 0);
+    const effectiveShippingFee = discountedSubtotal >= threshold
       ? 0
       : configuredFee;
 
     if (effectiveShippingFee !== null && Number.isFinite(effectiveShippingFee)) {
-      const grandTotal = subtotal + effectiveShippingFee;
+      const grandTotal = discountedSubtotal + effectiveShippingFee;
       if (Number(result.shippingFee) !== effectiveShippingFee || Number(result.grandTotal) !== grandTotal) {
         await admin
           .from("orders")

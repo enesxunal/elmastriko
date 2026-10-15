@@ -75,6 +75,10 @@ export default function CheckoutPage() {
   const [eftOrder, setEftOrder] = useState<{ orderId: string; orderNo: string; status: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; percent: number } | null>(null);
+  const [couponMessage, setCouponMessage] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
   const [paymentSuccess] = useState<{ orderNo: string } | null>(() => {
     if (typeof window === "undefined") return null;
     const params = new URLSearchParams(window.location.search);
@@ -84,9 +88,37 @@ export default function CheckoutPage() {
   });
   const hasUnknownPrice = lines.some(x => x.unitPrice === null);
   const subtotal = lines.reduce((sum, x) => sum + ((x.unitPrice || 0) * x.line.qty), 0);
-  const freeShipping = subtotal >= freeShippingThreshold;
+  const discount = coupon ? Math.round(subtotal * coupon.percent) / 100 : 0;
+  const discountedSubtotal = subtotal - discount;
+  const freeShipping = discountedSubtotal >= freeShippingThreshold;
   const effectiveShippingFee = lines.length === 0 ? 0 : freeShipping ? 0 : shippingFee;
-  const total = effectiveShippingFee === null ? null : subtotal + effectiveShippingFee;
+  const total = effectiveShippingFee === null ? null : discountedSubtotal + effectiveShippingFee;
+  async function applyCoupon() {
+    const code = couponInput.trim().toUpperCase();
+    if (!/^[A-Z0-9]{3,32}$/.test(code)) { setCoupon(null); setCouponMessage("Geçerli bir indirim kodu girin."); return; }
+    setCouponLoading(true);
+    try {
+      const response = await fetch("/api/influencer/validate?code=" + encodeURIComponent(code), { cache: "no-store" });
+      const info = await response.json() as {valid:boolean;code?:string;percent?:number};
+      if (!response.ok || !info.valid || !info.code || typeof info.percent !== "number") {
+        setCoupon(null);setCouponMessage("Bu kod geçersiz veya süresi dolmuş.");
+      } else {
+        setCoupon({code:info.code,percent:info.percent});
+        setCouponInput(info.code);
+        setCouponMessage("%" + info.percent + " indirim uygulandı.");
+      }
+    } catch { setCoupon(null);setCouponMessage("Kod kontrol edilemedi. Tekrar deneyin."); }
+    finally { setCouponLoading(false); }
+  }
+  useEffect(() => {
+    let active = true;
+    fetch("/api/influencer/validate", { cache: "no-store" }).then(r=>r.json()).then((info:{valid:boolean;code?:string;percent?:number})=>{
+      if (active && info.valid && info.code && typeof info.percent === "number") {
+        setCoupon({code:info.code,percent:info.percent});setCouponInput(info.code);setCouponMessage("Özel bağlantı indirimi otomatik uygulandı.");
+      }
+    }).catch(()=>undefined);
+    return ()=>{active=false};
+  }, []);
   const checkoutSent=useRef(false);
   useEffect(()=>{if(!loading && !commerceLoading && lines.length && !checkoutSent.current){checkoutSent.current=true;gaEvent("begin_checkout",gaCart(lines));}},[loading,commerceLoading,lines]);
 
@@ -197,6 +229,7 @@ export default function CheckoutPage() {
                 postalCode,
                 addressLine,
               },
+          affiliateCode: coupon?.code || undefined,
           items: lines.map(({ line }) => ({
             slug: line.slug,
             qty: line.qty,
@@ -320,6 +353,8 @@ export default function CheckoutPage() {
       {loading && cart.length > 0 ? <p>Sepet güncelleniyor...</p> : lines.length === 0 ? <p>Sepetiniz boş.</p> : lines.map(({ line, product }) => <div className="mini-product" key={line.slug + line.size + line.color}><img src={product.image} alt={product.name}/><p><b>{product.name}</b><br/><small>{line.qty} adet {line.size ? "· " + line.size : ""}{line.color ? " · " + line.color : ""}</small></p></div>)}
       <hr/>
       <p><span>Ara toplam</span><b>{hasUnknownPrice ? "Fiyat listesi bekleniyor" : formatPrice(subtotal)}</b></p>
+      <div className="affiliate-checkout-promo"><label htmlFor="affiliate-promo-code">İndirim kodu</label><div><input id="affiliate-promo-code" type="text" autoComplete="off" placeholder="Influencer kodunuz" value={couponInput} onChange={e=>{setCouponInput(e.target.value.toUpperCase());if (coupon?.code!==e.target.value.toUpperCase()){setCoupon(null);setCouponMessage("");}}}/><button type="button" onClick={applyCoupon} disabled={couponLoading}>{couponLoading?"Kontrol ediliyor":"Uygula"}</button></div>{couponMessage&&<small role="status">{couponMessage}</small>}{coupon&&<button type="button" className="affiliate-promo-clear" onClick={()=>{setCoupon(null);setCouponInput("");setCouponMessage("İndirim kaldırıldı.");void fetch("/api/influencer/clear",{method:"POST"}).catch(()=>undefined)}}>Kodu kaldır</button>}</div>
+      {coupon&&<p><span>{coupon.code} indirimi (%{coupon.percent})</span><b>-{formatPrice(discount)}</b></p>}
       <p><span>Kargo</span><b>{commerceLoading ? "Hesaplanıyor" : freeShipping ? "Ücretsiz" : hasUnknownPrice ? "Hesaplanacak" : effectiveShippingFee === null ? "Kargo tutarı onayda" : formatPrice(effectiveShippingFee)}</b></p>
       <p className="checkout-grand-total"><span>Toplam</span><b>{hasUnknownPrice ? "—" : commerceLoading ? "Hesaplanıyor" : total === null ? "Kargo tutarı onayda" : formatPrice(total)}</b></p>
       <button type="submit" form="checkout-form" disabled={submitting || loading || commerceLoading || !lines.length || hasUnknownPrice || total === null}>{submitting ? "Sipariş hazırlanıyor..." : paymentMethod === "eft" ? "EFT / Havale ile Sipariş Oluştur" : "Tosla ile Güvenli Öde"}</button>

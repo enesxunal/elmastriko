@@ -32,6 +32,7 @@ export type NesUblInput = {
   billing: NesInvoiceAddress;
   lines: NesInvoiceLine[];
   shippingFee?: number;
+  discountTotal?: number;
   vatRate: number;
   shippingVatRate?: number;
   websiteUrl?: string;
@@ -100,9 +101,23 @@ export function buildNesUblInvoice(input: NesUblInput) {
   const currency = input.currency || "TRY";
   const vatRate = input.vatRate;
   const shippingVatRate = input.shippingVatRate ?? vatRate;
-  const productGross = input.lines.reduce((sum, line) => sum + line.grossUnitPrice * line.quantity, 0);
+  const undiscountedProductGross = input.lines.reduce((sum, line) => sum + line.grossUnitPrice * line.quantity, 0);
+  // Split order-level promotional discount proportionally over taxable invoice lines.
+  // UBL line totals must match the actual payment amount after any influencer discount.
+  const undiscountedCents = Math.round(undiscountedProductGross * 100);
+  const discountCents = Math.max(0, Math.min(undiscountedCents, Math.round(Number(input.discountTotal || 0) * 100)));
+  let undistributedCents = discountCents;
+  const lineGrossAmounts = input.lines.map((line, index) => {
+    const lineCents = Math.round(line.grossUnitPrice * line.quantity * 100);
+    const allocated = index === input.lines.length - 1
+      ? undistributedCents
+      : Math.min(undistributedCents, Math.round(discountCents * lineCents / Math.max(1, undiscountedCents)));
+    undistributedCents -= allocated;
+    return Math.max(0, lineCents - allocated) / 100;
+  });
+  const productGross = lineGrossAmounts.reduce((sum, amount) => sum + amount, 0);
   const shippingGross = Math.max(0, input.shippingFee || 0);
-  const productNet = input.lines.reduce((sum, line) => sum + netFromGross(line.grossUnitPrice * line.quantity, vatRate), 0);
+  const productNet = lineGrossAmounts.reduce((sum, amount) => sum + netFromGross(amount, vatRate), 0);
   const shippingNet = netFromGross(shippingGross, shippingVatRate);
   const productTax = productGross - productNet;
   const shippingTax = shippingGross - shippingNet;
@@ -120,10 +135,10 @@ export function buildNesUblInvoice(input: NesUblInput) {
   const taxGroups = [...grouped.entries()].map(([rate, value]) => taxSubtotal(currency, value.taxable, value.tax, rate)).join("");
 
   const lines = input.lines.map((line, index) => {
-    const gross = line.grossUnitPrice * line.quantity;
+    const gross = lineGrossAmounts[index];
     const net = netFromGross(gross, vatRate);
     const tax = gross - net;
-    const unitNet = netFromGross(line.grossUnitPrice, vatRate);
+    const unitNet = net / line.quantity;
     return [
       "<cac:InvoiceLine><cbc:ID>" + (index + 1) + "</cbc:ID>",
       '<cbc:InvoicedQuantity unitCode="C62">' + line.quantity + "</cbc:InvoicedQuantity>",
@@ -147,9 +162,9 @@ export function buildNesUblInvoice(input: NesUblInput) {
     ].join(""));
   }
 
-  const note = input.profileId === "EARSIVFATURA"
+  const note = (input.profileId === "EARSIVFATURA"
     ? "<cbc:Note>İnternet üzerinden yapılan satış. Web sitesi: " + x(input.websiteUrl || "https://www.elmastriko.com") + ". Ödeme yöntemi: " + x(input.paymentMethod || "Kredi/Banka Kartı") + ".</cbc:Note>"
-    : "";
+    : "") + (discountCents > 0 ? "<cbc:Note>Kampanya indirimi uygulandı: " + money(discountCents / 100) + " TRY.</cbc:Note>" : "");
 
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',

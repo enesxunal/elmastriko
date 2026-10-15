@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Boxes, FileText, Gauge, History, Mail, PackageSearch, Plug, SearchCheck, Settings, ShoppingCart, Users, ExternalLink, LogOut } from "lucide-react";
+import { BarChart3, Boxes, FileText, Gauge, History, Mail, PackageSearch, Plug, SearchCheck, Settings, ShoppingCart, Users, Tag, ExternalLink, LogOut } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 
 const items = [
@@ -12,6 +12,7 @@ const items = [
   ["/yonetim/stok", "Stok", PackageSearch],
   ["/yonetim/siparisler", "Siparişler", ShoppingCart],
   ["/yonetim/kullanicilar", "Müşteriler", Users],
+  ["/yonetim/influencer", "Influencer", Tag],
   ["/yonetim/mesajlar", "Mesajlar", Mail],
   ["/yonetim/blog", "Blog", FileText],
   ["/yonetim/seo", "SEO & Sistem", SearchCheck],
