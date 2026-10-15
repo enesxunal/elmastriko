@@ -15,10 +15,16 @@ export function money(value: number | string | null | undefined) {
   return Number(value || 0).toLocaleString("tr-TR", { style: "currency", currency: "TRY" });
 }
 
+/** Reject sessions authenticated with OTP, magic link, invitation or recovery instead of a password. */
+export async function hasPasswordAuthentication(supabase: Awaited<ReturnType<typeof createClient>>): Promise<boolean> {
+  const { data, error } = await supabase.auth.getClaims();
+  return !error && Array.isArray(data?.claims?.amr) && data.claims.amr.some(item => (typeof item === "string" ? item : item.method) === "password");
+}
+
 export async function requireInfluencer() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.email || !user.email_confirmed_at) redirect("/influencer/giris");
+  if (!user?.email || !user.email_confirmed_at || !await hasPasswordAuthentication(supabase)) redirect("/influencer/giris");
   const claimed = await supabase.rpc("claim_influencer_access");
   if (claimed.error || !claimed.data) redirect("/influencer/giris?error=" + encodeURIComponent("Bu e-posta adresine tanımlı aktif davet bulunamadı."));
   const admin = createAdminClient();

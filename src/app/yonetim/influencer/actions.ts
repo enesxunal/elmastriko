@@ -3,7 +3,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createPublicClient } from "@/lib/supabase/public";
 import { sendMail } from "@/lib/mail";
 import { validEmail, validCode, validSlug } from "@/lib/influencer";
 
@@ -58,24 +57,49 @@ export async function saveInfluencer(fd: FormData) {
 export async function inviteInfluencer(fd: FormData) {
   await requireAdmin();
   const admin = createAdminClient();
-  const id = text(fd,"id");
-  const { data: influencer } = await admin.from("influencers").select("id,email,status").eq("id",id).maybeSingle();
-  if (!influencer || influencer.status !== "active" || !influencer.email || !validEmail(influencer.email))
-    return back("Davet göndermeden önce influencer'ı e-posta adresiyle aktif edin.");
-  const redirectTo = "https://www.elmastriko.com/auth/callback?next=/influencer";
-  // Supabase Auth sends the invitation link; no plaintext password is generated.
-  const invited = await admin.auth.admin.inviteUserByEmail(influencer.email,{ redirectTo });
-  if (invited.error) {
-    const err = invited.error.message.toLowerCase();
-    if (!err.includes("already") && !err.includes("registered") && !err.includes("exists"))
-      back("Davet gönderilemedi: " + invited.error.message);
-    const existing = createPublicClient();
-    const otp = await existing.auth.signInWithOtp({ email: influencer.email, options: { shouldCreateUser: false, emailRedirectTo: redirectTo } });
-    if (otp.error) back("Giriş bağlantısı gönderilemedi: " + otp.error.message);
+  const id = text(fd, "id");
+  const { data: influencer, error: readError } = await admin.from("influencers")
+    .select("id,email,status,full_name,user_id").eq("id", id).maybeSingle();
+  if (readError || !influencer || influencer.status !== "active" || !influencer.email || !validEmail(influencer.email))
+    return back("Şifre daveti göndermeden önce influencer'ı doğrulanmış e-posta adresiyle aktif edin.");
+  // generateLink does NOT dispatch a Supabase mail; our verified SMTP delivers a branded password-setup link.
+  // If the email already has an account (e.g. customer), send a recovery link instead of creating another identity.
+  let kind: "invite" | "recovery" = "invite";
+  let result = await admin.auth.admin.generateLink({ type: "invite", email: influencer.email });
+  if (result.error) {
+    const code = result.error.code || "";
+    const msg = result.error.message.toLowerCase();
+    if (code === "email_exists" || code === "user_already_exists" || /already|exists|registered/.test(msg)) {
+      kind = "recovery";
+      result = await admin.auth.admin.generateLink({ type: "recovery", email: influencer.email });
+    }
   }
-  await admin.from("influencers").update({invite_sent_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",id);
+  if (result.error || !result.data?.properties?.hashed_token)
+    return back("Şifre oluşturma daveti hazırlanamadı. Lütfen sonra tekrar deneyin.");
+
+  const url = new URL("/influencer/sifre-olustur", "https://www.elmastriko.com");
+  url.searchParams.set("token_hash", result.data.properties.hashed_token);
+  url.searchParams.set("type", kind);
+  try {
+    await sendMail({
+      account: "support", to: influencer.email,
+      subject: "Elmas Triko | Influencer şifrenizi oluşturun",
+      html: `<div style="font-family:Arial,sans-serif;color:#173d31;max-width:580px;margin:auto"><h2>Elmas Triko · İş birliği daveti</h2><p>Merhaba ${escapeHtml(influencer.full_name)},</p><p>Elmas Triko influencer iş birliği hesabınız için giriş şifrenizi kendiniz oluşturabilirsiniz.</p><p><a href="${escapeHtml(url.toString())}" style="display:inline-block;padding:14px 22px;background:#173d31;color:white;border-radius:8px;text-decoration:none">Şifremi oluştur</a></p><p style="font-size:13px">Şifrenizi oluşturduktan sonra <a href="https://www.elmastriko.com/influencer/giris">influencer giriş sayfasından</a> yalnızca bu e-posta adresi ve şifrenizle oturum açabilirsiniz.</p><p style="font-size:12px;color:#65766c">Bu bağlantı tek kullanımlıktır ve sınırlı süre geçerlidir. Şifrenizi başkalarıyla paylaşmayın.</p></div>`,
+    });
+  } catch (error) {
+    console.error("Influencer invitation mail failed", error);
+    back("Şifre daveti e-postası gönderilemedi. Destek SMTP bağlantısını kontrol edin.");
+  }
+  const { error: saveError } = await admin.from("influencers")
+    .update({ invite_sent_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", id);
+  if (saveError) back("Davet gönderildi ancak kayıt güncellenemedi. Tekrar göndermeden önce kontrol edin.");
   revalidatePath("/yonetim/influencer");
-  back("Giriş daveti yalnızca kayıtlı e-posta adresine gönderildi.",true);
+  back("Tek kullanımlık şifre oluşturma bağlantısı davet e-postasına gönderildi.", true);
+}
+
+function escapeHtml(value: string): string {
+  return value.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
 
 export async function decideInfluencerPayout(fd: FormData) {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { requireInfluencer,money } from "@/lib/influencer";
-import { requestInfluencerPayout } from "./actions";
+import { requestInfluencerPayout,signOutInfluencer } from "./actions";
 import "./influencer.css";
 export const metadata: Metadata={title:"Influencer Kazanç Paneli",robots:{index:false,follow:false}};
 export const dynamic="force-dynamic";
@@ -38,7 +38,7 @@ export default async function InfluencerHome({searchParams}:{searchParams:Promis
   const graph=Array.from({length:days},(_,index)=>{const date=new Date(Date.now()-(days-index-1)*86400000).toISOString().slice(0,10);return {date,count:counts.get(date)||0}});
   const max=Math.max(1,...graph.map(g=>g.count));
   return <main className="affiliate-public-shell"><div className="affiliate-dashboard">
-    <header className="affiliate-public-header"><Link href="/" className="affiliate-mark">ELMAS TRİKO</Link><Link href="/" className="affiliate-muted">Mağazaya dön →</Link></header>
+    <header className="affiliate-public-header"><Link href="/" className="affiliate-mark">ELMAS TRİKO</Link><nav className="affiliate-header-actions"><Link href="/" className="affiliate-muted">Mağazaya dön →</Link><form action={signOutInfluencer}><button type="submit" className="affiliate-signout">Çıkış yap</button></form></nav></header>
     <div className="affiliate-welcome"><span>İŞ BİRLİĞİ PANELİ</span><h1>Merhaba, {influencer.full_name}</h1><p>İndirim kodunuzu paylaşın, satış performansınızı ve komisyonlarınızı buradan takip edin.</p></div>
     {params.error&&<p className="affiliate-alert error">{params.error}</p>}{params.message&&<p className="affiliate-alert success">{params.message}</p>}
     <section className="affiliate-stat-grid">

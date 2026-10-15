@@ -41,6 +41,7 @@ const nextConfig: NextConfig = {
       { source: "/(.*)", headers: securityHeaders },
       { source: "/yonetim/:path*", headers: protectedHeaders },
       { source: "/hesabim/:path*", headers: protectedHeaders },
+      { source: "/influencer/:path*", headers: [...protectedHeaders, { key: "Referrer-Policy", value: "no-referrer" }] },
     ];
   },
 };

@@ -42,3 +42,11 @@
 .affiliate-decision{display:flex;align-items:center;gap:8px}.affiliate-decision form{display:flex;gap:6px;align-items:center}.affiliate-decision input{max-width:140px}
 @media(max-width:900px){.affiliate-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.affiliate-grid{grid-template-columns:1fr}.affiliate-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.affiliate-card-title{flex-direction:column}}
 @media(max-width:560px){.affiliate-public-shell{padding:20px 13px 60px}.affiliate-public-header{margin-bottom:40px}.affiliate-stat-grid{gap:8px}.affiliate-stat-grid article{padding:16px}.affiliate-stat-grid strong{font-size:20px}.affiliate-card{padding:17px;border-radius:12px}.affiliate-form-grid{grid-template-columns:1fr}.affiliate-login-card{padding:24px}.affiliate-invite-row form{width:100%}.affiliate-invite-row button{width:100%}.affiliate-decision{flex-direction:column;align-items:stretch}}
+/* Influencer password authentication */
+.affiliate-login-links{display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:16px 0;font-size:13px}
+.affiliate-login-links a{color:#194430;text-decoration:underline;text-underline-offset:3px}
+.affiliate-login-card .password-input-wrap{display:flex;position:relative;align-items:center}
+.affiliate-login-card .password-input-wrap>input{padding-right:49px}
+.affiliate-login-card .password-visibility-toggle{position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:10px;color:#355d48}
+.affiliate-login-card form>p.affiliate-muted{margin:0}
+.affiliate-header-actions{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.affiliate-header-actions form{margin:0}.affiliate-signout{border:1px solid #cbd9cc;background:white;color:#194430;padding:10px 13px;border-radius:8px;font-size:13px;cursor:pointer}

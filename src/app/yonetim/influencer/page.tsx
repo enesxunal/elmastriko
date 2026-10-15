@@ -62,7 +62,7 @@ export default async function AdminInfluencers({searchParams}:{searchParams:Prom
     commissions: ordersList.reduce((sum,row)=>sum+Number(row.commission_amount||0),0),
   };
   return <main className="admin-page affiliate-admin-page">
-    <div className="admin-page-head"><div><span>İŞ BİRLİKLERİ</span><h1>Influencer Programı</h1><p>Davet, kod, kampanya performansı ve komisyon taleplerini buradan yönetin.</p></div></div>
+    <div className="admin-page-head"><div><span>İŞ BİRLİKLERİ</span><h1>Influencer Programı</h1><p>Şifre oluşturma daveti, kod, kampanya performansı ve komisyon taleplerini buradan yönetin.</p></div></div>
     {params.error&&<p className="affiliate-alert error" role="alert">{params.error}</p>}
     {params.message&&<p className="affiliate-alert success" role="status">{params.message}</p>}
     <section className="affiliate-stat-grid">
@@ -84,7 +84,7 @@ export default async function AdminInfluencers({searchParams}:{searchParams:Prom
       </tbody></table></div>}
       <p className="affiliate-muted">Ödemeler banka üzerinden manuel yapılır. "Ödendi" işaretlemesi gerçek transferin ardından yapılmalıdır.</p>
     </section>
-    <section className="affiliate-card"><h2>Yeni influencer ekle</h2><p className="affiliate-muted">E-posta teyit edilmeden profili taslak bırakın. Davet yalnızca aktif ve e-posta adresi kayıtlı profillere gönderilir.</p><form action={saveInfluencer}><FormFields/></form></section>
+    <section className="affiliate-card"><h2>Yeni influencer ekle</h2><p className="affiliate-muted">E-posta adresini doğruladıktan sonra profili aktif edin. Şifre oluşturma daveti yalnızca aktif profillere gönderilir.</p><form action={saveInfluencer}><FormFields/></form></section>
     <h2 className="affiliate-section-title">İş birlikleri</h2>
     {list.map(i=>{
       const attributed = ordersList.filter(a=>a.influencer_id===i.id);
@@ -96,7 +96,7 @@ export default async function AdminInfluencers({searchParams}:{searchParams:Prom
         <p className="affiliate-muted">Paylaşım linki: <Link href={"/?ref="+i.slug} target="_blank">elmastriko.com/?ref={i.slug}</Link></p>
         <details><summary>Bilgileri, oranları ve teslimatları düzenle</summary><form action={saveInfluencer} className="affiliate-edit-form"><FormFields influencer={i}/></form></details>
         <div className="affiliate-invite-row"><span>{i.email||"Davet e-postası henüz eklenmedi"} {i.invite_sent_at&&<small> · Son davet: {new Date(i.invite_sent_at).toLocaleString("tr-TR")}</small>}</span>
-          <form action={inviteInfluencer}><input type="hidden" name="id" value={i.id}/><button type="submit" className="affiliate-button" disabled={i.status!=="active"||!i.email}>{i.invite_sent_at?"Giriş davetini yeniden gönder":"E-posta ile giriş daveti gönder"}</button></form>
+          <form action={inviteInfluencer}><input type="hidden" name="id" value={i.id}/><button type="submit" className="affiliate-button" disabled={i.status!=="active"||!i.email}>{i.invite_sent_at?"Şifre oluşturma bağlantısını yeniden gönder":"Şifre oluşturma daveti gönder"}</button></form>
         </div>
       </section>;
     })}
