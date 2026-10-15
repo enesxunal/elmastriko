@@ -68,6 +68,9 @@ async function navigateInApp(page, target) {
    });
    await check(engine+' discount-code input stays usable',async()=>{
     const input=page.locator('#affiliate-promo-code'),button=page.locator('.affiliate-checkout-promo > div > button');
+    assert.equal(await input.getAttribute('placeholder'),'\u0130ndirim kodu');
+    assert.equal(await page.locator('label[for="affiliate-promo-code"]').innerText(),'\u0130ndirim kodu');
+    assert(!/influencer/i.test(await page.locator('.affiliate-checkout-promo').innerText()));
     const i=await input.boundingBox(),b=await button.boundingBox();assert(i&&b&&i.width>=180&&i.height>=44&&b.y>=i.y+i.height-1,JSON.stringify({i,b}));
     await input.fill('GORSELTEST');assert.equal(await input.inputValue(),'GORSELTEST');await input.fill('');
    });
