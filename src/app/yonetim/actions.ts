@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
+import { uploadProductMediaServer, removeProductMediaServer } from "@/lib/media/product-media";
 import { basitKargo } from "@/lib/integrations/basitkargo";
 import { createNesInvoiceForOrder } from "@/lib/integrations/nes-order-invoice";
 import { BANK_TRANSFER } from "@/lib/payments/bank-transfer";
@@ -23,23 +24,26 @@ async function uploadProductFiles(
   files: File[],
   altText: string,
 ) {
-  const allowedTypes = ["image/png","image/jpeg","image/webp","image/avif"];
-  const validFiles = files.filter(file => file instanceof File && file.size > 0).slice(0,8);
-  for (const [index,file] of validFiles.entries()) {
-    if (!allowedTypes.includes(file.type)) throw new Error("Desteklenmeyen görsel formatı.");
-    if (file.size > 8 * 1024 * 1024) throw new Error("Her görsel en fazla 8 MB olabilir.");
-    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
-    const path = `${productId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from("product-media").upload(path,file,{contentType:file.type||undefined,upsert:false});
-    if (uploadError) throw uploadError;
-    const url = supabase.storage.from("product-media").getPublicUrl(path).data.publicUrl;
-    const { error: imageError } = await supabase.from("product_images").insert({
-      product_id: productId,
-      url,
-      alt_text: altText || null,
-      sort_order: index,
-    });
-    if (imageError) throw imageError;
+  const validFiles = files.filter(file => file instanceof File && file.size > 0).slice(0, 8);
+  const uploadedUrls: string[] = [];
+  try {
+    for (const [index, file] of validFiles.entries()) {
+      const url = await uploadProductMediaServer(supabase, productId, file);
+      uploadedUrls.push(url);
+      const { error } = await supabase.from("product_images").insert({
+        product_id: productId,
+        url,
+        alt_text: altText || null,
+        sort_order: index,
+      });
+      if (error) throw error;
+    }
+  } catch (error) {
+    for (const url of uploadedUrls) {
+      try { await removeProductMediaServer(supabase, url); }
+      catch (cleanupError) { console.error("Product image rollback failed", cleanupError); }
+    }
+    throw error;
   }
 }
 
@@ -98,21 +102,17 @@ export async function updateProduct(fd: FormData) {
   revalidatePath("/yonetim/urunler"); revalidatePath(`/yonetim/urunler/${id}`); revalidatePath("/kadin"); revalidatePath("/erkek");
 }
 
-function storagePathFromPublicUrl(url: string) {
-  const marker="/storage/v1/object/public/product-media/";
-  const index=url.indexOf(marker);
-  if(index<0) return null;
-  return decodeURIComponent(url.slice(index+marker.length));
-}
-
 export async function deleteProduct(fd: FormData) {
   const { supabase } = await requireAdmin();
   const id=v(fd,"id");
   const { data: images }=await supabase.from("product_images").select("url").eq("product_id",id);
-  const storagePaths=(images||[]).map(image=>storagePathFromPublicUrl(image.url)).filter((path):path is string=>Boolean(path));
-  if(storagePaths.length) await supabase.storage.from("product-media").remove(storagePaths);
+  const urls=(images||[]).map(image=>image.url).filter((url):url is string=>Boolean(url));
   const { error } = await supabase.from("products").delete().eq("id",id);
   if (error) redirect("/yonetim/urunler?error="+encodeURIComponent(error.message));
+  for(const url of urls) {
+    try { await removeProductMediaServer(supabase,url); }
+    catch(cleanupError) { console.error("Product media deletion failed",cleanupError); }
+  }
   await audit("delete","product",id);
   revalidatePath("/yonetim/urunler");
   revalidatePath("/kadin");
@@ -311,23 +311,30 @@ export async function addProductImages(fd: FormData) {
   const { data: existing } = await supabase.from("product_images").select("sort_order").eq("product_id",productId).order("sort_order",{ascending:false}).limit(1);
   const offset = Number(existing?.[0]?.sort_order ?? -1) + 1;
 
+  const newIds: string[] = [];
+  const newUrls: string[] = [];
   try {
-    const allowedTypes=["image/png","image/jpeg","image/webp","image/avif"];
     for (const [index,file] of files.slice(0,8).entries()) {
-      if(!allowedTypes.includes(file.type)) throw new Error("Desteklenmeyen görsel formatı.");
-      if(file.size>8*1024*1024) throw new Error("Her görsel en fazla 8 MB olabilir.");
-      const ext=(file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
-      const path=`${productId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError }=await supabase.storage.from("product-media").upload(path,file,{contentType:file.type||undefined,upsert:false});
-      if(uploadError) throw uploadError;
-      const url=supabase.storage.from("product-media").getPublicUrl(path).data.publicUrl;
-      const { data, error }=await supabase.from("product_images").insert({product_id:productId,url,alt_text:altText||null,sort_order:offset+index}).select("id").single();
+      const url = await uploadProductMediaServer(supabase,productId,file);
+      newUrls.push(url);
+      const { data, error }=await supabase.from("product_images").insert({
+        product_id: productId,
+        url,
+        alt_text: altText||null,
+        sort_order: offset+index,
+      }).select("id").single();
       if(error) throw error;
+      newIds.push(data.id);
       await audit("create","product_image",data.id,{productId});
     }
   } catch (uploadError) {
+    if(newIds.length) await supabase.from("product_images").delete().in("id",newIds);
+    for(const url of newUrls) {
+      try { await removeProductMediaServer(supabase,url); }
+      catch(cleanupError) { console.error("Product media upload rollback failed",cleanupError); }
+    }
     const message=uploadError instanceof Error?uploadError.message:"Görsel yüklenemedi.";
-    redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent(message));
+    redirect("/yonetim/urunler/"+productId+"?error="+encodeURIComponent(message));
   }
 
   revalidatePath(`/yonetim/urunler/${productId}`);
@@ -351,10 +358,12 @@ export async function deleteProductImage(fd: FormData) {
   const { supabase }=await requireAdmin();
   const productId=v(fd,"product_id"), id=v(fd,"id");
   const { data:image }=await supabase.from("product_images").select("url").eq("id",id).maybeSingle();
-  const storagePath=image?.url?storagePathFromPublicUrl(image.url):null;
-  if(storagePath) await supabase.storage.from("product-media").remove([storagePath]);
   const { error }=await supabase.from("product_images").delete().eq("id",id);
-  if(error) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent(error.message));
+  if(error) redirect("/yonetim/urunler/"+productId+"?error="+encodeURIComponent(error.message));
+  if(image?.url) {
+    try { await removeProductMediaServer(supabase,image.url); }
+    catch(cleanupError) { console.error("Product image cleanup failed",cleanupError); }
+  }
   await audit("delete","product_image",id);
   revalidatePath(`/yonetim/urunler/${productId}`);
   revalidatePath("/yonetim/urunler");

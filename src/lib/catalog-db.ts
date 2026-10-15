@@ -116,8 +116,7 @@ export async function getProducts(options?: {
     );
   }
   if (options?.type) {
-    const typed = list.filter(p => p.type === options.type);
-    if (typed.length) list = typed;
+    list = list.filter(p => p.type === options.type);
   }
 
   if (options?.sort === "price-asc") {

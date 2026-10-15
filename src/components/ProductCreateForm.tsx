@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowRight, Info, Loader2 } from "lucide-react";
 import ProductImagePicker from "./ProductImagePicker";
 import { createClient } from "@/lib/supabase/client";
+import { uploadProductImage, cleanupUploadedProductImages, type UploadedProductMedia } from "@/lib/media/upload-client";
 import { PRODUCT_TAXONOMY, ProductGender } from "@/lib/product-taxonomy";
 
 type Category = { id:string; name:string };
@@ -95,7 +96,7 @@ export default function ProductCreateForm({
     }
 
     const files=fd.getAll("images").filter((item):item is File=>item instanceof File&&item.size>0).slice(0,8);
-    const uploadedPaths:string[]=[];
+    const uploadedMedia:UploadedProductMedia[]=[];
 
     try {
       const variantRows=selectedColors.flatMap(color=>selectedSizes.map(size=>({
@@ -117,13 +118,9 @@ export default function ProductCreateForm({
 
       for(const [index,file] of files.entries()){
         if(file.size>8*1024*1024) throw new Error("Her görsel en fazla 8 MB olabilir.");
-        const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
-        const path=`${product.id}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-        const {error:uploadError}=await supabase.storage.from("product-media").upload(path,file,{contentType:file.type,upsert:false});
-        if(uploadError) throw uploadError;
-        uploadedPaths.push(path);
-        const url=supabase.storage.from("product-media").getPublicUrl(path).data.publicUrl;
-        const {error:imageError}=await supabase.from("product_images").insert({product_id:product.id,url,alt_text:productName,sort_order:index});
+        const uploaded=await uploadProductImage(supabase,product.id,file);
+        uploadedMedia.push(uploaded);
+        const {error:imageError}=await supabase.from("product_images").insert({product_id:product.id,url:uploaded.url,alt_text:productName,sort_order:index});
         if(imageError) throw imageError;
       }
 
@@ -136,7 +133,7 @@ export default function ProductCreateForm({
       router.push(`/yonetim/urunler/${product.id}?created=1&variants_created=${selectedColors.length*selectedSizes.length}`);
       router.refresh();
     } catch(createError) {
-      if(uploadedPaths.length) await supabase.storage.from("product-media").remove(uploadedPaths);
+      if(uploadedMedia.length) await cleanupUploadedProductImages(supabase,product.id,uploadedMedia);
       await supabase.from("products").delete().eq("id",product.id);
       setError(createError instanceof Error?createError.message:"Ürün oluşturulamadı.");
       setBusy(false);

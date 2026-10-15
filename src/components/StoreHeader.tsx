@@ -25,7 +25,7 @@ export default function StoreHeader() {
             <div className="mobile-menu-group">
               <Link className="mobile-menu-parent" href="/kadin">Kadın <ArrowRight size={16}/></Link>
               <div className="mobile-subgrid">
-                <Link href="/yeni-gelenler">Yeni Gelenler</Link>
+                <Link href="/kadin/yeni-gelenler">Yeni Gelenler</Link>
                 <Link href="/kadin/hirka">Hırkalar</Link>
                 <Link href="/kadin/kazak">Kazaklar</Link>
                 <Link href="/kadin/takim">Takımlar</Link>
@@ -36,8 +36,8 @@ export default function StoreHeader() {
             <div className="mobile-menu-group">
               <Link className="mobile-menu-parent" href="/erkek">Erkek <ArrowRight size={16}/></Link>
               <div className="mobile-subgrid">
-                <Link href="/yeni-gelenler">Yeni Gelenler</Link>
-                <Link href="/arama?type=Kazak">Kazaklar</Link>
+                <Link href="/erkek/yeni-gelenler">Yeni Gelenler</Link>
+                <Link href="/erkek?type=Kazak">Kazaklar</Link>
                 <Link href="/erkek">Tüm Erkek</Link>
               </div>
             </div>
@@ -63,7 +63,7 @@ export default function StoreHeader() {
                 <div className="mega-kicker">Kadın Koleksiyonu</div>
                 <div className="mega-column">
                   <h4>Giyim</h4>
-                  <Link href="/yeni-gelenler">Yeni Gelenler</Link>
+                  <Link href="/kadin/yeni-gelenler">Yeni Gelenler</Link>
                   <Link href="/kadin/hirka">Hırkalar</Link>
                   <Link href="/kadin/kazak">Kazaklar</Link>
                   <Link href="/kadin/takim">Takımlar</Link>
@@ -71,7 +71,7 @@ export default function StoreHeader() {
                 </div>
                 <div className="mega-column">
                   <h4>Keşfet</h4>
-                  <Link href="/yeni-gelenler">Yeni Gelenler</Link>
+                  <Link href="/kadin/yeni-gelenler">Yeni Gelenler</Link>
                   <Link href="/kadin">Tüm Kadın</Link>
                 </div>
                 <Link className="mega-editorial" href="/kadin">
@@ -89,12 +89,12 @@ export default function StoreHeader() {
                 <div className="mega-kicker">Erkek Koleksiyonu</div>
                 <div className="mega-column">
                   <h4>Giyim</h4>
-                  <Link href="/yeni-gelenler">Yeni Gelenler</Link>
-                  <Link href="/arama?type=Kazak">Kazaklar</Link>
+                  <Link href="/erkek/yeni-gelenler">Yeni Gelenler</Link>
+                  <Link href="/erkek?type=Kazak">Kazaklar</Link>
                 </div>
                 <div className="mega-column">
                   <h4>Keşfet</h4>
-                  <Link href="/yeni-gelenler">Yeni Gelenler</Link>
+                  <Link href="/erkek/yeni-gelenler">Yeni Gelenler</Link>
                   <Link href="/erkek">Tüm Erkek</Link>
                 </div>
                 <Link className="mega-editorial" href="/erkek">

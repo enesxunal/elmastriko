@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ImagePlus, Loader2 } from "lucide-react";
 import ProductImagePicker from "./ProductImagePicker";
 import { createClient } from "@/lib/supabase/client";
+import { uploadProductImage, cleanupUploadedProductImages, type UploadedProductMedia } from "@/lib/media/upload-client";
 
 export default function ProductMediaUploadForm({productId,productName,startOrder,colorVariants=[]}:{productId:string;productName:string;startOrder:number;colorVariants?:Array<{id:string;color:string}>}) {
   const router=useRouter();
@@ -29,20 +30,16 @@ export default function ProductMediaUploadForm({productId,productName,startOrder
     }
 
     const supabase=createClient();
-    const uploadedPaths:string[]=[];
+    const uploadedMedia:UploadedProductMedia[]=[];
     const insertedImageIds:string[]=[];
     try {
       for(const [index,file] of files.entries()){
         if(file.size>8*1024*1024) throw new Error("Her görsel en fazla 8 MB olabilir.");
-        const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"");
-        const path=`${productId}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-        const {error:uploadError}=await supabase.storage.from("product-media").upload(path,file,{contentType:file.type,upsert:false});
-        if(uploadError) throw uploadError;
-        uploadedPaths.push(path);
-        const url=supabase.storage.from("product-media").getPublicUrl(path).data.publicUrl;
+        const uploaded=await uploadProductImage(supabase,productId,file);
+        uploadedMedia.push(uploaded);
         const {data:image,error:imageError}=await supabase.from("product_images").insert({
           product_id:productId,
-          url,
+          url:uploaded.url,
           alt_text:alt,
           variant_id:variantId,
           sort_order:startOrder+index,
@@ -55,7 +52,7 @@ export default function ProductMediaUploadForm({productId,productName,startOrder
       router.refresh();
     } catch(uploadError) {
       if(insertedImageIds.length) await supabase.from("product_images").delete().in("id",insertedImageIds);
-      if(uploadedPaths.length) await supabase.storage.from("product-media").remove(uploadedPaths);
+      if(uploadedMedia.length) await cleanupUploadedProductImages(supabase,productId,uploadedMedia);
       setError(uploadError instanceof Error?uploadError.message:"Görsel yüklenemedi.");
     } finally {
       setBusy(false);
