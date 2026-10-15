@@ -5,6 +5,7 @@ import AnalyticsTracker from "@/components/AnalyticsTracker";
 import InfluencerReferralCapture from "@/components/InfluencerReferralCapture";
 import { createPublicClient } from "@/lib/supabase/public";
 import "./globals.css";
+import "./storefront-responsive.css";
 
 const siteUrl = "https://www.elmastriko.com";
 

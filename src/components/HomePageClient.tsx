@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import NewsletterForm from "@/components/NewsletterForm";
 import FavoriteButton from "@/components/FavoriteButton";
-import { useStore } from "@/components/StoreProvider";
-import { ArrowRight, Heart, Search, ShoppingBag, UserRound, Camera, Plus } from "lucide-react";
+import StoreHeader from "@/components/StoreHeader";
+import { ArrowRight, Camera } from "lucide-react";
 import { useState } from "react";
 
 type HomeProduct = {
@@ -41,116 +41,11 @@ const social = [
 ];
 
 export default function Home({ initialProducts = [] }: { initialProducts?: HomeProduct[] }) {
-  const { cartCount, favorites } = useStore();
   const [products] = useState<HomeProduct[]>(initialProducts);
 
   return (
     <main>
-      <div className="topbar">
-        <span>5.000 TL üzeri ücretsiz kargo</span>
-        <span className="topbar-center">Yeni sezon · 2026</span>
-        <span>Güvenli ödeme</span>
-      </div>
-
-      <header className="site-header">
-        <details className="mobile-menu">
-          <summary aria-label="Menüyü aç"><span/><span/></summary>
-          <div className="mobile-menu-panel">
-            <div className="mobile-menu-title">Koleksiyonlar</div>
-            <div className="mobile-menu-group">
-              <a className="mobile-menu-parent" href="/kadin">Kadın <ArrowRight size={16}/></a>
-              <div className="mobile-subgrid">
-                <a href="/kadin/yeni-gelenler">Yeni Gelenler</a><a href="/kadin/hirka">Hırkalar</a><a href="/kadin/kazak">Kazaklar</a>
-                <a href="/kadin/takim">Takımlar</a><a href="/kadin/triko">Triko</a>
-              </div>
-            </div>
-            <div className="mobile-menu-group">
-              <a className="mobile-menu-parent" href="/erkek">Erkek <ArrowRight size={16}/></a>
-              <div className="mobile-subgrid">
-                <a href="/erkek/yeni-gelenler">Yeni Gelenler</a><a href="/erkek?type=Kazak">Kazaklar</a><a href="/erkek">Tüm Erkek</a>
-              </div>
-            </div>
-            <div className="mobile-feature-links">
-              <a href="/yeni-gelenler">Yeni Gelenler <ArrowRight size={14}/></a>
-              <a href="/yeni-gelenler">Elmas Seçkisi <ArrowRight size={14}/></a>
-            </div>
-            <div className="mobile-menu-secondary">
-              <a href="/hesabim">Hesabım</a><a href="/favoriler">Favoriler</a><a href="/siparis-takip">Sipariş Takibi</a>
-            </div>
-          </div>
-        </details>
-
-        <nav className="nav-left" aria-label="Ana menü">
-          <div className="mega-trigger">
-            <a className="mega-link" href="/kadin">Kadın</a>
-            <div className="mega-menu">
-              <div className="mega-menu-inner">
-                <div className="mega-kicker">Kadın Koleksiyonu</div>
-                <div className="mega-column">
-                  <h4>Giyim</h4>
-                  <a href="/kadin/yeni-gelenler">Yeni Gelenler</a><a href="/kadin/hirka">Hırkalar</a><a href="/kadin/kazak">Kazaklar</a><a href="/kadin/takim">Takımlar</a><a href="/kadin/triko">Triko</a>
-                </div>
-                <div className="mega-column">
-                  <h4>Keşfet</h4>
-                  <a href="/kadin/yeni-gelenler">Yeni Gelenler</a><a href="/kadin">Tüm Kadın</a>
-                </div>
-                <a className="mega-editorial" href="/kadin">
-                  <img src="/images/category-women.webp" alt="Kadın koleksiyonu"/>
-                  <div><span>Yeni sezon</span><strong>Kadın / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div className="mega-trigger">
-            <a className="mega-link" href="/erkek">Erkek</a>
-            <div className="mega-menu">
-              <div className="mega-menu-inner">
-                <div className="mega-kicker">Erkek Koleksiyonu</div>
-                <div className="mega-column">
-                  <h4>Giyim</h4>
-                  <a href="/erkek/yeni-gelenler">Yeni Gelenler</a><a href="/erkek?type=Kazak">Kazaklar</a>
-                </div>
-                <div className="mega-column">
-                  <h4>Keşfet</h4>
-                  <a href="/erkek/yeni-gelenler">Yeni Gelenler</a><a href="/erkek">Tüm Erkek</a>
-                </div>
-                <a className="mega-editorial" href="/erkek">
-                  <img src="/images/elmas-triko-erkek-krem-polo.webp" alt="Erkek koleksiyonu"/>
-                  <div><span>Yeni sezon</span><strong>Erkek / 2026</strong><b>Keşfet <ArrowRight size={14}/></b></div>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <a href="/yeni-gelenler">Yeni Gelenler</a>
-        </nav>
-
-        <Link className="brand" href="/" aria-label="Elmas Triko ana sayfa">
-          <Image src="/elmas-triko.png" alt="Elmas Triko" width={290} height={105} priority />
-        </Link>
-
-        <div className="header-right">
-          <div className="mega-trigger collection-trigger">
-            <a className="collection-link mega-link" href="/yeni-gelenler">Koleksiyonlar</a>
-            <div className="mega-menu">
-              <div className="mega-menu-inner collections-mega">
-                <div className="mega-kicker">Elmas Edit</div>
-                <a className="collection-tile" href="/yeni-gelenler"><span>01</span><strong>Yeni Sezon</strong><small>Son eklenen parçalar</small></a>
-                <a className="collection-tile" href="/kadin"><span>02</span><strong>Signature Knit</strong><small>Kadın koleksiyonunu keşfet</small></a>
-                <a className="collection-tile" href="/erkek"><span>03</span><strong>Modern Klasikler</strong><small>Erkek koleksiyonunu keşfet</small></a>
-                <a className="collection-tile dark" href="/yeni-gelenler"><span>04</span><strong>Tüm Koleksiyonlar</strong><small>Güncel ürünleri keşfet</small></a>
-              </div>
-            </div>
-          </div>
-          <div className="header-actions">
-            <Link aria-label="Ara" href="/arama"><Search size={19} strokeWidth={1.5} /></Link>
-            <Link aria-label="Hesabım" href="/hesabim"><UserRound size={19} strokeWidth={1.5} /></Link>
-            <Link aria-label="Favoriler" href="/favoriler"><Heart size={19} strokeWidth={1.5} />{favorites.length > 0 && <span className="cart-dot">{favorites.length}</span>}</Link>
-            <Link aria-label="Sepet" href="/sepet"><ShoppingBag size={19} strokeWidth={1.5} />{cartCount > 0 && <span className="cart-dot">{cartCount}</span>}</Link>
-          </div>
-        </div>
-      </header>
+      <StoreHeader/>
 
       <section className="hero">
         <div className="hero-media" />
@@ -231,7 +126,7 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
               <a href={"/urun/" + product.slug} className="product-image-wrap">
                 <img src={product.image} alt={product.name} />
                 <span className="product-badge">{product.badge || "Yeni"}</span>
-                <span className="quick-add"><Plus size={16}/> Hızlı ekle</span>
+                <span className="quick-add"><ArrowRight size={16}/> Ürünü incele</span>
               </a>
               <div className="product-info">
                 <div>
@@ -298,8 +193,8 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
       </section>
 
       <section className="service-row">
-        <div><b>01</b><span>Güvenli Ödeme</span><small>Ödeme altyapısı canlı satış öncesi bağlanacak</small></div>
-        <div><b>02</b><span>Hızlı Gönderim</span><small>BasitKargo entegrasyonu</small></div>
+        <div><b>01</b><span>Güvenli Ödeme</span><small>Kart ve EFT / havale seçenekleri</small></div>
+        <div><b>02</b><span>Hızlı Gönderim</span><small>Sipariş ve kargo takibi</small></div>
         <div><b>03</b><span>Kolay İade</span><small>Standart iade süreci</small></div>
         <div><b>04</b><span>Müşteri Desteği</span><small>Satış öncesi ve sonrası</small></div>
       </section>

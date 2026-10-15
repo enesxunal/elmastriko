@@ -24,7 +24,7 @@ export default async function GenderNewArrivalsPage({
   return <>
     <StoreHeader />
     <main className="listing-page">
-      <div className="listing-hero">
+      <div className="simple-title new-arrivals-title">
         <span>ELMAS TRİKO / {audience.toLocaleUpperCase("tr-TR")} / 2026</span>
         <h1>{audience} Yeni Gelenler</h1>
         <p>Yeni sezon {audience.toLocaleLowerCase("tr-TR")} triko, kazak ve hırka modelleri.</p>

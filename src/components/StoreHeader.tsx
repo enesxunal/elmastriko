@@ -1,12 +1,36 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowRight, Heart, Search, ShoppingBag, UserRound } from "lucide-react";
 import { useStore } from "./StoreProvider";
 
 export default function StoreHeader() {
   const { cartCount, favorites } = useStore();
+  const menuRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    const closeOutside = (event: PointerEvent) => {
+      const menu = menuRef.current;
+      if (menu?.open && event.target instanceof Node && !menu.contains(event.target)) {
+        menu.open = false;
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && menuRef.current?.open) {
+        menuRef.current.open = false;
+        menuRef.current.querySelector("summary")?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
 
   return (
     <>
@@ -17,9 +41,13 @@ export default function StoreHeader() {
       </div>
 
       <header className="site-header">
-        <details className="mobile-menu">
+        <details className="mobile-menu" ref={menuRef}>
           <summary aria-label="Menüyü aç"><span/><span/></summary>
-          <div className="mobile-menu-panel">
+          <div className="mobile-menu-panel" onClick={event => {
+            if (event.target instanceof Element && event.target.closest("a") && menuRef.current) {
+              menuRef.current.open = false;
+            }
+          }}>
             <div className="mobile-menu-title">Koleksiyonlar</div>
 
             <div className="mobile-menu-group">

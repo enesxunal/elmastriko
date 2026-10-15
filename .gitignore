@@ -42,3 +42,6 @@ next-env.d.ts
 
 # supabase cli
 /supabase/.temp/
+
+# Local browser review evidence
+/.qa/
