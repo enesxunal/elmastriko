@@ -25,6 +25,7 @@ type OrderPayload = {
   };
   items: Array<{ slug: string; qty: number; size?: string; color?: string }>;
   affiliateCode?: string;
+  analytics?: { sessionId?: string; visitorId?: string };
 };
 
 type OrderResult = {
@@ -94,6 +95,19 @@ export async function POST(request: NextRequest) {
         result.shippingFee = effectiveShippingFee;
         result.grandTotal = grandTotal;
       }
+    }
+  }
+
+  if (result.orderId && payload.analytics) {
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const { sessionId, visitorId } = payload.analytics;
+    if (sessionId && visitorId && uuid.test(sessionId) && uuid.test(visitorId)) {
+      try {
+        const { error: analyticsError } = await createAdminClient().rpc("attribute_store_order", {
+          p_order_id: result.orderId, p_session_id: sessionId, p_visitor_id: visitorId,
+        });
+        if (analyticsError) console.error("Order analytics attribution unavailable", analyticsError.code);
+      } catch { console.error("Order analytics attribution unavailable"); }
     }
   }
 

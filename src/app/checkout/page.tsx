@@ -1,4 +1,5 @@
 "use client";
+import { trackStoreEvent, analyticsOrderContext, flushAnalytics } from "@/lib/analytics-client";
 
 import StoreHeader from "@/components/StoreHeader";
 import BankTransferPaymentCard from "@/components/BankTransferPaymentCard";
@@ -120,7 +121,7 @@ export default function CheckoutPage() {
     return ()=>{active=false};
   }, []);
   const checkoutSent=useRef(false);
-  useEffect(()=>{if(!loading && !commerceLoading && lines.length && !checkoutSent.current){checkoutSent.current=true;gaEvent("begin_checkout",gaCart(lines));}},[loading,commerceLoading,lines]);
+  useEffect(()=>{if(!loading && !commerceLoading && lines.length && !checkoutSent.current){checkoutSent.current=true;gaEvent("begin_checkout",gaCart(lines));trackStoreEvent("begin_checkout");}},[loading,commerceLoading,lines]);
 
   useEffect(() => {
     if (!paymentSuccess) return;
@@ -198,10 +199,13 @@ export default function CheckoutPage() {
       const eventCart=gaCart(lines);
       gaEvent("add_shipping_info",{...eventCart,shipping_tier:"standard"});
       gaEvent("add_payment_info",{...eventCart,payment_type:paymentMethod === "eft" ? "bank_transfer" : "card"});
+      const analytics = analyticsOrderContext();
+      await Promise.race([flushAnalytics(), new Promise<void>(resolve => setTimeout(resolve, 1500))]);
       const orderResponse = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          analytics,
           email,
           phone,
           shipping: {

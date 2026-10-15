@@ -1,4 +1,5 @@
 "use client";
+import { trackStoreEvent } from "@/lib/analytics-client";
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
@@ -190,6 +191,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     favorites,
     addToCart(line) {
       if (!line.slug) return;
+      trackStoreEvent("add_to_cart", line.slug);
       setCart(prev => {
         const next = normalizeCart(prev);
         const found = next.find(item => sameCartLine(item, line));
