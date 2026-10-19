@@ -1,4 +1,5 @@
 import { sendOrderNotice } from "@/lib/mail";
+import { sendMetaPurchase } from "@/lib/meta-capi";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { tosla, validateToslaCallback } from "@/lib/integrations/tosla";
@@ -119,16 +120,18 @@ export async function POST(request: NextRequest) {
     .update(paymentUpdate)
     .eq("id", payment.id);
 
+  let newlyPaid = false;
   if (order.payment_status !== "paid") {
-    await supabase
-      .from("orders")
-      .update({
-        payment_provider: "tosla",
-        payment_status: paymentStatus,
-        status: paid ? "paid" : "awaiting_payment",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", order.id);
+    const { data: changed, error: updateError } = await supabase.from("orders")
+      .update({payment_provider:"tosla",payment_status:paymentStatus,status:paid?"paid":"awaiting_payment",updated_at:new Date().toISOString()})
+      .eq("id",order.id).neq("payment_status","paid").select("id");
+    if(updateError) console.error("Payment status update failed",updateError.message);
+    newlyPaid = paid && Boolean(changed?.length);
+  }
+  if(newlyPaid) {
+    const {data:confirmedOrder} = await supabase.from("orders")
+      .select("id,grand_total,currency,guest_email,guest_phone").eq("id",order.id).maybeSingle();
+    if(confirmedOrder) await sendMetaPurchase(confirmedOrder);
   }
 
   if (paid && isNesConfigured()) {

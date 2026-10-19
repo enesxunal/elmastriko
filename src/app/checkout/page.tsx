@@ -1,4 +1,5 @@
 "use client";
+import { metaTrack } from "@/lib/meta-pixel";
 import { trackStoreEvent, analyticsOrderContext, flushAnalytics } from "@/lib/analytics-client";
 
 import StoreHeader from "@/components/StoreHeader";
@@ -121,7 +122,7 @@ export default function CheckoutPage() {
     return ()=>{active=false};
   }, []);
   const checkoutSent=useRef(false);
-  useEffect(()=>{if(!loading && !commerceLoading && lines.length && !checkoutSent.current){checkoutSent.current=true;gaEvent("begin_checkout",gaCart(lines));trackStoreEvent("begin_checkout");}},[loading,commerceLoading,lines]);
+  useEffect(()=>{if(!loading && !commerceLoading && lines.length && !checkoutSent.current){checkoutSent.current=true;gaEvent("begin_checkout",gaCart(lines));metaTrack("InitiateCheckout",{currency:"TRY",value:gaCart(lines).value,content_type:"product",content_ids:lines.map(({line,product})=>product.variants?.find(v=>v.color===line.color && v.size===line.size)?.sku || product.variants?.find(v=>v.color===line.color && v.size===line.size)?.id || product.slug),num_items:lines.reduce((n,x)=>n+x.line.qty,0)});trackStoreEvent("begin_checkout");}},[loading,commerceLoading,lines]);
 
   useEffect(() => {
     if (!paymentSuccess) return;

@@ -7,6 +7,7 @@ import { uploadProductMediaServer, removeProductMediaServer } from "@/lib/media/
 import { basitKargo } from "@/lib/integrations/basitkargo";
 import { createNesInvoiceForOrder } from "@/lib/integrations/nes-order-invoice";
 import { BANK_TRANSFER } from "@/lib/payments/bank-transfer";
+import { sendMetaPurchase } from "@/lib/meta-capi";
 import { encryptMailPassword } from "@/lib/mail/crypto";
 import { sendOrderStatusEmail, sendShipmentEmail, sendOrderNotice, verifyMailAccount, type MailAccountKey } from "@/lib/mail";
 
@@ -517,7 +518,11 @@ export async function approveBankTransfer(fd: FormData) {
   const now=new Date().toISOString();
   const raw=(payment.raw_response||{}) as Record<string,unknown>;
   await supabase.from("payments").update({status:"paid",raw_response:{...raw,adminApprovedAt:now},updated_at:now}).eq("id",payment.id);
-  await supabase.from("orders").update({payment_provider:BANK_TRANSFER.provider,payment_status:"paid",status:"paid",updated_at:now}).eq("id",orderId);
+  const {data:justPaid,error:paymentApprovalError}=await supabase.from("orders")
+    .update({payment_provider:BANK_TRANSFER.provider,payment_status:"paid",status:"paid",updated_at:now})
+    .eq("id",orderId).neq("payment_status","paid").select("id,grand_total,currency,guest_email,guest_phone");
+  if(paymentApprovalError) throw new Error(paymentApprovalError.message);
+  if(justPaid?.[0]) await sendMetaPurchase(justPaid[0]);
   await audit("approve","bank_transfer_payment",orderId,{orderNo:order.order_no});
   if(order.payment_status!=="paid"){
     try{await createNesInvoiceForOrder(orderId);}catch(error){console.error("NES invoice creation failed after EFT approval:",error);}
