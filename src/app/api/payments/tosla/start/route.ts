@@ -58,7 +58,10 @@ export async function POST(request: NextRequest) {
       installmentCount: Math.max(0, Math.min(12, Number(body.installmentCount || 0))),
     });
   } catch (error) {
-    console.error("Tosla payment session start failed", error instanceof Error ? error.name : "unknown");
+    const cause = error instanceof Error ? error.cause as { code?: unknown } | undefined : undefined;
+    const networkCode = typeof cause?.code === "string" && /^[A-Z0-9_]{1,60}$/.test(cause.code) ? cause.code : undefined;
+    const httpStatus = error instanceof Error ? /^Tosla API (\d{3}):/.exec(error.message)?.[1] : undefined;
+    console.error("Tosla payment session start failed", { name: error instanceof Error ? error.name : "unknown", networkCode, httpStatus });
     await recordCheckoutEvent("payment_session_failed", body.diagnostics, { orderId: order.id, code: "provider", isTest: /@example\.invalid$/i.test(order.guest_email || "") });
     return NextResponse.json(
       { error: "Tosla ödeme oturumu başlatılamadı. Lütfen tekrar deneyin." },
