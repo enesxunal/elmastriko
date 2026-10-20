@@ -95,6 +95,8 @@ export default function CheckoutPage() {
   const freeShipping = discountedSubtotal >= freeShippingThreshold;
   const effectiveShippingFee = lines.length === 0 ? 0 : freeShipping ? 0 : shippingFee;
   const total = effectiveShippingFee === null ? null : discountedSubtotal + effectiveShippingFee;
+  const submitDisabled = submitting || loading || commerceLoading || !lines.length || hasUnknownPrice || total === null;
+  const submitLabel = submitting ? "Sipariş hazırlanıyor..." : paymentMethod === "eft" ? "EFT / Havale ile Sipariş Oluştur" : "Tosla ile Güvenli Öde";
   async function applyCoupon() {
     const code = couponInput.trim().toUpperCase();
     if (!/^[A-Z0-9]{3,32}$/.test(code)) { setCoupon(null); setCouponMessage("Geçerli bir indirim kodu girin."); return; }
@@ -352,6 +354,11 @@ export default function CheckoutPage() {
           ? <div className="provider-waiting"><b>Tosla İşim Sanal POS</b><p>Ödemeler 3D Secure destekli güvenli kart ödeme akışıyla alınır. Visa, Mastercard ve TROY kartları desteklenir.</p></div>
           : <div className="provider-waiting eft-preview"><b>EFT / Havale</b><p>Siparişiniz oluşturulduktan sonra banka bilgileri ve açıklamaya yazmanız gereken sipariş kodu gösterilecek. Ödeme, yönetici kontrolünden sonra onaylanır.</p></div>}
       </div></div>
+      <div className="checkout-bottom-action">
+        <p><span>Toplam</span><b>{hasUnknownPrice ? "—" : commerceLoading ? "Hesaplanıyor" : total === null ? "Kargo tutarı onayda" : formatPrice(total)}</b></p>
+        <button type="submit" disabled={submitDisabled}>{submitLabel}</button>
+        {submitError && <p className="checkout-error-box" role="alert">{submitError}</p>}
+      </div>
     </form>
     <aside className="checkout-summary premium-checkout-summary">
       <div className="summary-kicker">SİPARİŞ ÖZETİ</div><h3>Ödemeniz</h3>
@@ -362,7 +369,7 @@ export default function CheckoutPage() {
       {coupon&&<p><span>{coupon.code} indirimi (%{coupon.percent})</span><b>-{formatPrice(discount)}</b></p>}
       <p><span>Kargo</span><b>{commerceLoading ? "Hesaplanıyor" : freeShipping ? "Ücretsiz" : hasUnknownPrice ? "Hesaplanacak" : effectiveShippingFee === null ? "Kargo tutarı onayda" : formatPrice(effectiveShippingFee)}</b></p>
       <p className="checkout-grand-total"><span>Toplam</span><b>{hasUnknownPrice ? "—" : commerceLoading ? "Hesaplanıyor" : total === null ? "Kargo tutarı onayda" : formatPrice(total)}</b></p>
-      <button type="submit" form="checkout-form" disabled={submitting || loading || commerceLoading || !lines.length || hasUnknownPrice || total === null}>{submitting ? "Sipariş hazırlanıyor..." : paymentMethod === "eft" ? "EFT / Havale ile Sipariş Oluştur" : "Tosla ile Güvenli Öde"}</button>
+      <button type="submit" form="checkout-form" disabled={submitDisabled}>{submitLabel}</button>
       {submitError && <p className="checkout-error-box">{submitError}</p>}
       <div className="checkout-trust">
         {paymentMethod === "card"
