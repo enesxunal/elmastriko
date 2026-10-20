@@ -160,7 +160,8 @@ export default async function StatisticsPage({
     supabase.rpc("checkout_diagnostics_report", { p_from: period.from.toISOString(), p_to: period.to.toISOString() }),
   ]);
 
-  const allOrders = (ordersResult.data || []) as OrderRow[];
+  const rawOrders = (ordersResult.data || []) as OrderRow[];
+  const allOrders = rawOrders.filter(order => !/@example\.invalid$/i.test(order.guest_email || ""));
   const items = (itemsResult.data || []) as OrderItemRow[];
   const addresses = (addressesResult.data || []) as AddressRow[];
   const inventory = (inventoryResult.data || []) as InventoryRow[];
@@ -287,7 +288,7 @@ export default async function StatisticsPage({
       <CheckoutDiagnosticsDashboard report={checkoutDiagnosticsResult.error ? null : checkoutDiagnosticsResult.data as CheckoutReport | null}/>
 
       {ordersResult.error && <div className="admin-alert error">Satış verisi okunamadı; aşağıdaki satış değerleri doğrulanamıyor.</div>}
-      <section className="analytics-traffic-title commerce-title"><div><span>TİCARET ANALİTİĞİ</span><h2>Satış ve ürün performansı</h2></div></section>
+      <section className="analytics-traffic-title commerce-title"><div><span>TİCARET ANALİTİĞİ</span><h2>Satış ve ürün performansı</h2><p className="analytics-helper">Bilinen teknik test siparişleri satış, sipariş ve müşteri hesaplarına dahil edilmez. Sipariş kayıtları yönetimde korunur.</p></div></section>
 
       <section className="analytics-kpis">
         {kpis.map(({ label, value, change: delta, icon: Icon, note }) => (
