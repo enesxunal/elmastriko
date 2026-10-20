@@ -1083,12 +1083,13 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
 /* Influencer promo code at checkout */
 .affiliate-checkout-promo{background:#f5f7f3;padding:15px;border-radius:12px;margin:13px 0}.affiliate-checkout-promo>label{font-size:13px;font-weight:700;display:block;margin-bottom:9px}.affiliate-checkout-promo>div{display:flex;gap:8px}.affiliate-checkout-promo input{min-width:0;flex:1;border:1px solid #ccd9d0;padding:10px;border-radius:7px;font-size:14px;background:white}.affiliate-checkout-promo button{border:1px solid #173d31;background:#173d31;color:white;padding:9px 12px;border-radius:7px;font-size:12px;cursor:pointer}.affiliate-checkout-promo button:disabled{opacity:.6}.affiliate-checkout-promo small{display:block;margin-top:8px;color:#315d46;font-size:12px}.affiliate-checkout-promo .affiliate-promo-clear{background:transparent;color:#375946;margin-top:8px;border-color:#c5d7c8}
 
-/* Keep checkout submission reachable after choosing a payment method on mobile. */
-.checkout-bottom-action{display:none}
-@media(max-width:1050px){
-  .checkout-bottom-action{display:block;margin-top:24px;padding-top:20px;border-top:1px solid #e2dcd2}
-  .checkout-bottom-action>p:first-child{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 14px;font-size:14px}
-  .checkout-bottom-action>p:first-child b{font-size:20px}
-  .checkout-bottom-action>button{display:block;width:100%;min-height:54px;padding:14px 12px;border:1px solid #173d31;border-radius:12px;background:#173d31;color:#fff;font-size:12px;font-weight:700;line-height:1.5;cursor:pointer}
-  .checkout-bottom-action>button:disabled{background:#b7b0a7;border-color:#b7b0a7;opacity:.6;cursor:not-allowed}
-}
+/* Payment methods are the final checkout actions. */
+.checkout-payment-help{font-size:12px;line-height:1.6;color:#766e65;margin:0 0 16px}
+.checkout-payment-total{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 16px;font-size:14px}
+.checkout-payment-total b{font-size:20px}
+.payment-step .payment-method-grid{margin-bottom:0}
+.payment-step .payment-method-card{min-height:86px;border-color:#173d31;background:#173d31;color:#fff}
+.payment-step .payment-method-card small{font-size:11px;line-height:1.5;color:#e3ece6}
+.payment-step .payment-method-card:hover:not(:disabled){background:#1d4a3c;box-shadow:0 8px 20px rgba(23,61,49,.14)}
+.payment-step .payment-method-card:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.payment-step .payment-method-card:focus-visible{outline:3px solid #bda26d;outline-offset:3px}

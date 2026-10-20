@@ -96,7 +96,6 @@ export default function CheckoutPage() {
   const effectiveShippingFee = lines.length === 0 ? 0 : freeShipping ? 0 : shippingFee;
   const total = effectiveShippingFee === null ? null : discountedSubtotal + effectiveShippingFee;
   const submitDisabled = submitting || loading || commerceLoading || !lines.length || hasUnknownPrice || total === null;
-  const submitLabel = submitting ? "Sipariş hazırlanıyor..." : paymentMethod === "eft" ? "EFT / Havale ile Sipariş Oluştur" : "Tosla ile Güvenli Öde";
   async function applyCoupon() {
     const code = couponInput.trim().toUpperCase();
     if (!/^[A-Z0-9]{3,32}$/.test(code)) { setCoupon(null); setCouponMessage("Geçerli bir indirim kodu girin."); return; }
@@ -179,6 +178,9 @@ export default function CheckoutPage() {
     event.preventDefault();
     if (submitting || loading || commerceLoading || !lines.length || hasUnknownPrice || total === null) return;
 
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    const selectedPaymentMethod = submitter instanceof HTMLButtonElement && submitter.value === "eft" ? "eft" : "card";
+    setPaymentMethod(selectedPaymentMethod);
     setSubmitting(true);
     setSubmitError("");
 
@@ -201,7 +203,7 @@ export default function CheckoutPage() {
       const sameBilling = form.get("sameBilling") === "on";
       const eventCart=gaCart(lines);
       gaEvent("add_shipping_info",{...eventCart,shipping_tier:"standard"});
-      gaEvent("add_payment_info",{...eventCart,payment_type:paymentMethod === "eft" ? "bank_transfer" : "card"});
+      gaEvent("add_payment_info",{...eventCart,payment_type:selectedPaymentMethod === "eft" ? "bank_transfer" : "card"});
       const analytics = analyticsOrderContext();
       await Promise.race([flushAnalytics(), new Promise<void>(resolve => setTimeout(resolve, 1500))]);
       const orderResponse = await fetch("/api/orders", {
@@ -251,11 +253,11 @@ export default function CheckoutPage() {
         throw new Error(orderBody.error || "Sipariş oluşturulamadı.");
       }
 
-      if (paymentMethod === "card" && orderBody.orderNo) {
+      if (selectedPaymentMethod === "card" && orderBody.orderNo) {
         sessionStorage.setItem("elmas_ga_purchase_"+orderBody.orderNo,JSON.stringify({...eventCart,transaction_id:orderBody.orderNo}));
       }
 
-      if (paymentMethod === "eft") {
+      if (selectedPaymentMethod === "eft") {
         const eftResponse = await fetch("/api/payments/eft/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -342,23 +344,18 @@ export default function CheckoutPage() {
       <div className="checkout-step"><span>02</span><div><h2>Teslimat adresi</h2><div className="form-grid"><input required name="addressLine" autoComplete="street-address" className="full" placeholder="Adres"/><input required name="city" autoComplete="address-level1" placeholder="İl"/><input required name="district" autoComplete="address-level2" placeholder="İlçe"/><input name="postalCode" autoComplete="postal-code" placeholder="Posta kodu"/><input name="addressTitle" placeholder="Adres başlığı"/></div></div></div>
       <div className="checkout-step"><span>03</span><div><h2>Fatura</h2><div className="invoice-type-switch"><button type="button" className={invoiceType === "individual" ? "selected" : ""} onClick={() => setInvoiceType("individual")}>Bireysel</button><button type="button" className={invoiceType === "company" ? "selected" : ""} onClick={() => setInvoiceType("company")}>Kurumsal</button></div>{invoiceType === "company" && <div className="form-grid invoice-company-fields"><input required name="companyName" placeholder="Firma unvanı"/><input required name="taxOffice" placeholder="Vergi dairesi"/><input required name="taxNumber" placeholder="Vergi / T.C. no"/><input name="invoiceEmail" type="email" placeholder="E-fatura e-posta"/></div>}<label className="check-row"><input name="sameBilling" type="checkbox" defaultChecked/> Fatura adresi teslimat adresi ile aynı</label><p className="checkout-note">Ödeme tamamlandıktan sonra fatura kaydı NES Portal entegrasyonuna aktarılacak.</p></div></div>
       <div className="checkout-step payment-step"><span>04</span><div><h2>Ödeme yöntemi</h2>
-        <div className="payment-method-grid">
-          <button type="button" className={paymentMethod==="card"?"payment-method-card selected":"payment-method-card"} onClick={()=>setPaymentMethod("card")}>
-            <b>Kredi / Banka Kartı</b><small>Tosla İşim Sanal POS · 3D Secure</small>
+        <p className="checkout-payment-help">Bilgilerinizi kontrol ettikten sonra ödeme yönteminize dokunun. Siparişiniz oluşturularak seçtiğiniz ödeme adımına geçilir.</p>
+        <p className="checkout-payment-total"><span>Toplam</span><b>{hasUnknownPrice ? "—" : commerceLoading ? "Hesaplanıyor" : total === null ? "Kargo tutarı onayda" : formatPrice(total)}</b></p>
+        <div className="payment-method-grid" aria-busy={submitting}>
+          <button type="submit" name="paymentMethod" value="card" className="payment-method-card" disabled={submitDisabled}>
+            <b>Kredi / Banka Kartı</b><small>{submitting && paymentMethod === "card" ? "Ödeme ekranı hazırlanıyor..." : "Güvenli kart ödemesine geç →"}</small>
           </button>
-          <button type="button" className={paymentMethod==="eft"?"payment-method-card selected":"payment-method-card"} onClick={()=>setPaymentMethod("eft")}>
-            <b>EFT / Havale</b><small>Türkiye Finans Bankası · Manuel ödeme onayı</small>
+          <button type="submit" name="paymentMethod" value="eft" className="payment-method-card" disabled={submitDisabled}>
+            <b>EFT / Havale</b><small>{submitting && paymentMethod === "eft" ? "Siparişiniz hazırlanıyor..." : "Sipariş oluştur, banka bilgilerini gör →"}</small>
           </button>
         </div>
-        {paymentMethod==="card"
-          ? <div className="provider-waiting"><b>Tosla İşim Sanal POS</b><p>Ödemeler 3D Secure destekli güvenli kart ödeme akışıyla alınır. Visa, Mastercard ve TROY kartları desteklenir.</p></div>
-          : <div className="provider-waiting eft-preview"><b>EFT / Havale</b><p>Siparişiniz oluşturulduktan sonra banka bilgileri ve açıklamaya yazmanız gereken sipariş kodu gösterilecek. Ödeme, yönetici kontrolünden sonra onaylanır.</p></div>}
-      </div></div>
-      <div className="checkout-bottom-action">
-        <p><span>Toplam</span><b>{hasUnknownPrice ? "—" : commerceLoading ? "Hesaplanıyor" : total === null ? "Kargo tutarı onayda" : formatPrice(total)}</b></p>
-        <button type="submit" disabled={submitDisabled}>{submitLabel}</button>
         {submitError && <p className="checkout-error-box" role="alert">{submitError}</p>}
-      </div>
+      </div></div>
     </form>
     <aside className="checkout-summary premium-checkout-summary">
       <div className="summary-kicker">SİPARİŞ ÖZETİ</div><h3>Ödemeniz</h3>
@@ -369,8 +366,6 @@ export default function CheckoutPage() {
       {coupon&&<p><span>{coupon.code} indirimi (%{coupon.percent})</span><b>-{formatPrice(discount)}</b></p>}
       <p><span>Kargo</span><b>{commerceLoading ? "Hesaplanıyor" : freeShipping ? "Ücretsiz" : hasUnknownPrice ? "Hesaplanacak" : effectiveShippingFee === null ? "Kargo tutarı onayda" : formatPrice(effectiveShippingFee)}</b></p>
       <p className="checkout-grand-total"><span>Toplam</span><b>{hasUnknownPrice ? "—" : commerceLoading ? "Hesaplanıyor" : total === null ? "Kargo tutarı onayda" : formatPrice(total)}</b></p>
-      <button type="submit" form="checkout-form" disabled={submitDisabled}>{submitLabel}</button>
-      {submitError && <p className="checkout-error-box">{submitError}</p>}
       <div className="checkout-trust">
         {paymentMethod === "card"
           ? <span><b>3D Secure koruması</b><small>Kart bilgileriniz Elmas Triko sunucularında tutulmaz.</small></span>
