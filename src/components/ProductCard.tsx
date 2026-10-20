@@ -1,5 +1,6 @@
 "use client";
 
+import { trackCartAddition } from "@/lib/commerce-tracking";
 import Link from "next/link";
 import { Check, ShoppingBag } from "lucide-react";
 import { useState } from "react";
@@ -21,6 +22,7 @@ export default function ProductCard({ product }: { product: Product }) {
   function quickAdd() {
     if (!canBuy) return;
     addToCart({ slug: product.slug, qty: 1, size, color });
+    trackCartAddition(product, { slug: product.slug, qty: 1, size, color }, firstAvailable?.price ?? product.price);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1800);
   }

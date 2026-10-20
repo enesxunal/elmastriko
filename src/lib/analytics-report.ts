@@ -1,5 +1,8 @@
 export type AnalyticsReport={
   from:string;to:string;bucket:"hour"|"day"|"week";measurementStartedAt:string|null;lastEventAt:string|null;
+  eventAlignmentStartedAt?:string|null;
+  excludedTestSessions?:number;
+  eventTotals?:Array<{kind:string;events:number;sessions:number}>;
   summary:{visitors:number;sessions:number;pageviews:number;activeMs:number;measuredSessions:number;measuredPages:number;activeNow:number;singlePageSessions:number};
   funnel:{sessions:number;product:number;cart:number;checkout:number;purchase:number;orders:number;revenue:number;unattributedPaidOrders:number};
   trend:Array<{at:string;views:number;sessions:number;visitors:number;activeMs:number;measuredSessions:number}>;

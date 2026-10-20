@@ -1,4 +1,5 @@
 "use client";
+import { analyticsAllowed } from "./analytics-identity";
 import type { Product } from "@/lib/catalog";
 import type { CartLine } from "@/components/StoreProvider";
 
@@ -6,7 +7,7 @@ type Item = { item_id: string; item_name: string; price: number; quantity: numbe
 type CartProduct = {line: CartLine; product: Product; unitPrice: number | null};
 declare global { interface Window { dataLayer?: unknown[]; gtag?: (...args: unknown[]) => void } }
 export function gaEvent(name: string, details: Record<string, unknown>) {
-  if (typeof window === "undefined") return;
+  if (!analyticsAllowed()) return;
   if (typeof window.gtag === "function") window.gtag("event", name, details);
   else if (window.dataLayer) window.dataLayer.push({event: name, ...details});
 }

@@ -1,7 +1,7 @@
 "use client";
 import { checkoutAttemptId, trackCheckoutProgress } from "@/lib/checkout-diagnostics-client";
-import { metaTrack } from "@/lib/meta-pixel";
-import { trackStoreEvent, analyticsOrderContext, flushAnalytics } from "@/lib/analytics-client";
+import { trackCheckoutStart } from "@/lib/commerce-tracking";
+import { analyticsOrderContext, flushAnalytics } from "@/lib/analytics-client";
 
 import StoreHeader from "@/components/StoreHeader";
 import BankTransferPaymentCard from "@/components/BankTransferPaymentCard";
@@ -137,7 +137,7 @@ export default function CheckoutPage() {
   const formStarted = useRef(false);
   const invalidAt = useRef(0);
   const checkoutSent=useRef(false);
-  useEffect(()=>{if(!loading && !commerceLoading && lines.length && !checkoutSent.current){checkoutSent.current=true;gaEvent("begin_checkout",gaCart(lines));metaTrack("InitiateCheckout",{currency:"TRY",value:gaCart(lines).value,content_type:"product",content_ids:lines.map(({line,product})=>product.variants?.find(v=>v.color===line.color && v.size===line.size)?.sku || product.variants?.find(v=>v.color===line.color && v.size===line.size)?.id || product.slug),num_items:lines.reduce((n,x)=>n+x.line.qty,0)});trackStoreEvent("begin_checkout");}},[loading,commerceLoading,lines]);
+  useEffect(() => { if (!loading && !commerceLoading && lines.length && !checkoutSent.current) { checkoutSent.current = true; trackCheckoutStart(lines); } }, [loading, commerceLoading, lines]);
 
   useEffect(() => {
     if (!paymentSuccess) return;

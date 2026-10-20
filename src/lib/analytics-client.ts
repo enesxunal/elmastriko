@@ -3,7 +3,7 @@ import {analyticsAllowed,currentAnalyticsSession,type AnalyticsSession} from "./
 export {analyticsAllowed} from "./analytics-identity";
 
 type Kind="page_view"|"engagement"|"view_item"|"add_to_cart"|"begin_checkout";
-export type AnalyticsPage={id:string;path:string;session:AnalyticsSession};
+export type AnalyticsPage={id:string;viewItemId?:string;checkoutId?:string;path:string;session:AnalyticsSession};
 type Event={id:string;pageId:string;kind:Kind;path:string;at:string;activeMs:number;slug?:string};
 type Queued={session:AnalyticsSession;event:Event};
 let page:AnalyticsPage|null=null;
@@ -13,21 +13,21 @@ let inFlight:Promise<void>|null=null;
 let retries=0;
 function schedule(){if(!scheduled)scheduled=setTimeout(()=>{scheduled=undefined;void flushAnalytics();},400);}
 export function enqueueAnalytics(target:AnalyticsPage,kind:Kind,activeMs=0,slug?:string){
-  const event:Event={id:kind==="page_view"?target.id:crypto.randomUUID(),pageId:target.id,kind,path:target.path,at:new Date().toISOString(),activeMs};
+  const event:Event={id:kind==="page_view"?target.id:kind==="view_item"?target.viewItemId!:kind==="begin_checkout"?target.checkoutId!:crypto.randomUUID(),pageId:target.id,kind,path:target.path,at:new Date().toISOString(),activeMs};
   if(slug)event.slug=slug.slice(0,160);
-  queue.push({session:target.session,event});if(queue.length>100)queue=queue.slice(-100);schedule();
+  queue.push({session:target.session,event});if(queue.length>100)queue=queue.slice(-100);schedule();return event.id;
 }
 export function currentAnalyticsPage(path=location.pathname):AnalyticsPage{
   const s=currentAnalyticsSession();
   const clean=path.split("?")[0].replace(/^(\/hesabim\/siparis)\/[^/]+/,"$1/[siparis]").slice(0,500);
   if(!page||page.path!==clean||page.session.id!==s.id){
-    page={id:crypto.randomUUID(),path:clean,session:s};enqueueAnalytics(page,"page_view");
+    page={id:crypto.randomUUID(),viewItemId:crypto.randomUUID(),path:clean,session:s};enqueueAnalytics(page,"page_view");
     if(/^\/urun\/[^/]+$/.test(clean))enqueueAnalytics(page,"view_item",0,clean.split("/").pop());
   }
   return page;
 }
 export function trackStoreEvent(kind:"add_to_cart"|"begin_checkout",slug?:string){
-  try{if(analyticsAllowed())enqueueAnalytics(currentAnalyticsPage(),kind,0,slug);}catch{/* Measurement must never block shopping. */}
+  try{if(analyticsAllowed()){const target=currentAnalyticsPage();if(kind==="begin_checkout"){if(target.checkoutId)return target.checkoutId;target.checkoutId=crypto.randomUUID();}return enqueueAnalytics(target,kind,0,slug);}}catch{/* Measurement must never block shopping. */}
 }
 export function analyticsOrderContext(){
   try{if(analyticsAllowed()){const p=currentAnalyticsPage();return{sessionId:p.session.id,visitorId:p.session.visitorId};}}catch{}

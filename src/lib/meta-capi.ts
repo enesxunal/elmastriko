@@ -7,6 +7,7 @@ export async function sendMetaPurchase(order: {
   id: string; grand_total: number; currency?: string | null;
   guest_email?: string | null; guest_phone?: string | null;
 }, eventTime = Math.floor(Date.now() / 1000)) {
+  if (/@example\.invalid$/i.test(order.guest_email || "")) return false;
   const token = process.env.META_CAPI_ACCESS_TOKEN;
   if (!token) { console.warn("Meta CAPI token missing"); return false; }
   const user_data: Record<string, string> = {};

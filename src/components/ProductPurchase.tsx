@@ -7,8 +7,7 @@ import { Heart, Minus, Plus, RotateCcw, ShieldCheck, Truck } from "lucide-react"
 import { Product, formatPrice } from "@/lib/catalog";
 import { useStore } from "./StoreProvider";
 import { useMemo, useState, useEffect } from "react";
-import { gaEvent, gaItem } from "@/lib/ga4";
-import { metaTrack } from "@/lib/meta-pixel";
+import { trackProductView, trackCartAddition } from "@/lib/commerce-tracking";
 
 export default function ProductPurchase({ product, selectedColor, onColorChange }: { product: Product; selectedColor?: string; onColorChange?: (color: string) => void }) {
   const { shippingCampaignActive, shippingFee, freeShippingThreshold, loading: shippingLoading } = useCommerceSettings();
@@ -55,7 +54,7 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
     );
   };
 
-  useEffect(() => { const item=gaItem(product); if(item) metaTrack("ViewContent",{content_ids:product.variants?.length ? product.variants.filter(v=>v.available>0).map(v=>v.sku||v.id) : [product.slug],content_type:"product",currency:"TRY",value:item.price}); if(item) gaEvent("view_item", {currency:"TRY",value:item.price,items:[item]}); }, [product]);
+  useEffect(() => { trackProductView(product); }, [product]);
 
   return <>
     <span className="product-category">{product.category === "kadin" ? "Kadın" : "Erkek"} / {product.type}</span>
@@ -112,7 +111,7 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
         onClick={() => {
           if (outOfStock || product.price === null) return;
           addToCart({ slug: product.slug, qty: safeQty, size, color });
-          const item=gaItem(product,safeQty,selectedPrice,color,size); if(item) {gaEvent("add_to_cart",{currency:"TRY",value:item.price*safeQty,items:[item]});metaTrack("AddToCart",{currency:"TRY",value:item.price*safeQty,content_ids:[selectedVariant?.sku||selectedVariant?.id||product.slug],content_type:"product",num_items:safeQty});}
+          trackCartAddition(product, { slug: product.slug, qty: safeQty, color, size }, selectedPrice);
           setAdded(true);
         }}
       >
