@@ -7,13 +7,18 @@ let session:AnalyticsSession|null=null;
 let visitor="";
 export function readStorage(store:"localStorage"|"sessionStorage",key:string){try{return window[store].getItem(key);}catch{return null;}}
 export function writeStorage(store:"localStorage"|"sessionStorage",key:string,value:string){try{window[store].setItem(key,value);}catch{}}
-export function analyticsAllowed(path=typeof location!=="undefined"?location.pathname:""){
-  if(typeof window==="undefined"||!path.startsWith("/")||/^\/(yonetim|api|auth|influencer)(\/|$)/.test(path))return false;
-  if(!["www.elmastriko.com","elmastriko.com"].includes(location.hostname))return false;
-  if(navigator.webdriver||/bot|crawler|spider|slurp/i.test(navigator.userAgent))return false;
-  if(navigator.doNotTrack==="1"||(navigator as Navigator & {globalPrivacyControl?:boolean}).globalPrivacyControl)return false;
-  return readStorage("localStorage","et_analytics_opt_out")!=="1";
+export function analyticsExclusionReason(path=typeof location!=="undefined"?location.pathname:"") {
+  if(typeof window==="undefined")return "unavailable";
+  if(!path.startsWith("/")||/^\/(yonetim|api|auth|influencer)(\/|$)/.test(path))return "internal";
+  if(!["www.elmastriko.com","elmastriko.com"].includes(location.hostname))return "preview";
+  if(navigator.webdriver||/bot|crawler|spider|slurp/i.test(navigator.userAgent))return "automated";
+  if(navigator.doNotTrack==="1"||(navigator as Navigator & {globalPrivacyControl?:boolean}).globalPrivacyControl)return "privacy";
+  return readStorage("localStorage","et_analytics_opt_out")==="1" ? "opt_out" : null;
 }
+export function analyticsAllowed(path=typeof location!=="undefined"?location.pathname:"") {
+  return analyticsExclusionReason(path) === null;
+}
+
 function metadata(){
   const ua=navigator.userAgent,query=new URLSearchParams(location.search);
   const safe=(s:string|null,n:number)=>s&&!s.includes("@")?s.slice(0,n):null;
