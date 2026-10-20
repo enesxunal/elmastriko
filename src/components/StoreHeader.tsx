@@ -59,7 +59,7 @@ export default function StoreHeader() {
                 <Link href="/kadin/hirka">Hırkalar</Link>
                 <Link href="/kadin/kazak">Kazaklar</Link>
                 <Link href="/kadin/takim">Takımlar</Link>
-                <Link href="/kadin/triko">Triko</Link>
+                <Link href="/kadin">Triko</Link>
               </div>
             </div>
 
@@ -97,7 +97,7 @@ export default function StoreHeader() {
                   <Link href="/kadin/hirka">Hırkalar</Link>
                   <Link href="/kadin/kazak">Kazaklar</Link>
                   <Link href="/kadin/takim">Takımlar</Link>
-                  <Link href="/kadin/triko">Triko</Link>
+                  <Link href="/kadin">Triko</Link>
                 </div>
                 <div className="mega-column">
                   <h4>Keşfet</h4>

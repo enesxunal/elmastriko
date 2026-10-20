@@ -7,12 +7,15 @@ export default function robots(): MetadataRoute.Robots {
       userAgent:"*",
       allow:"/",
       disallow:[
-        "/yonetim/",
+        "/yonetim",
         "/api/",
         "/checkout",
         "/sepet",
         "/favoriler",
-        "/hesabim/",
+        "/hesabim",
+        "/influencer",
+        "/auth/",
+        "/odeme/",
         "/arama",
         "/siparis-basarili",
         "/siparis-takip"

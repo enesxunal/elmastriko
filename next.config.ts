@@ -36,6 +36,9 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
   images: { formats: ["image/avif", "image/webp"] },
+  async redirects() {
+    return [{ source: "/kadin/triko", destination: "/kadin", permanent: true }];
+  },
   async headers() {
     return [
       { source: "/(.*)", headers: securityHeaders },
