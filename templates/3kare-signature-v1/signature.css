@@ -1,0 +1,62 @@
+.k3-signature {
+  --signature-ink: #f4f1fa;
+  --signature-muted: #aba9b4;
+  --signature-accent: #c5b7ff;
+  --signature-line: #ffffff21;
+  --signature-wash: #c5b7ff0a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 26px;
+  padding: 25px 0 4px;
+  border-top: 1px solid var(--signature-line);
+  color: var(--signature-ink);
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: left;
+  isolation: isolate;
+}
+.k3-signature[data-theme="light"] {
+  --signature-ink: #24212e;
+  --signature-muted: #65606f;
+  --signature-accent: #6844c4;
+  --signature-line: #24212e26;
+  --signature-wash: #6844c408;
+}
+.k3-eyebrow { display: flex; align-items: center; gap: 10px; font-size: 8px; font-weight: 500; letter-spacing: .16em; line-height: 1.5; color: var(--signature-muted); }
+.k3-squares { display: flex; gap: 3px; }
+.k3-squares i { width: 5px; height: 5px; background: var(--signature-accent); transition: transform .25s ease; }
+.k3-squares i:nth-child(2) { opacity: .65; }
+.k3-squares i:nth-child(3) { opacity: .35; }
+.k3-message p { margin: 8px 0 0; font-size: 19px; line-height: 1.3; font-weight: 400; letter-spacing: -.045em; color: var(--signature-ink); }
+.k3-message p span { color: var(--signature-accent); }
+.k3-credit { display: flex; flex-shrink: 0; align-items: center; gap: 22px; min-height: 64px; padding: 8px 8px 8px 18px; border: 1px solid transparent; border-radius: 10px; color: var(--signature-ink); text-decoration: none; transition: background .25s ease, border-color .25s ease; }
+.k3-brand { display: flex; flex-direction: column; gap: 6px; }
+.k3-logo { display: block; width: 112px; height: 35px; filter: brightness(0) invert(1); }
+.k3-signature[data-theme="light"] .k3-logo { filter: brightness(0); }
+.k3-domain { font-size: 9px; letter-spacing: .09em; line-height: 1.5; color: var(--signature-muted); }
+.k3-arrow { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--signature-line); border-radius: 50%; color: var(--signature-accent); transition: background .25s ease, color .25s ease, transform .25s ease; }
+.k3-arrow svg { width: 18px; height: 18px; }
+.k3-credit:hover, .k3-credit:focus-visible { background: var(--signature-wash); border-color: var(--signature-line); }
+.k3-credit:hover .k3-arrow, .k3-credit:focus-visible .k3-arrow { background: var(--signature-accent); color: #17131e; transform: rotate(45deg); }
+.k3-signature[data-theme="light"] .k3-credit:hover .k3-arrow, .k3-signature[data-theme="light"] .k3-credit:focus-visible .k3-arrow { color: white; }
+.k3-signature:has(.k3-credit:hover) .k3-squares i:nth-child(2), .k3-signature:has(.k3-credit:focus-visible) .k3-squares i:nth-child(2) { transform: translateY(-3px); }
+.k3-signature:has(.k3-credit:hover) .k3-squares i:nth-child(3), .k3-signature:has(.k3-credit:focus-visible) .k3-squares i:nth-child(3) { transform: translateY(-6px); }
+.k3-credit:focus-visible { outline: 2px solid var(--signature-accent); outline-offset: 4px; }
+@media (max-width: 520px) {
+  .k3-signature { gap: 16px; margin-top: 22px; padding-top: 22px; }
+  .k3-eyebrow { font-size: 7px; letter-spacing: .08em; gap: 7px; }
+  .k3-message p { max-width: 130px; font-size: 18px; }
+  .k3-credit { gap: 13px; padding: 7px 0 7px 7px; }
+  .k3-logo { width: 88px; height: 28px; }
+  .k3-domain { font-size: 8px; letter-spacing: .025em; }
+  .k3-arrow { width: 34px; height: 34px; }
+}
+@media (max-width: 350px) {
+  .k3-signature { flex-wrap: wrap; }
+  .k3-message p { max-width: none; }
+  .k3-credit { margin-left: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .k3-signature *, .k3-signature *::before, .k3-signature *::after { transition: none !important; transform: none !important; }
+}

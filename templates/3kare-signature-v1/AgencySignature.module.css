@@ -1,0 +1,62 @@
+.signature {
+  --signature-ink: #f4f1fa;
+  --signature-muted: #aba9b4;
+  --signature-accent: #c5b7ff;
+  --signature-line: #ffffff21;
+  --signature-wash: #c5b7ff0a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 26px;
+  padding: 25px 0 4px;
+  border-top: 1px solid var(--signature-line);
+  color: var(--signature-ink);
+  font-family: Arial, Helvetica, sans-serif;
+  text-align: left;
+  isolation: isolate;
+}
+.signature[data-theme="light"] {
+  --signature-ink: #24212e;
+  --signature-muted: #65606f;
+  --signature-accent: #6844c4;
+  --signature-line: #24212e26;
+  --signature-wash: #6844c408;
+}
+.eyebrow { display: flex; align-items: center; gap: 10px; font-size: 8px; font-weight: 500; letter-spacing: .16em; line-height: 1.5; color: var(--signature-muted); }
+.squares { display: flex; gap: 3px; }
+.squares i { width: 5px; height: 5px; background: var(--signature-accent); transition: transform .25s ease; }
+.squares i:nth-child(2) { opacity: .65; }
+.squares i:nth-child(3) { opacity: .35; }
+.message p { margin: 8px 0 0; font-size: 19px; line-height: 1.3; font-weight: 400; letter-spacing: -.045em; color: var(--signature-ink); }
+.message p span { color: var(--signature-accent); }
+.credit { display: flex; flex-shrink: 0; align-items: center; gap: 22px; min-height: 64px; padding: 8px 8px 8px 18px; border: 1px solid transparent; border-radius: 10px; color: var(--signature-ink); text-decoration: none; transition: background .25s ease, border-color .25s ease; }
+.brand { display: flex; flex-direction: column; gap: 6px; }
+.logo { display: block; width: 112px; height: 35px; filter: brightness(0) invert(1); }
+.signature[data-theme="light"] .logo { filter: brightness(0); }
+.domain { font-size: 9px; letter-spacing: .09em; line-height: 1.5; color: var(--signature-muted); }
+.arrow { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid var(--signature-line); border-radius: 50%; color: var(--signature-accent); transition: background .25s ease, color .25s ease, transform .25s ease; }
+.arrow svg { width: 18px; height: 18px; }
+.credit:hover, .credit:focus-visible { background: var(--signature-wash); border-color: var(--signature-line); }
+.credit:hover .arrow, .credit:focus-visible .arrow { background: var(--signature-accent); color: #17131e; transform: rotate(45deg); }
+.signature[data-theme="light"] .credit:hover .arrow, .signature[data-theme="light"] .credit:focus-visible .arrow { color: white; }
+.signature:has(.credit:hover) .squares i:nth-child(2), .signature:has(.credit:focus-visible) .squares i:nth-child(2) { transform: translateY(-3px); }
+.signature:has(.credit:hover) .squares i:nth-child(3), .signature:has(.credit:focus-visible) .squares i:nth-child(3) { transform: translateY(-6px); }
+.credit:focus-visible { outline: 2px solid var(--signature-accent); outline-offset: 4px; }
+@media (max-width: 520px) {
+  .signature { gap: 16px; margin-top: 22px; padding-top: 22px; }
+  .eyebrow { font-size: 7px; letter-spacing: .08em; gap: 7px; }
+  .message p { max-width: 130px; font-size: 18px; }
+  .credit { gap: 13px; padding: 7px 0 7px 7px; }
+  .logo { width: 88px; height: 28px; }
+  .domain { font-size: 8px; letter-spacing: .025em; }
+  .arrow { width: 34px; height: 34px; }
+}
+@media (max-width: 350px) {
+  .signature { flex-wrap: wrap; }
+  .message p { max-width: none; }
+  .credit { margin-left: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .signature *, .signature *::before, .signature *::after { transition: none !important; transform: none !important; }
+}

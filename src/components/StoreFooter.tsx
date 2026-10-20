@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import AgencySignature from "./AgencySignature";
 
 export default function StoreFooter() {
   return <footer className="store-footer">
@@ -10,5 +11,6 @@ export default function StoreFooter() {
       <div><h4>Kurumsal</h4><Link href="/hakkimizda">Hakkımızda</Link><Link href="/blog">Blog</Link><Link href="/kvkk">KVKK</Link><Link href="/gizlilik">Gizlilik Politikası</Link><Link href="/mesafeli-satis">Mesafeli Satış Sözleşmesi</Link></div>
     </div>
     <div className="store-footer-bottom"><span>© 2026 Elmas Triko</span><span className="payment-brands" aria-label="Desteklenen kartlar"><b>VISA</b><b>Mastercard</b><b>TROY</b></span></div>
+    <AgencySignature/>
   </footer>;
 }
