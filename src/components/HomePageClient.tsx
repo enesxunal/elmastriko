@@ -1,6 +1,8 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 "use client";
 
+import AgencySignature from "./AgencySignature";
+
 import Image from "next/image";
 import Link from "next/link";
 import NewsletterForm from "@/components/NewsletterForm";
@@ -218,6 +220,7 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
           <div><h4>Kurumsal</h4><a href="/hakkimizda">Hakkımızda</a><a href="/kvkk">KVKK</a><a href="/gizlilik">Gizlilik Politikası</a><a href="/mesafeli-satis">Mesafeli Satış Sözleşmesi</a></div>
         </div>
         <div className="footer-bottom"><span>© 2026 ELMAS TRİKO</span><span className="payment-brands" aria-label="Desteklenen kartlar"><b>VISA</b><b>Mastercard</b><b>TROY</b></span><a href="https://www.instagram.com/elmas_triko/" target="_blank" rel="noreferrer">Instagram</a></div>
+        <AgencySignature/>
       </footer>
     </main>
   );
