@@ -194,8 +194,8 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
 
       <section className="service-row">
         <div><b>01</b><span>Güvenli Ödeme</span><small>Kart ve EFT / havale seçenekleri</small></div>
-        <div><b>02</b><span>Hızlı Gönderim</span><small>Sipariş ve kargo takibi</small></div>
-        <div><b>03</b><span>Kolay İade</span><small>Standart iade süreci</small></div>
+        <div><b>02</b><span>Hızlı Gönderim</span><small>1–2 iş gününde kargoya teslim</small></div>
+        <div><b>03</b><span>Kolay İade</span><small>İade ve değişim desteği</small></div>
         <div><b>04</b><span>Müşteri Desteği</span><small>Satış öncesi ve sonrası</small></div>
       </section>
 
@@ -214,7 +214,7 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
         </div>
         <div className="footer-columns">
           <div><h4>Alışveriş</h4><a href="/kadin">Kadın</a><a href="/erkek">Erkek</a><a href="/yeni-gelenler">Yeni Gelenler</a><a href="/yeni-gelenler">Çok Satanlar</a></div>
-          <div><h4>Yardım</h4><a href="/siparis-takip">Sipariş Takibi</a><a href="/kargo-iade">Teslimat – İade – İptal</a><a href="/iletisim">İletişim</a></div>
+          <div><h4>Yardım</h4><a href="/siparis-takip">Sipariş Takibi</a><a href="/kargo-iade">Teslimat – İade – İptal</a><a href="/iletisim">İletişim</a><a href="https://wa.me/905356007011" target="_blank" rel="noopener noreferrer">WhatsApp: 0535 600 70 11</a></div>
           <div><h4>Kurumsal</h4><a href="/hakkimizda">Hakkımızda</a><a href="/kvkk">KVKK</a><a href="/gizlilik">Gizlilik Politikası</a><a href="/mesafeli-satis">Mesafeli Satış Sözleşmesi</a></div>
         </div>
         <div className="footer-bottom"><span>© 2026 ELMAS TRİKO</span><span className="payment-brands" aria-label="Desteklenen kartlar"><b>VISA</b><b>Mastercard</b><b>TROY</b></span><a href="https://www.instagram.com/elmas_triko/" target="_blank" rel="noreferrer">Instagram</a></div>

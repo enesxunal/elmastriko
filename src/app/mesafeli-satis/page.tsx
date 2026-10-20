@@ -15,9 +15,9 @@ export default function DistanceSalesPage() {
     <section className="legal-copy">
       <h2>Satıcı</h2><p>{company.legalName}<br/>{company.address}<br/>Vergi Dairesi: {company.taxOffice}<br/>Vergi No: {company.taxNumber}<br/>MERSİS: {company.mersis}</p>
       <h2>Ürün ve bedel</h2><p>Ürünün temel nitelikleri, satış fiyatı, varsa indirim bilgisi ve kargo bedeli sipariş öncesinde ürün ve checkout ekranlarında gösterilir.</p>
-      <h2>Ödeme</h2><p>Ödemeler Tosla İşim Sanal POS altyapısı üzerinden güvenli kart ödeme akışıyla alınacaktır. Desteklenen kart ve taksit seçenekleri ödeme ekranında gösterilir.</p>
-      <h2>Teslimat</h2><p>Siparişler {company.shippingProvider} altyapısı üzerinden gönderilecektir. Gönderi ve takip bilgileri sipariş durumuna bağlanacaktır.</p>
-      <h2>Cayma ve iade</h2><p>Cayma ve iade süreci yürürlükteki tüketici mevzuatı, ürünün niteliği ve yeniden satışa uygunluk koşulları dikkate alınarak uygulanır. Canlı satış öncesinde sözleşmenin nihai metni tamamlanacaktır.</p>
+      <h2>Ödeme</h2><p>Kart ödemeleri Tosla İşim altyapısı ve bankanızın 3D Secure doğrulamasıyla alınır. EFT / Havale seçeneğinde ödeme, banka hesabı kontrol edildikten sonra onaylanır.</p>
+      <h2>Teslimat</h2><p>Ödemesi onaylanan siparişler {company.dispatchTime} içinde kargoya teslim edilir. Kargo firmasının adresinize ulaştırma süresi bölgeye göre değişir. Gönderi bilgilerini sipariş takip sayfasından kontrol edebilirsiniz.</p>
+      <h2>Cayma ve iade</h2><p>Cayma ve iade talepleri yürürlükteki tüketici mevzuatı ve ürünün niteliği dikkate alınarak değerlendirilir. Talebinizi sipariş numaranızla birlikte destek@elmastriko.com adresine veya 0535 600 70 11 WhatsApp destek hattına iletebilirsiniz. Gönderim adımları için teslimat ve iade sayfasını inceleyin.</p>
     </section>
   </main><StoreFooter/></>;
 }

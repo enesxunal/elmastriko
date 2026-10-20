@@ -1,5 +1,6 @@
 "use client";
 
+import { useCommerceSettings } from "@/hooks/useCommerceSettings";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { Heart, Minus, Plus, RotateCcw, ShieldCheck, Truck } from "lucide-react";
@@ -10,6 +11,7 @@ import { gaEvent, gaItem } from "@/lib/ga4";
 import { metaTrack } from "@/lib/meta-pixel";
 
 export default function ProductPurchase({ product, selectedColor, onColorChange }: { product: Product; selectedColor?: string; onColorChange?: (color: string) => void }) {
+  const { shippingCampaignActive, shippingFee, freeShippingThreshold, loading: shippingLoading } = useCommerceSettings();
   const { addToCart, favorites, toggleFavorite } = useStore();
   const initialVariant = product.variants?.find(variant => variant.available > 0) || product.variants?.[0];
   const [size, setSize] = useState(initialVariant?.size || product.sizes[0] || "");
@@ -59,6 +61,7 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
     <span className="product-category">{product.category === "kadin" ? "Kadın" : "Erkek"} / {product.type}</span>
     <h1>{product.name}</h1>
     <div className="product-main-price">{formatPrice(selectedPrice)}</div>
+    <p className="product-shipping-note">{shippingCampaignActive ? "31 Ekim sonuna kadar kargo ücretsiz. Minimum tutar yok." : shippingLoading ? "Kargo bilgisi yükleniyor…" : selectedPrice !== null && selectedPrice * safeQty >= freeShippingThreshold ? "Bu seçimde kargo ücretsiz." : shippingFee !== null ? `Kargo ${formatPrice(shippingFee)} · ${freeShippingThreshold.toLocaleString("tr-TR")} TL ve üzeri ücretsiz.` : "Kargo bedeli sepette gösterilir."}</p>
     <p className="product-desc">{product.description}</p>
 
     {product.colors.length > 0 && <div className="product-option">
@@ -127,9 +130,15 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
     </div>, document.body)}
 
     <div className="product-assurances">
-      <div><Truck size={17}/><span><b>Ücretsiz kargo</b><small>5.000 TL üzeri siparişlerde</small></span></div>
-      <div><RotateCcw size={17}/><span><b>Kolay iade</b><small>Standart iade süreci</small></span></div>
+      <div><Truck size={17}/><span><b>{shippingCampaignActive ? "Kargo bizden" : "Ücretsiz kargo"}</b><small>{shippingCampaignActive ? "31 Ekim’e kadar tüm siparişlerde" : "5.000 TL ve üzeri siparişlerde"}</small></span></div>
+      <div><RotateCcw size={17}/><span><b>İade ve değişim desteği</b><small><Link href="/kargo-iade">Koşulları inceleyin →</Link></small></span></div>
       <div><ShieldCheck size={17}/><span><b>Güvenli ödeme</b><small>3D Secure kart ve EFT</small></span></div>
+    </div>
+    <p className="dispatch-note">Ödeme onayından sonra <strong>1–2 iş gününde kargoya teslim.</strong></p>
+    <div className="purchase-help">
+      <details><summary>Beden seçiminde yardım</summary><p>Satın almadan önce beden tablosunu inceleyin. Kalıp ve ölçü sorularınız için <a href="https://wa.me/905356007011" target="_blank" rel="noopener noreferrer">WhatsApp’tan bize yazın</a>.</p><button type="button" onClick={() => setSizeGuideOpen(true)}>Beden tablosunu aç →</button></details>
+      <details><summary>Teslimat ve sipariş takibi</summary><p>Ödemesi onaylanan siparişler 1–2 iş günü içinde kargoya verilir. Teslim süresi kargo firmasına ve bölgeye göre değişir. Kargoya verildiğinde takip bilgisini <Link href="/siparis-takip">sipariş takip sayfasından</Link> kontrol edebilirsiniz.</p><Link href="/kargo-iade">Teslimat koşulları →</Link></details>
+      <div className="purchase-contact"><b>Elmas Triko resmi online mağazası</b><span><a href="https://wa.me/905356007011" target="_blank" rel="noopener noreferrer">WhatsApp’tan soru sorun →</a> · <Link href="/mesafeli-satis">Satış koşulları</Link></span></div>
     </div>
   </>;
 }

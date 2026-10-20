@@ -1,0 +1,11 @@
+import ts from "typescript";
+import vm from "node:vm";
+import fs from "node:fs";
+import assert from "node:assert/strict";
+const ctx={exports:{}};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync("src/lib/shipping-campaign.ts","utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,ctx);
+const {isShippingCampaignActive:active,canShowShippingPopup:show,POPUP_COOLDOWN:day}=ctx.exports;
+const start=Date.parse("2026-10-21T00:00:00+03:00"), end=Date.parse("2026-11-01T00:00:00+03:00");
+assert.equal(active(start-1),false);assert.equal(active(start),true);assert.equal(active(end-1),true);assert.equal(active(end),false);
+assert.equal(show(0,start),true);assert.equal(show(start,start+day-1),false);assert.equal(show(start,start+day),true);assert.equal(show(0,end),false);
+console.log("Turkey-time campaign start/expiry and exact 24-hour popup cooldown: passed.");

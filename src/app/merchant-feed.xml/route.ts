@@ -1,3 +1,4 @@
+import { isShippingCampaignActive } from "@/lib/shipping-campaign";
 import { getProducts } from "@/lib/catalog-db";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,7 @@ function money(value: number) {
 export async function GET() {
   const products = await getProducts();
   const items: string[] = [];
+  const shipping = isShippingCampaignActive() ? "<g:shipping><g:country>TR</g:country><g:service>Standart kargo</g:service><g:price>0.00 TRY</g:price></g:shipping>" : "";
 
   for (const product of products) {
     if (product.price === null) continue;
@@ -57,6 +59,7 @@ export async function GET() {
       <g:image_link>${escapeXml(colorImage)}</g:image_link>
       <g:availability>${availability}</g:availability>
       <g:price>${money(variantPrice)}</g:price>
+      ${shipping}
       <g:condition>new</g:condition>
       <g:brand>Elmas Triko</g:brand>
       <g:gender>${product.category === "erkek" ? "male" : "female"}</g:gender>
@@ -77,6 +80,7 @@ export async function GET() {
       <g:image_link>${escapeXml(defaultImage)}</g:image_link>
       <g:availability>in_stock</g:availability>
       <g:price>${money(product.price)}</g:price>
+      ${shipping}
       <g:condition>new</g:condition>
       <g:brand>Elmas Triko</g:brand>
       <g:gender>${product.category === "erkek" ? "male" : "female"}</g:gender>

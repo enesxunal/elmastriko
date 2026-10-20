@@ -1,5 +1,6 @@
 "use client";
 
+import { useShippingCampaign } from "@/hooks/useShippingCampaign";
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
@@ -7,6 +8,7 @@ import { ArrowRight, Heart, Search, ShoppingBag, UserRound } from "lucide-react"
 import { useStore } from "./StoreProvider";
 
 export default function StoreHeader() {
+  const shippingCampaignActive = useShippingCampaign();
   const { cartCount, favorites } = useStore();
   const menuRef = useRef<HTMLDetailsElement>(null);
 
@@ -35,7 +37,7 @@ export default function StoreHeader() {
   return (
     <>
       <div className="topbar">
-        <span>5.000 TL üzeri ücretsiz kargo</span>
+        <span>{shippingCampaignActive ? "31 Ekim’e kadar kargo bizden" : "5.000 TL ve üzeri ücretsiz kargo"}</span>
         <span className="topbar-center">Yeni sezon · 2026</span>
         <span>Güvenli ödeme</span>
       </div>

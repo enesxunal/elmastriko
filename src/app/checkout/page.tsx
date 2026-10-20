@@ -77,7 +77,7 @@ function onPaymentLocationChange(callback: () => void) {
 export default function CheckoutPage() {
   const { cart, clearCart } = useStore();
   const { lines, loading } = useCartCatalog(cart);
-  const { freeShippingThreshold, shippingFee, loading: commerceLoading } = useCommerceSettings();
+  const { freeShippingThreshold, shippingFee, shippingCampaignActive, loading: commerceLoading } = useCommerceSettings();
   const formRef = useRef<HTMLFormElement>(null);
   const [invoiceType, setInvoiceType] = useState<"individual" | "company">("individual");
   const [paymentMethod, setPaymentMethod] = useState<"card" | "eft">("card");
@@ -381,7 +381,7 @@ export default function CheckoutPage() {
       <span className="checkout-kicker">GÜVENLİ ÖDEME</span><h1>Sipariş bilgileri</h1><p className="checkout-intro">Teslimat ve fatura bilgilerinizi kontrol edin, ardından kart veya EFT / Havale ödeme yöntemini seçin.</p>
       <div className="checkout-step"><span>01</span><div><h2>İletişim</h2><div className="form-grid"><input required name="firstName" autoComplete="given-name" placeholder="Ad"/><input required name="lastName" autoComplete="family-name" placeholder="Soyad"/><input required name="email" type="email" autoComplete="email" placeholder="E-posta"/><input required name="phone" autoComplete="tel" placeholder="Telefon"/></div></div></div>
       <div className="checkout-step"><span>02</span><div><h2>Teslimat adresi</h2><div className="form-grid"><input required name="addressLine" autoComplete="street-address" className="full" placeholder="Adres"/><input required name="city" autoComplete="address-level1" placeholder="İl"/><input required name="district" autoComplete="address-level2" placeholder="İlçe"/><input name="postalCode" autoComplete="postal-code" placeholder="Posta kodu"/><input name="addressTitle" placeholder="Adres başlığı"/></div></div></div>
-      <div className="checkout-step"><span>03</span><div><h2>Fatura</h2><div className="invoice-type-switch"><button type="button" className={invoiceType === "individual" ? "selected" : ""} onClick={() => setInvoiceType("individual")}>Bireysel</button><button type="button" className={invoiceType === "company" ? "selected" : ""} onClick={() => setInvoiceType("company")}>Kurumsal</button></div>{invoiceType === "company" && <div className="form-grid invoice-company-fields"><input required name="companyName" placeholder="Firma unvanı"/><input required name="taxOffice" placeholder="Vergi dairesi"/><input required name="taxNumber" placeholder="Vergi / T.C. no"/><input name="invoiceEmail" type="email" placeholder="E-fatura e-posta"/></div>}<label className="check-row"><input name="sameBilling" type="checkbox" defaultChecked/> Fatura adresi teslimat adresi ile aynı</label><p className="checkout-note">Ödeme tamamlandıktan sonra fatura kaydı NES Portal entegrasyonuna aktarılacak.</p></div></div>
+      <div className="checkout-step"><span>03</span><div><h2>Fatura</h2><div className="invoice-type-switch"><button type="button" className={invoiceType === "individual" ? "selected" : ""} onClick={() => setInvoiceType("individual")}>Bireysel</button><button type="button" className={invoiceType === "company" ? "selected" : ""} onClick={() => setInvoiceType("company")}>Kurumsal</button></div>{invoiceType === "company" && <div className="form-grid invoice-company-fields"><input required name="companyName" placeholder="Firma unvanı"/><input required name="taxOffice" placeholder="Vergi dairesi"/><input required name="taxNumber" placeholder="Vergi / T.C. no"/><input name="invoiceEmail" type="email" placeholder="E-fatura e-posta"/></div>}<label className="check-row"><input name="sameBilling" type="checkbox" defaultChecked/> Fatura adresi teslimat adresi ile aynı</label><p className="checkout-note">Fatura bilgileriniz siparişinizle birlikte kaydedilir.</p></div></div>
       <div className="checkout-step payment-step"><span>04</span><div><h2>Ödeme yöntemi</h2>
         <p className="checkout-payment-help">Bilgilerinizi kontrol ettikten sonra ödeme yönteminize dokunun. Siparişiniz oluşturularak seçtiğiniz ödeme adımına geçilir.</p>
         <p className="checkout-payment-total"><span>Toplam</span><b>{hasUnknownPrice ? "—" : commerceLoading ? "Hesaplanıyor" : total === null ? "Kargo tutarı onayda" : formatPrice(total)}</b></p>
@@ -406,10 +406,13 @@ export default function CheckoutPage() {
       <p><span>Kargo</span><b>{commerceLoading ? "Hesaplanıyor" : freeShipping ? "Ücretsiz" : hasUnknownPrice ? "Hesaplanacak" : effectiveShippingFee === null ? "Kargo tutarı onayda" : formatPrice(effectiveShippingFee)}</b></p>
       <p className="checkout-grand-total"><span>Toplam</span><b>{hasUnknownPrice ? "—" : commerceLoading ? "Hesaplanıyor" : total === null ? "Kargo tutarı onayda" : formatPrice(total)}</b></p>
       <div className="checkout-trust">
+        {shippingCampaignActive && <span><b>Kargo bizden</b><small>31 Ekim sonuna kadar minimum tutar olmadan ücretsiz.</small></span>}
         {paymentMethod === "card"
           ? <span><b>3D Secure koruması</b><small>Kart bilgileriniz Elmas Triko sunucularında tutulmaz.</small></span>
           : <span><b>Manuel ödeme kontrolü</b><small>EFT/Havale ödemesi banka hesabı kontrol edildikten sonra onaylanır.</small></span>}
         <span><b>NES e-Arşiv</b><small>Ödeme onaylandıktan sonra faturanız oluşturulur.</small></span>
+        <span><b>1–2 iş gününde kargoya teslim</b><small>Ödeme onayından sonra hazırlanır. Kargo firmasının teslim süresi bölgeye göre değişir.</small></span>
+        <span><b>Yardıma mı ihtiyacınız var?</b><small><a href="https://wa.me/905356007011" target="_blank" rel="noopener noreferrer">WhatsApp desteği</a> · <Link href="/kargo-iade">Teslimat ve iade</Link> · <Link href="/siparis-takip">Sipariş takibi</Link></small></span>
       </div>
     </aside>
   </main></>;

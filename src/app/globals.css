@@ -1093,3 +1093,28 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
 .payment-step .payment-method-card:hover:not(:disabled){background:#1d4a3c;box-shadow:0 8px 20px rgba(23,61,49,.14)}
 .payment-step .payment-method-card:disabled{opacity:.6;cursor:not-allowed;transform:none}
 .payment-step .payment-method-card:focus-visible{outline:3px solid #bda26d;outline-offset:3px}
+
+/* Seasonal shipping announcement and purchase support. */
+.shipping-campaign-dialog{border:1px solid #d9dfd7;border-radius:18px;padding:0;width:min(460px,calc(100% - 32px));max-height:calc(100svh - 40px);margin:auto;background:#f8f7f1;color:#193e31;box-shadow:0 24px 100px #10261e44;overflow:auto}
+.shipping-campaign-dialog::backdrop{background:rgba(13,28,21,.6)}
+.shipping-campaign-inner{position:relative;padding:48px 32px 30px;text-align:center}
+.shipping-campaign-close{position:absolute;top:10px;right:10px;width:44px;height:44px;border:0;background:transparent;display:grid;place-items:center;cursor:pointer;color:#193e31}
+.shipping-campaign-eyebrow{display:block;font-size:10px;letter-spacing:2px;padding:0 10px}
+.shipping-campaign-icon{display:grid;place-items:center;border:1px solid #cbd8cc;width:70px;height:70px;border-radius:50%;margin:28px auto 16px}
+.shipping-campaign-dialog h2{font-family:Georgia,serif;font-size:48px;line-height:1.1;font-weight:400;margin:12px 0 20px}
+.shipping-campaign-dialog p{font-size:20px;line-height:1.5;margin:0 auto 16px;max-width:330px}
+.shipping-campaign-dialog .shipping-campaign-detail{font-size:14px;color:#596c61}
+.shipping-campaign-continue{display:block;width:100%;padding:16px 12px;margin:24px 0 18px;background:#214e3d;color:#fff;border:0;border-radius:7px;font-size:15px;cursor:pointer}
+.shipping-campaign-dialog small{display:block;font-size:11px;line-height:1.6;color:#607064}
+.product-shipping-note{color:#23513f;font-size:13px;line-height:1.6;margin:8px 0 14px;background:#f1f6ef;padding:10px 12px;border-radius:6px}
+.dispatch-note{font-size:13px;line-height:1.6;color:#344e40;margin:18px 0 10px}
+.purchase-help{border-top:1px solid #e1e4de;margin-top:16px;font-size:13px;line-height:1.7}
+.purchase-help details{padding:14px 0;border-bottom:1px solid #e1e4de}
+.purchase-help summary{cursor:pointer;font-weight:600}
+.purchase-help p{margin:10px 0;color:#526157}
+.purchase-help a,.purchase-help button,.checkout-trust a,.contact-card a,.policy-list a{text-decoration:underline;text-underline-offset:3px}
+.purchase-help button{border:0;background:transparent;padding:0;font:inherit;color:#23513f;cursor:pointer}
+.purchase-contact{padding:16px 0;display:grid;gap:5px}
+.purchase-contact span{font-size:12px}
+.contact-card a{overflow-wrap:anywhere}
+@media(max-width:480px){.shipping-campaign-inner{padding:46px 22px 24px}.shipping-campaign-dialog h2{font-size:42px}.shipping-campaign-dialog p{font-size:18px}.shipping-campaign-dialog .shipping-campaign-detail{font-size:13px}.product-assurances{gap:10px}.product-assurances small{line-height:1.5}}

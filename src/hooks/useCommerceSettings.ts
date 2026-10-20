@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useShippingCampaign } from "./useShippingCampaign";
 
 type CommerceSettings = {
   currency: string;
@@ -15,6 +16,7 @@ const fallback: CommerceSettings = {
 };
 
 export function useCommerceSettings() {
+  const shippingCampaignActive = useShippingCampaign();
   const [settings, setSettings] = useState<CommerceSettings>(fallback);
   const [loading, setLoading] = useState(true);
 
@@ -36,6 +38,8 @@ export function useCommerceSettings() {
             ? null
             : Number(body.shippingFee),
         });
+      } catch {
+        // Keep the conservative fallback if settings cannot be loaded.
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -45,5 +49,5 @@ export function useCommerceSettings() {
     return () => { cancelled = true; };
   }, []);
 
-  return { ...settings, loading };
+  return { ...settings, freeShippingThreshold: shippingCampaignActive ? 0 : settings.freeShippingThreshold, shippingCampaignActive, loading };
 }

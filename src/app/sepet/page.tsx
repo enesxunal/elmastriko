@@ -14,7 +14,7 @@ import { gaEvent, gaCart, gaItem } from "@/lib/ga4";
 export default function CartPage() {
   const { cart, removeFromCart, setQty } = useStore();
   const { lines, loading } = useCartCatalog(cart);
-  const { freeShippingThreshold, shippingFee, loading: commerceLoading } = useCommerceSettings();
+  const { freeShippingThreshold, shippingFee, shippingCampaignActive, loading: commerceLoading } = useCommerceSettings();
   const hasUnknownPrice = lines.some(x => x.unitPrice === null);
   const subtotal = lines.reduce((sum, x) => sum + ((x.unitPrice || 0) * x.line.qty), 0);
   const freeShipping = subtotal >= freeShippingThreshold;
@@ -29,8 +29,8 @@ export default function CartPage() {
     <div className="cart-layout">
       <section className="cart-items">
         <div className="shipping-progress">
-          <div><span style={{width: Math.min(100, (subtotal / freeShippingThreshold) * 100) + "%"}}/></div>
-          <p>{subtotal === 0 ? freeShippingThreshold.toLocaleString("tr-TR") + " TL ve üzeri siparişlerde kargo ücretsiz." : freeShipping ? "Ücretsiz kargo kazandınız." : "Ücretsiz kargo için " + remaining.toLocaleString("tr-TR") + " TL daha ekleyin."}</p>
+          <div><span style={{width: (freeShippingThreshold === 0 ? 100 : Math.min(100, (subtotal / freeShippingThreshold) * 100)) + "%"}}/></div>
+          <p>{shippingCampaignActive ? "31 Ekim sonuna kadar tüm siparişlerde kargo ücretsiz. Minimum tutar yok." : subtotal === 0 ? freeShippingThreshold.toLocaleString("tr-TR") + " TL ve üzeri siparişlerde kargo ücretsiz." : freeShipping ? "Ücretsiz kargo kazandınız." : "Ücretsiz kargo için " + remaining.toLocaleString("tr-TR") + " TL daha ekleyin."}</p>
         </div>
         {loading && cart.length > 0 ? <div className="cart-loading">Sepet güncelleniyor...</div> :
         lines.length === 0 ? <div className="empty-cart"><span>SEPETİNİZ BOŞ</span><h2>Henüz ürün eklemediniz.</h2><Link href="/kadin">Alışverişe başla →</Link></div> :
@@ -48,7 +48,7 @@ export default function CartPage() {
         {lines.length > 0 && total !== null ? <Link href="/checkout">Güvenli Ödemeye Geç</Link> : <span className="disabled-checkout">Güvenli Ödemeye Geç</span>}
         <div className="cart-trust-list">
           <span><b>3D Secure</b><small>Tosla İşim Sanal POS ile korumalı ödeme</small></span>
-          <span><b>Hızlı teslimat</b><small>Siparişiniz ödeme sonrası hazırlanır</small></span>
+          <span><b>Sipariş hazırlığı</b><small>Ödeme onayından sonra 1–2 iş gününde kargoya teslim</small></span>
           <span><b>Kolay takip</b><small>Hesabınızdan sipariş ve kargo durumunu izleyin</small></span>
         </div>
       </aside>

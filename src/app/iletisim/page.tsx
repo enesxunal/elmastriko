@@ -15,8 +15,8 @@ export default function ContactPage() {
     <section className="content-hero"><span>İLETİŞİM</span><h1>Elmas Triko’ya ulaşın.</h1><p>Ürün, sipariş, teslimat ve satış sonrası konularda formu kullanabilirsiniz.</p></section>
     <section className="contact-layout">
       <div className="contact-card"><span>ŞİRKET</span><h2>{company.legalName}</h2><p>{company.address}</p><p>MERSİS: {company.mersis}<br/>Ticaret Sicil No: {company.registryNo}</p></div>
-      <div className="contact-card muted"><span>İLETİŞİM KANALLARI</span><h2>Yayına hazırlık aşamasında.</h2><p>Telefon ve e-posta bilgileri müşteriden teyit edildiğinde bu alan canlı iletişim kanallarıyla güncellenecek.</p></div>
+      <div className="contact-card muted"><span>İLETİŞİM KANALLARI</span><h2>Doğrudan bize ulaşın.</h2><p><a href={`https://wa.me/${company.whatsapp}`} target="_blank" rel="noopener noreferrer">WhatsApp: {company.whatsappDisplay} ↗</a></p><p><a href={`mailto:${company.supportEmail}`}>{company.supportEmail}</a></p><p>Ürün, beden, sipariş, teslimat ve iade/değişim sorularınız için bize yazabilirsiniz. Siparişle ilgili taleplerde sipariş numaranızı ekleyin.</p></div>
     </section>
-    <section className="contact-form-section"><div><span>MESAJ GÖNDER</span><h2>Size nasıl yardımcı olabiliriz?</h2><p>Mesajlar yönetim paneline düşer ve müşteri tarafından takip edilebilir.</p></div><ContactForm/></section>
+    <section className="contact-form-section"><div><span>MESAJ GÖNDER</span><h2>Size nasıl yardımcı olabiliriz?</h2><p>Siparişle ilgili yazıyorsanız sipariş numaranızı mesajınıza ekleyin.</p></div><ContactForm/></section>
   </main><StoreFooter/></>;
 }

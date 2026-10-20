@@ -66,42 +66,8 @@ export async function POST(request: NextRequest) {
   }
 
   const result = (data || {}) as OrderResult;
-  if (result.orderId && Number.isFinite(Number(result.subtotal))) {
-    const admin = createAdminClient();
-    const { data: commerce } = await admin
-      .from("site_settings")
-      .select("value")
-      .eq("key", "commerce")
-      .maybeSingle();
-
-    const value = (commerce?.value || {}) as Record<string, unknown>;
-    const threshold = Number(value.freeShippingThreshold ?? 5000);
-    const configuredFee = value.shippingFee === null || value.shippingFee === undefined || value.shippingFee === ""
-      ? null
-      : Number(value.shippingFee);
-    const subtotal = Number(result.subtotal);
-    const discountedSubtotal = subtotal - Number(result.discountTotal || 0);
-    const effectiveShippingFee = discountedSubtotal >= threshold
-      ? 0
-      : configuredFee;
-
-    if (effectiveShippingFee !== null && Number.isFinite(effectiveShippingFee)) {
-      const grandTotal = discountedSubtotal + effectiveShippingFee;
-      if (Number(result.shippingFee) !== effectiveShippingFee || Number(result.grandTotal) !== grandTotal) {
-        await admin
-          .from("orders")
-          .update({
-            shipping_fee: effectiveShippingFee,
-            grand_total: grandTotal,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", result.orderId);
-
-        result.shippingFee = effectiveShippingFee;
-        result.grandTotal = grandTotal;
-      }
-    }
-  }
+  // The database transaction owns shipping, discounts and the final total.
+  // Do not overwrite its campaign-aware result with a second calculation.
 
   if (result.orderId && payload.analytics) {
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createPublicClient } from "@/lib/supabase/public";
 
+import { isShippingCampaignActive, SHIPPING_CAMPAIGN_END } from "@/lib/shipping-campaign";
+
 const FALLBACK_THRESHOLD = 5000;
 
 export async function GET() {
@@ -21,6 +23,8 @@ export async function GET() {
   return NextResponse.json({
     currency: String(value.currency || "TRY"),
     freeShippingThreshold: Number.isFinite(threshold) ? threshold : FALLBACK_THRESHOLD,
+    shippingCampaignActive: isShippingCampaignActive(),
+    shippingCampaignEndsAt: SHIPPING_CAMPAIGN_END,
     shippingFee: shippingFee !== null && Number.isFinite(shippingFee) ? shippingFee : null,
   }, {
     headers: { "Cache-Control": "no-store" },
