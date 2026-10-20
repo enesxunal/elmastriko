@@ -21,4 +21,4 @@ CSS sınıfları `k3-` ile ayrılmıştır. Renkler `--signature-accent`, `--sig
 
 Kaynak logo: https://3kareajans.com/wp-content/uploads/2023/11/3kareajanslogo4.png. Şekli değiştirilmez; SVG viewBox yalnızca şeffaf kenar boşluklarını kırpar.
 
-Sürüm: 1.0 · 21 Ekim 2026 · İlk kullanım: Elmas Triko.
+Sürüm: 1.1 (ince) · 21 Ekim 2026 · İlk kullanım: Elmas Triko.
