@@ -1,3 +1,5 @@
+import { recordCheckoutEvent } from "@/lib/checkout-diagnostics-server";
+import { checkoutErrorCode, type CheckoutDiagnosticContext } from "@/lib/checkout-diagnostics";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -26,6 +28,7 @@ type OrderPayload = {
   items: Array<{ slug: string; qty: number; size?: string; color?: string }>;
   affiliateCode?: string;
   analytics?: { sessionId?: string; visitorId?: string };
+  diagnostics?: CheckoutDiagnosticContext;
 };
 
 type OrderResult = {
@@ -56,6 +59,8 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase.rpc("create_store_order", { payload });
 
   if (error) {
+    await recordCheckoutEvent("order_failed", payload.diagnostics, { code: checkoutErrorCode(error.message), isTest: /@example\.invalid$/i.test(payload.email) });
+    console.error("Store order creation failed", { code: error.code, category: checkoutErrorCode(error.message) });
     const status = error.message.includes("price_missing") ? 409 : 400;
     return NextResponse.json({ error: error.message }, { status });
   }
@@ -112,6 +117,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (result.orderId) {
+    await recordCheckoutEvent("order_created", payload.diagnostics, { orderId: result.orderId, isTest: /@example\.invalid$/i.test(payload.email) });
     try { await sendNewOrderEmails(result.orderId); } catch (mailError) { console.error("New order mail failed:", mailError); }
   }
 

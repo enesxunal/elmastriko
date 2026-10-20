@@ -9,6 +9,7 @@ import { createNesInvoiceForOrder } from "@/lib/integrations/nes-order-invoice";
 import { BANK_TRANSFER } from "@/lib/payments/bank-transfer";
 import { sendMetaPurchase } from "@/lib/meta-capi";
 import { encryptMailPassword } from "@/lib/mail/crypto";
+import { recordCheckoutEvent } from "@/lib/checkout-diagnostics-server";
 import { sendOrderStatusEmail, sendShipmentEmail, sendOrderNotice, verifyMailAccount, type MailAccountKey } from "@/lib/mail";
 
 function v(fd: FormData, key: string) { return String(fd.get(key) || "").trim(); }
@@ -527,6 +528,7 @@ export async function approveBankTransfer(fd: FormData) {
   if(order.payment_status!=="paid"){
     try{await createNesInvoiceForOrder(orderId);}catch(error){console.error("NES invoice creation failed after EFT approval:",error);}
   }
+  await recordCheckoutEvent("payment_verified", {}, { orderId });
   try { await sendOrderStatusEmail(orderId, "Ödemeniz onaylandı"); } catch (mailError) { console.error("Bank transfer approval mail failed:",mailError); }
   revalidatePath(`/yonetim/siparisler/${orderId}`); revalidatePath(`/hesabim/siparis/${orderId}`); revalidatePath("/yonetim/siparisler");
   redirect(`/yonetim/siparisler/${orderId}?payment=approved`);

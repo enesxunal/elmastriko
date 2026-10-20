@@ -1,0 +1,32 @@
+import type { CardSession } from "./card-session";
+export function escapeHtml(value: string) { return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;"); }
+
+export function renderCardPage(session: CardSession, action: string, nonce: string) {
+  const amount = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" }).format(session.amount);
+  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Güvenli kart ödemesi | Elmas Triko</title>
+<style nonce="${nonce}">
+*{box-sizing:border-box}body{margin:0;background:#f7f4ee;color:#173d31;font-family:Arial,sans-serif;font-size:16px;line-height:1.5}header{background:#fff;border-bottom:1px solid #e3ddd4;padding:22px;text-align:center}header img{width:145px;max-width:100%;height:auto}main{width:min(100% - 28px,520px);margin:32px auto 60px}a{color:#315e4b;font-size:14px}.payment-card{background:#fff;border:1px solid #e3ddd4;border-radius:16px;padding:clamp(20px,5vw,32px);margin-top:20px}.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#61766a}h1{font:normal 32px/1.15 Georgia,serif;margin:10px 0 22px}.order-summary{border-block:1px solid #e8e5dc;padding:16px 0;margin-bottom:24px}.order-summary p{display:flex;justify-content:space-between;gap:16px;margin:4px 0;font-size:14px;flex-wrap:wrap}.order-summary strong{font-size:24px}.order-summary small{font-size:12px;color:#697269;overflow-wrap:anywhere}label{display:block;font-size:14px;font-weight:600;margin-bottom:7px}input{width:100%;min-width:0;height:52px;padding:12px;border:1px solid #c9d4cb;border-radius:8px;font:16px Arial,sans-serif;color:#173d31;background:#fff}input:focus{outline:2px solid #315e4b;outline-offset:2px}.field{margin-bottom:18px}.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}button{width:100%;min-height:54px;padding:14px;border:0;border-radius:9px;background:#173d31;color:#fff;font:600 16px Arial,sans-serif;cursor:pointer}button:disabled{opacity:.65;cursor:wait}.trust{font-size:13px;color:#647268;margin:20px 0 0}.cards{font-size:12px;letter-spacing:.08em;color:#486452;margin-top:16px}.error{font-size:14px;color:#953c34}footer{text-align:center;font-size:12px;color:#6d756d;margin-top:24px}footer a{font-size:12px}@media(max-width:340px){.row{grid-template-columns:1fr}h1{font-size:28px}}
+</style></head><body><header><a href="/" aria-label="Elmas Triko ana sayfa"><img src="/elmas-triko.png" alt="Elmas Triko"></a></header><main><a href="/checkout">← Sipariş bilgilerine dön</a><section class="payment-card"><div class="eyebrow">Tosla İşim · 3D Secure</div><h1>Güvenli kart ödemesi</h1><div class="order-summary"><p><span>Ödenecek tutar</span><strong>${escapeHtml(amount)}</strong></p><small>Sipariş: ${escapeHtml(session.orderNo)}</small></div>
+<form id="card-form" action="${escapeHtml(action)}" method="post" enctype="multipart/form-data" autocomplete="off">
+<input type="hidden" name="ThreeDSessionId" value="${escapeHtml(session.providerSession)}">
+<div class="field"><label for="card-name">Kart üzerindeki ad soyad</label><input id="card-name" name="CardHolderName" autocomplete="cc-name" required maxlength="100"></div>
+<div class="field"><label for="card-number">Kart numarası</label><input id="card-number" name="CardNo" inputmode="numeric" autocomplete="cc-number" required minlength="12" maxlength="23" aria-describedby="card-help"></div>
+<div class="row"><div class="field"><label for="card-expiry">Son kullanma tarihi</label><input id="card-expiry" name="ExpireDate" placeholder="AA/YY" inputmode="numeric" autocomplete="cc-exp" required maxlength="5" pattern="[0-9]{2}/[0-9]{2}"></div><div class="field"><label for="card-cvv">Güvenlik kodu</label><input id="card-cvv" name="Cvv" type="password" inputmode="numeric" autocomplete="cc-csc" required minlength="3" maxlength="4" pattern="[0-9]{3,4}" aria-label="Güvenlik kodu CVV"></div></div>
+<p id="card-error" class="error" role="alert" hidden></p><button id="pay-button" type="submit">${escapeHtml(amount)} öde</button></form>
+<p class="trust" id="card-help">Kart bilgileriniz doğrudan Tosla’ya iletilir; Elmas Triko sunucularına gönderilmez. Sonraki adımda bankanızın 3D Secure doğrulamasına geçersiniz.</p><div class="cards" aria-label="Desteklenen kartlar">VISA · Mastercard · TROY</div></section><footer>Elmas Triko · <a href="/iletisim">Yardım ve iletişim</a></footer></main>
+<script nonce="${nonce}">
+const form=document.getElementById('card-form'),number=document.getElementById('card-number'),expiry=document.getElementById('card-expiry'),error=document.getElementById('card-error');
+function progress(stage){try{navigator.sendBeacon('/odeme/kart/olay',new Blob([JSON.stringify({stage})],{type:'application/json'}));}catch{}}
+progress('card_page_viewed');
+let lastInvalid=0;form.addEventListener('invalid',()=>{if(Date.now()-lastInvalid>1000){progress('card_form_invalid');lastInvalid=Date.now();}},true);
+number.addEventListener('input',()=>number.setCustomValidity(''));
+expiry.addEventListener('input',()=>{const d=expiry.value.replace(/\\D/g,'').slice(0,4);expiry.value=d.length>2?d.slice(0,2)+'/'+d.slice(2):d;expiry.setCustomValidity('');});
+form.addEventListener('submit',event=>{
+const digits=number.value.replace(/[ -]/g,'');let sum=0,double=false;for(let i=digits.length-1;i>=0;i--){let n=Number(digits[i]);if(double){n*=2;if(n>9)n-=9;}sum+=n;double=!double;}
+if(!/^\\d{12,19}$/.test(digits)||sum%10!==0){event.preventDefault();number.setCustomValidity('Kart numaranızı kontrol edin.');number.reportValidity();progress('card_form_invalid');return;}
+const parts=expiry.value.split('/'),month=Number(parts[0]),year=2000+Number(parts[1]),now=new Date();
+if(month<1||month>12||year<now.getFullYear()||(year===now.getFullYear()&&month<now.getMonth()+1)){event.preventDefault();expiry.setCustomValidity('Geçerli bir son kullanma tarihi girin.');expiry.reportValidity();progress('card_form_invalid');return;}
+number.value=digits;progress('card_submitted');document.getElementById('pay-button').disabled=true;document.getElementById('pay-button').textContent='Bankanıza yönlendiriliyorsunuz…';
+});window.addEventListener('pageshow',()=>{document.getElementById('pay-button').disabled=false;document.getElementById('pay-button').textContent=${JSON.stringify(amount + " öde")};});
+</script></body></html>`;
+}

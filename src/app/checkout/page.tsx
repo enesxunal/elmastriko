@@ -1,4 +1,5 @@
 "use client";
+import { checkoutAttemptId, trackCheckoutProgress } from "@/lib/checkout-diagnostics-client";
 import { metaTrack } from "@/lib/meta-pixel";
 import { trackStoreEvent, analyticsOrderContext, flushAnalytics } from "@/lib/analytics-client";
 
@@ -9,7 +10,7 @@ import { formatPrice } from "@/lib/catalog";
 import { useStore } from "@/components/StoreProvider";
 import { useCartCatalog } from "@/hooks/useCartCatalog";
 import { useCommerceSettings } from "@/hooks/useCommerceSettings";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { gaEvent, gaCart } from "@/lib/ga4";
 
 type CreatedOrder = {
@@ -18,6 +19,7 @@ type CreatedOrder = {
 };
 
 type PaymentStart = {
+  paymentUrl?: string;
   iframeUrl?: string | null;
   formUrl?: string | null;
   error?: string;
@@ -67,6 +69,11 @@ async function readJsonResponse<T>(response: Response): Promise<T & { error?: st
   }
 }
 
+function onPaymentLocationChange(callback: () => void) {
+  window.addEventListener("popstate", callback);
+  return () => window.removeEventListener("popstate", callback);
+}
+
 export default function CheckoutPage() {
   const { cart, clearCart } = useStore();
   const { lines, loading } = useCartCatalog(cart);
@@ -81,6 +88,11 @@ export default function CheckoutPage() {
   const [coupon, setCoupon] = useState<{ code: string; percent: number } | null>(null);
   const [couponMessage, setCouponMessage] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
+  const paymentReturn = useSyncExternalStore(
+    onPaymentLocationChange,
+    () => ["failed", "pending"].includes(new URLSearchParams(window.location.search).get("payment") || ""),
+    () => false,
+  );
   const [paymentSuccess] = useState<{ orderNo: string } | null>(() => {
     if (typeof window === "undefined") return null;
     const params = new URLSearchParams(window.location.search);
@@ -122,6 +134,8 @@ export default function CheckoutPage() {
     }).catch(()=>undefined);
     return ()=>{active=false};
   }, []);
+  const formStarted = useRef(false);
+  const invalidAt = useRef(0);
   const checkoutSent=useRef(false);
   useEffect(()=>{if(!loading && !commerceLoading && lines.length && !checkoutSent.current){checkoutSent.current=true;gaEvent("begin_checkout",gaCart(lines));metaTrack("InitiateCheckout",{currency:"TRY",value:gaCart(lines).value,content_type:"product",content_ids:lines.map(({line,product})=>product.variants?.find(v=>v.color===line.color && v.size===line.size)?.sku || product.variants?.find(v=>v.color===line.color && v.size===line.size)?.id || product.slug),num_items:lines.reduce((n,x)=>n+x.line.qty,0)});trackStoreEvent("begin_checkout");}},[loading,commerceLoading,lines]);
 
@@ -181,6 +195,9 @@ export default function CheckoutPage() {
     const submitter = (event.nativeEvent as SubmitEvent).submitter;
     const selectedPaymentMethod = submitter instanceof HTMLButtonElement && submitter.value === "eft" ? "eft" : "card";
     setPaymentMethod(selectedPaymentMethod);
+    trackCheckoutProgress("form_submitted");
+    let failureStage: "order_failed" | "payment_session_failed" = "order_failed";
+    let failureCode: "network" | "server" = "network";
     setSubmitting(true);
     setSubmitError("");
 
@@ -197,6 +214,8 @@ export default function CheckoutPage() {
       const fullName = [firstName, lastName].filter(Boolean).join(" ");
 
       if (!firstName || !lastName || !email || !phone || !addressLine || !city || !district) {
+        failureCode = "server";
+        trackCheckoutProgress("form_invalid", "validation");
         throw new Error("Lütfen zorunlu teslimat ve iletişim bilgilerini doldurun.");
       }
 
@@ -211,6 +230,7 @@ export default function CheckoutPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           analytics,
+          diagnostics: { sessionId: analytics?.sessionId, attemptId: checkoutAttemptId() },
           email,
           phone,
           shipping: {
@@ -250,11 +270,13 @@ export default function CheckoutPage() {
 
       const orderBody = await readJsonResponse<CreatedOrder>(orderResponse);
       if (!orderResponse.ok || !orderBody.orderId) {
+        failureCode = "server";
         throw new Error(orderBody.error || "Sipariş oluşturulamadı.");
       }
 
+      failureStage = "payment_session_failed";
       if (selectedPaymentMethod === "card" && orderBody.orderNo) {
-        sessionStorage.setItem("elmas_ga_purchase_"+orderBody.orderNo,JSON.stringify({...eventCart,transaction_id:orderBody.orderNo}));
+        try { sessionStorage.setItem("elmas_ga_purchase_"+orderBody.orderNo,JSON.stringify({...eventCart,transaction_id:orderBody.orderNo})); } catch { /* Storage restrictions must not block payment. */ }
       }
 
       if (selectedPaymentMethod === "eft") {
@@ -268,6 +290,7 @@ export default function CheckoutPage() {
         });
         const eft = await readJsonResponse<{ status?: string }>(eftResponse);
         if (!eftResponse.ok) {
+          failureCode = "server";
           throw new Error(eft.error || "EFT/Havale ödeme kaydı oluşturulamadı.");
         }
         clearCart();
@@ -286,12 +309,19 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           orderId: orderBody.orderId,
           email,
+          diagnostics: { sessionId: analytics?.sessionId, attemptId: checkoutAttemptId() },
         }),
       });
 
       const payment = await readJsonResponse<PaymentStart>(paymentResponse);
       if (!paymentResponse.ok) {
+        failureCode = "server";
         throw new Error(payment.error || "Ödeme oturumu başlatılamadı.");
+      }
+
+      if (payment.paymentUrl) {
+        window.location.assign(payment.paymentUrl);
+        return;
       }
 
       if (payment.iframeUrl) {
@@ -306,6 +336,7 @@ export default function CheckoutPage() {
 
       throw new Error("Tosla ödeme ekranı adresi alınamadı.");
     } catch (error) {
+      if (failureCode === "network") trackCheckoutProgress(failureStage, "network");
       setSubmitError(error instanceof Error ? error.message : "Sipariş başlatılamadı.");
       setSubmitting(false);
     }
@@ -336,8 +367,16 @@ export default function CheckoutPage() {
   }
 
   return <><StoreHeader/><main className="checkout-page">
-    <form ref={formRef} id="checkout-form" className="checkout-main" onSubmit={handleSubmit}>
+    <form ref={formRef} id="checkout-form" className="checkout-main" onSubmit={handleSubmit}
+      onChange={() => { if (!formStarted.current) { formStarted.current = true; trackCheckoutProgress("form_started"); } }}
+      onInvalidCapture={event => {
+        if (Date.now() - invalidAt.current < 1000) return;
+        invalidAt.current = Date.now();
+        const name = (event.target as HTMLInputElement).name;
+        trackCheckoutProgress("form_invalid", "validation", ["firstName", "lastName", "email", "phone"].includes(name) ? "contact" : ["companyName", "taxOffice", "taxNumber", "invoiceEmail"].includes(name) ? "invoice" : "address");
+      }}>
       <Link href="/sepet" className="checkout-back">← Sepete dön</Link>
+      {paymentReturn && <p role="alert" className="checkout-error-box">Ödeme henüz tamamlanmadı. Bankanızdan ücret çekildiyse tekrar ödeme yapmadan bizimle iletişime geçin.</p>}
       <div className="checkout-progress"><span className="done">01 Sepet</span><span className="active">02 Bilgiler</span><span>03 Ödeme</span></div>
       <span className="checkout-kicker">GÜVENLİ ÖDEME</span><h1>Sipariş bilgileri</h1><p className="checkout-intro">Teslimat ve fatura bilgilerinizi kontrol edin, ardından kart veya EFT / Havale ödeme yöntemini seçin.</p>
       <div className="checkout-step"><span>01</span><div><h2>İletişim</h2><div className="form-grid"><input required name="firstName" autoComplete="given-name" placeholder="Ad"/><input required name="lastName" autoComplete="family-name" placeholder="Soyad"/><input required name="email" type="email" autoComplete="email" placeholder="E-posta"/><input required name="phone" autoComplete="tel" placeholder="Telefon"/></div></div></div>

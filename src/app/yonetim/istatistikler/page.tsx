@@ -1,3 +1,5 @@
+import CheckoutDiagnosticsDashboard from "@/components/CheckoutDiagnosticsDashboard";
+import type { CheckoutReport } from "@/lib/checkout-diagnostics";
 import Link from "next/link";
 import {
   ArrowDownRight,
@@ -142,6 +144,7 @@ export default async function StatisticsPage({
     favoritesResult,
     behaviorResult,
     previousBehaviorResult,
+    checkoutDiagnosticsResult,
   ] = await Promise.all([
     orderQuery,
     supabase.from("order_items").select("order_id,product_id,product_name,sku,color,size,unit_price,quantity,line_total"),
@@ -154,6 +157,7 @@ export default async function StatisticsPage({
     period.previousFrom && period.previousTo
       ? supabase.rpc("store_analytics_report", {p_from:period.previousFrom.toISOString(),p_to:period.previousTo.toISOString(),p_bucket:period.bucket})
       : Promise.resolve({data:null,error:null}),
+    supabase.rpc("checkout_diagnostics_report", { p_from: period.from.toISOString(), p_to: period.to.toISOString() }),
   ]);
 
   const allOrders = (ordersResult.data || []) as OrderRow[];
@@ -280,6 +284,8 @@ export default async function StatisticsPage({
         report={behaviorResult.error ? null : behaviorResult.data as AnalyticsReport | null}
         previous={previousBehaviorResult.error ? null : previousBehaviorResult.data as AnalyticsReport | null}
         error={Boolean(behaviorResult.error)}/>
+      <CheckoutDiagnosticsDashboard report={checkoutDiagnosticsResult.error ? null : checkoutDiagnosticsResult.data as CheckoutReport | null}/>
+
       {ordersResult.error && <div className="admin-alert error">Satış verisi okunamadı; aşağıdaki satış değerleri doğrulanamıyor.</div>}
       <section className="analytics-traffic-title commerce-title"><div><span>TİCARET ANALİTİĞİ</span><h2>Satış ve ürün performansı</h2></div></section>
 

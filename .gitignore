@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Local browser review evidence
 /.qa/
+
+# Local checkout QA fixtures
+/work/

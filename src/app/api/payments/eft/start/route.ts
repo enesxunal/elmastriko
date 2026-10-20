@@ -1,3 +1,4 @@
+import { recordCheckoutEvent } from "@/lib/checkout-diagnostics-server";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BANK_TRANSFER } from "@/lib/payments/bank-transfer";
@@ -70,6 +71,8 @@ export async function POST(request: NextRequest) {
     status: "awaiting_payment",
     updated_at: new Date().toISOString(),
   }).eq("id", orderId);
+
+  await recordCheckoutEvent("eft_started", {}, { orderId });
 
   return NextResponse.json({
     orderId,

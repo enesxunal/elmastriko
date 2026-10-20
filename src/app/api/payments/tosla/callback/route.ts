@@ -1,3 +1,4 @@
+import { recordCheckoutEvent } from "@/lib/checkout-diagnostics-server";
 import { sendOrderNotice } from "@/lib/mail";
 import { sendMetaPurchase } from "@/lib/meta-capi";
 import { NextRequest, NextResponse } from "next/server";
@@ -127,6 +128,9 @@ export async function POST(request: NextRequest) {
       .eq("id",order.id).neq("payment_status","paid").select("id");
     if(updateError) console.error("Payment status update failed",updateError.message);
     newlyPaid = paid && Boolean(changed?.length);
+  }
+  if (order.payment_status !== "paid") {
+    await recordCheckoutEvent(newlyPaid ? "payment_verified" : failed ? "payment_failed" : "verification_pending", {}, { orderId: order.id, providerCode: bankCode, ...(failed ? { code: "provider" } as const : {}) });
   }
   if(newlyPaid) {
     const {data:confirmedOrder} = await supabase.from("orders")

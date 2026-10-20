@@ -47,6 +47,9 @@ async function transporterFor(accountKey: MailAccountKey) {
     port: Number(settings.smtp_port),
     secure: Boolean(settings.smtp_secure),
     requireTLS: !settings.smtp_secure,
+    connectionTimeout: 5000,
+    greetingTimeout: 5000,
+    socketTimeout: 10000,
     auth: {
       user: settings.smtp_user,
       pass: decryptMailPassword(settings.smtp_password_encrypted),
@@ -112,7 +115,7 @@ export async function sendOrderNotice(orderId:string, event:OrderNoticeEvent, co
  const safeNo=escapeHtml(order.order_no);
  const details=`<p><b>Sipariş:</b> ${safeNo}</p><p><b>Toplam:</b> ${Number(order.grand_total).toLocaleString("tr-TR")} ${escapeHtml(order.currency)}</p>${context?`<p>${escapeHtml(context)}</p>`:""}${event==="shipped" && shipment?.tracking_code?`<p>Takip kodu: <b>${escapeHtml(shipment.tracking_code)}</b></p>`:""}${event==="shipped" && shipment?.tracking_url && /^https:\/\//i.test(shipment.tracking_url)?`<p><a href="${escapeHtml(shipment.tracking_url)}">Kargoyu takip et</a></p>`:""}${event==="invoice_sent" && invoice?.status==="sent"?`<p>Fatura numarası: ${escapeHtml(invoice.invoice_no || "Hazır")}. Belgeyi hesabınıza giriş yaparak görüntüleyebilirsiniz.</p>`:""}`;
  const targets:["support"|"sales",string,string][] = [["sales","satis@elmastriko.com",`Satış bildirimi: ${title}`]];
- if(email)targets.unshift(["support",email,title]);
+ if(email && !/@example\.invalid$/i.test(email))targets.unshift(["support",email,title]);
  for(const [account,to,subject] of targets){
    // Notification ledger is intentionally DB-backed to prevent duplicates across server instances.
    const {data:claim,error:claimError}=await admin.from("order_mail_deliveries").insert({order_id:orderId,event_key:event,recipient:to,status:"sending"}).select("id").single();

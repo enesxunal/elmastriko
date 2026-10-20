@@ -1,0 +1,50 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import path from 'node:path';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url), ts=require('typescript'), cache=new Map();
+function load(relative){
+ const file=path.resolve(relative);if(cache.has(file))return cache.get(file);
+ const output=ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+ const exports={};cache.set(file,exports);
+ const localRequire=name=>name.startsWith('@/')?load('src/'+name.slice(2)+'.ts'):name.startsWith('./')?load(path.join(path.dirname(file),name+'.ts')):require(name);
+ vm.runInThisContext('(function(exports,require){'+output+'\n})',{filename:file})(exports,localRequire);return exports;
+}
+const {signCardSession,readCardSession,cardFormAction}=load('src/lib/payments/card-session.ts');
+const {renderCardPage}=load('src/lib/payments/card-page.ts');
+const sample={orderId:'10000000-0000-4000-8000-000000000001',orderNo:'ET-TEST-1',providerSession:'test-session',amount:1048,expires:Date.now()+60000};
+const token=signCardSession(sample,'test-secret');
+assert.deepEqual(readCardSession(token,'test-secret'),sample);
+assert.equal(readCardSession(token,'wrong-secret'),null);
+assert.equal(readCardSession(token+'x','test-secret'),null);
+assert.equal(readCardSession(signCardSession({...sample,expires:1},'test-secret'),'test-secret'),null);
+assert.equal(readCardSession(token,''),null);
+assert.throws(()=>signCardSession(sample,''));
+process.env.TOSLA_MODE='live';assert.equal(cardFormAction(),'https://entegrasyon.tosla.com/api/Payment/ProcessCardForm');
+process.env.TOSLA_API_BASE_URL='https://untrusted.example/';assert.equal(new URL(cardFormAction()).host,'entegrasyon.tosla.com');
+const html=renderCardPage({...sample,orderNo:'<script>alert(1)</script>'},cardFormAction(),'test-nonce');
+assert.ok(html.includes('&lt;script&gt;'));
+assert.ok(!html.includes('gtag')&&!html.includes('fbq')&&!html.includes('BURAK'));
+assert.ok(html.includes('1048')===false); // amount must be localized for customers
+for(const name of ['ThreeDSessionId','CardHolderName','CardNo','ExpireDate','Cvv'])assert.ok(html.includes('name="'+name+'"'));
+assert.ok(html.includes('enctype="multipart/form-data"'));
+const script=html.match(/<script nonce="test-nonce">([\s\S]*?)<\/script>/)[1];
+new vm.Script(script);
+const handlers={},beacons=[];
+const el=id=>({value:'',disabled:false,textContent:'',setCustomValidity(s){this.invalid=s;},reportValidity(){},addEventListener(type,fn,capture){handlers[id+':'+type+(capture?':capture':'')]=fn;}});
+const elements=Object.fromEntries(['card-form','card-number','card-expiry','card-error','pay-button'].map(id=>[id,el(id)]));
+vm.runInNewContext(script,{document:{getElementById:id=>elements[id]},navigator:{sendBeacon:(url,body)=>beacons.push({url,body})},window:{addEventListener(){}},Blob,Date});
+let prevented=false;
+elements['card-number'].value='1234567890123456';elements['card-expiry'].value='12/99';
+handlers['card-form:submit']({preventDefault(){prevented=true;}});assert.ok(prevented);assert.match(elements['card-number'].invalid,/kontrol/);
+assert.equal(JSON.parse(await beacons.at(-1).body.text()).stage,'card_form_invalid');
+assert.deepEqual(Object.keys(JSON.parse(await beacons.at(-1).body.text())),['stage']);
+// A known test PAN is used only in this local validation test; it is never transmitted.
+prevented=false;elements['card-number'].value='4242 4242 4242 4242';elements['card-expiry'].value='12/99';
+handlers['card-form:submit']({preventDefault(){prevented=true;}});assert.equal(prevented,false);assert.equal(elements['card-number'].value,'4242424242424242');assert.ok(elements['pay-button'].disabled);
+assert.equal(JSON.parse(await beacons.at(-1).body.text()).stage,'card_submitted');
+prevented=false;elements['card-number'].value='4242424242424242';elements['card-expiry'].value='01/20';handlers['card-form:submit']({preventDefault(){prevented=true;}});assert.ok(prevented);assert.match(elements['card-expiry'].invalid,/tarihi/);
+console.log('Card session tampering/expiry, provider origin, HTML escaping, exact provider fields, card validation and diagnostic privacy: passed.');
+fs.mkdirSync('work/qa',{recursive:true});
+fs.writeFileSync('work/qa/card-preview.html',renderCardPage(sample,cardFormAction(),'test-nonce'));
