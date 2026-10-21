@@ -1,4 +1,5 @@
 import InternalTrafficControl from "./InternalTrafficControl";
+import PaymentActivityDashboard, { type PaymentActivityReport } from "./PaymentActivityDashboard";
 import Link from "next/link";
 import {Clock3,Eye,Globe2,UsersRound} from "lucide-react";
 import {RANGE_OPTIONS,formatAnalyticsTime,type AnalyticsRange} from "@/lib/analytics-range";
@@ -12,7 +13,7 @@ function Delta({current,previous}:{current:number;previous:number|undefined}){
   const change=(current-previous)/previous*100;
   return <span className={"behavior-delta "+(change>=0?"up":"down")}>{change>0?"+":""}{change.toLocaleString("tr-TR",{maximumFractionDigits:1})}%</span>;
 }
-export default function AnalyticsBehaviorDashboard({period,report,previous,error}:{period:AnalyticsRange;report:AnalyticsReport|null;previous:AnalyticsReport|null;error?:boolean}){
+export default function AnalyticsBehaviorDashboard({period,report,previous,error,paymentActivity}:{period:AnalyticsRange;report:AnalyticsReport|null;previous:AnalyticsReport|null;error?:boolean;paymentActivity:PaymentActivityReport|null}){
   const dateOptions:Intl.DateTimeFormatOptions={day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"};
   const s=report?.summary,p=previous?.summary;
   const average=s?.measuredSessions?s.activeMs/1000/s.measuredSessions:null;
@@ -45,14 +46,15 @@ export default function AnalyticsBehaviorDashboard({period,report,previous,error
       <section className="analytics-kpis traffic-kpis">{kpis.map(({label,value,current,previous:old,icon:Icon,note})=><article key={label}><div className="analytics-kpi-top"><span className="analytics-icon"><Icon size={18}/></span><Delta current={current} previous={old}/></div><small>{label}</small><strong>{value}</strong><p>{note}</p></article>)}</section>
       <div className="behavior-duration-note"><Clock3 size={18}/><div><b>Aktif süre nasıl ölçülüyor?</b><p>Yalnızca görünür ve odaktaki sayfa ölçülür. Sekme değişince, uygulama arka plana geçince veya 60 saniye etkileşim olmayınca sayaç durur. Toplam aktif süre: <strong>{analyticsDuration(s!.measuredSessions?s!.activeMs/1000:null)}</strong>. Ölçülmemiş geçmiş süreler tahmin edilmez.</p></div></div>
       <section className="admin-section behavior-event-totals">
-        <div className="admin-section-head"><div><span>OLAY ÖLÇÜMÜ</span><h2>Olay sayısı ve oturum sayısı</h2></div></div>
+        <div className="admin-section-head"><div><span>OLAY ÖLÇÜMÜ · META’DA TARAYICI KAYNAĞIYLA KARŞILAŞTIRIN</span><h2>Olay sayısı ve oturum sayısı</h2></div></div>
         <InternalTrafficControl/>
         <p className="analytics-helper">Aynı kişi birden fazla olay oluşturabilir. Bu tablo seçilen dönemde gerçekleşen tüm müşteri olaylarını sayar; aşağıdaki huni ise aynı oturumda adımları sırayla geçenleri gösterir.</p>
         {report.eventTotals ? <div className="behavior-table-scroll"><table><thead><tr><th>Olay</th><th>Meta olay adı</th><th>Toplam olay</th><th>Tekil oturum</th></tr></thead><tbody>{report.eventTotals.map(row => <tr key={row.kind}><td>{{page_view:"Sayfa görüntüleme",view_item:"Ürün görüntüleme",add_to_cart:"Sepete ekleme",begin_checkout:"Ödeme başlangıcı"}[row.kind] || row.kind}</td><td>{{page_view:"PageView",view_item:"ViewContent",add_to_cart:"AddToCart",begin_checkout:"InitiateCheckout"}[row.kind]}</td><td>{count(row.events)}</td><td>{count(row.sessions)}</td></tr>)}</tbody></table></div> : <p>Olay toplamları okunamıyor; bu bir sıfır olay sonucu değildir.</p>}
-        <p className="analytics-helper">Meta karşılaştırmasında aynı tarihi, saat dilimini ve yalnızca tarayıcı kaynağını seçin. Meta’nın “toplam olaylar” alanı tarayıcı ve sunucu kopyalarını birlikte gösterebilir. Reklam engelleme, gizlilik tercihleri ve iletim kayıpları nedeniyle Meta’nın aldığı sayı birebir aynı olmayabilir.</p>
+        <p className="analytics-helper">Meta karşılaştırmasında aynı tarihi, saat dilimini ve yalnızca tarayıcı kaynağını seçin. Meta’nın “toplam olaylar” alanı tarayıcı ve sunucu kopyalarını birlikte gösterebilir. Sonradan ayıklanan denemeler Meta’nın geçmiş toplamlarında kalır. Reklam engelleme, gizlilik tercihleri ve iletim kayıpları da fark oluşturabilir.</p>
         <p className="analytics-helper">Bilinen teknik testler hariç: {count(report.excludedTestSessions || 0)} oturum. Yönetim ve önizleme sayfaları müşteri trafiğine dahil edilmez.{report.eventAlignmentStartedAt && <> Ortak olay kimliğiyle ölçüm düzenlemesi: {formatAnalyticsTime(report.eventAlignmentStartedAt,dateOptions)}. Önceki Meta verileri geriye dönük değişmez.</>}</p>
       </section>
-      <section className="admin-section behavior-funnel"><div className="admin-section-head"><div><span>ALIŞVERİŞ HUNİSİ</span><h2>Ziyaretten satın almaya</h2></div><div className="analytics-chart-total"><small>Oturumdan satışa</small><b>{analyticsPercent(f!.purchase,f!.sessions)}</b></div></div>
+      <PaymentActivityDashboard report={paymentActivity}/>
+      <section className="admin-section behavior-funnel"><div className="admin-section-head"><div><span>BU DÖNEMDE BAŞLAYAN MÜŞTERİ OTURUMLARI</span><h2>Ziyaretten satın almaya</h2></div><div className="analytics-chart-total"><small>Oturumdan satışa</small><b>{analyticsPercent(f!.purchase,f!.sessions)}</b></div></div>
         <p className="analytics-helper">Bilinen teknik testler hariçtir. Aynı oturumdaki adımlar sırayla ve yalnızca bir kez sayılır. Karttan hızlı ekleme, ürünle etkileşime dahildir. Ödeme sayfasını açmak satış sayılmaz.</p>
         <div className="behavior-funnel-steps">{steps.map((step,i)=>{const before=i?steps[i-1].value:step.value;return <article key={step.label}><span className="funnel-step-number">{i+1}</span><h3>{step.label}</h3><strong>{count(step.value)}</strong><div className="funnel-bar"><i style={{width:(f!.sessions?step.value/f!.sessions*100:0)+"%"}}/></div><b>{i?analyticsPercent(step.value,before)+" geçiş":"Başlangıç"}</b><small>{i?`${count(Math.max(0,before-step.value))} oturum bu adımda kaybedildi`:"Seçili aralıkta başlayan oturumlar"}</small><p>{step.help}</p></article>;})}</div>
         <div className="behavior-funnel-foot"><span><b>{count(f!.orders)}</b> ödenmiş sipariş · {f!.revenue.toLocaleString("tr-TR",{style:"currency",currency:"TRY",maximumFractionDigits:0})}</span><span>Ödeme durumu raporun açıldığı andaki durumdur; EFT onayı sonradan dönüşüme yansır.</span></div>

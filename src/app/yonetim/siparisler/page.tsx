@@ -13,21 +13,25 @@ function statusLabel(value:string){
   return labels[value]||value;
 }
 
-export default async function OrdersAdmin(){
+export default async function OrdersAdmin({searchParams}:{searchParams:Promise<{archive?:string}>}){
+  const archived=(await searchParams).archive === "1";
   const {supabase}=await requireAdmin();
-  const {data:orders}=await supabase.from("orders").select("id,order_no,status,payment_status,grand_total,currency,guest_email,guest_phone,created_at").order("created_at",{ascending:false}).limit(100);
+  let query=supabase.from("orders").select("id,order_no,status,payment_status,grand_total,currency,guest_email,guest_phone,created_at,is_test").order("created_at",{ascending:false}).limit(100);
 
+  query = archived ? query.not("archived_at","is",null) : query.is("archived_at",null);
+  const {data:orders}=await query;
   const list=orders||[];
-  const paid=list.filter(o=>o.payment_status==="paid").length;
+  const paid=list.filter(o=>!o.is_test&&o.payment_status==="paid").length;
   const waiting=list.filter(o=>["pending","customer_notified","rejected"].includes(o.payment_status)||o.status==="awaiting_payment").length;
   const shipping=list.filter(o=>["ready_to_ship","shipped"].includes(o.status)).length;
-  const revenue=list.filter(o=>o.payment_status==="paid"&&!["cancelled","refunded"].includes(o.status)).reduce((sum,o)=>sum+Number(o.grand_total||0),0);
+  const revenue=list.filter(o=>!o.is_test&&o.payment_status==="paid"&&!["cancelled","refunded"].includes(o.status)).reduce((sum,o)=>sum+Number(o.grand_total||0),0);
 
   return <main className="admin-page admin-orders-page">
     <div className="admin-page-head admin-orders-head">
-      <div><span>OPERASYON</span><h1>Siparişler</h1><p>Ödeme, fatura, hazırlık ve teslimat akışını tek ekrandan yönetin.</p></div>
+      <div><span>OPERASYON</span><h1>{archived ? "Arşiv / Deneme siparişleri" : "Siparişler"}</h1><p>Ödeme, fatura, hazırlık ve teslimat akışını tek ekrandan yönetin.</p></div>
     </div>
 
+    <p><Link href={archived ? "/yonetim/siparisler" : "/yonetim/siparisler?archive=1"}>{archived ? "Gerçek siparişlere dön" : "Deneme arşivini göster"}</Link></p>
     <section className="admin-order-kpis">
       <article><span><ShoppingBag size={16}/> Toplam sipariş</span><strong>{list.length}</strong><small>Son 100 kayıt</small></article>
       <article><span><CheckCircle2 size={16}/> Ödemesi tamamlanan</span><strong>{paid}</strong><small>{revenue.toLocaleString("tr-TR")} TL ciro</small></article>

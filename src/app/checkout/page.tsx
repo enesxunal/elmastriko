@@ -27,7 +27,7 @@ type PaymentStart = {
 
 type CheckoutContext = {
   user: { email?: string } | null;
-  profile: { full_name?: string | null; phone?: string | null } | null;
+  profile: { full_name?: string | null; phone?: string | null; role?: string } | null;
   address: {
     title?: string | null;
     full_name?: string | null;
@@ -79,6 +79,7 @@ export default function CheckoutPage() {
   const { lines, loading } = useCartCatalog(cart);
   const { freeShippingThreshold, shippingFee, shippingCampaignActive, loading: commerceLoading } = useCommerceSettings();
   const formRef = useRef<HTMLFormElement>(null);
+  const [internalTest, setInternalTest] = useState(false);
   const [invoiceType, setInvoiceType] = useState<"individual" | "company">("individual");
   const [paymentMethod, setPaymentMethod] = useState<"card" | "eft">("card");
   const [eftOrder, setEftOrder] = useState<{ orderId: string; orderNo: string; status: string } | null>(null);
@@ -154,6 +155,7 @@ export default function CheckoutPage() {
         if (!response.ok) return;
         const context = await response.json() as CheckoutContext;
         if (cancelled || !context.user) return;
+        setInternalTest(context.profile?.role === "admin");
 
         const form = formRef.current;
         if (!form) return;
@@ -368,6 +370,7 @@ export default function CheckoutPage() {
 
   return <><StoreHeader/><main className="checkout-page">
     <form ref={formRef} id="checkout-form" className="checkout-main" onSubmit={handleSubmit}
+      onFocusCapture={() => { if (!formStarted.current) { formStarted.current = true; trackCheckoutProgress("form_started"); } }}
       onChange={() => { if (!formStarted.current) { formStarted.current = true; trackCheckoutProgress("form_started"); } }}
       onInvalidCapture={event => {
         if (Date.now() - invalidAt.current < 1000) return;
@@ -375,6 +378,7 @@ export default function CheckoutPage() {
         const name = (event.target as HTMLInputElement).name;
         trackCheckoutProgress("form_invalid", "validation", ["firstName", "lastName", "email", "phone"].includes(name) ? "contact" : ["companyName", "taxOffice", "taxNumber", "invoiceEmail"].includes(name) ? "invoice" : "address");
       }}>
+      {internalTest && <p role="status" className="checkout-error-box">Yönetici hesabıyla oluşturulan sipariş deneme olarak kaydedilir; gerçek satış istatistiklerine ve Meta satın alma olaylarına dahil edilmez.</p>}
       <Link href="/sepet" className="checkout-back">← Sepete dön</Link>
       {paymentReturn && <p role="alert" className="checkout-error-box">Ödeme henüz tamamlanmadı. Bankanızdan ücret çekildiyse tekrar ödeme yapmadan bizimle iletişime geçin.</p>}
       <div className="checkout-progress"><span className="done">01 Sepet</span><span className="active">02 Bilgiler</span><span>03 Ödeme</span></div>

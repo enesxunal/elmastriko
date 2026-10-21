@@ -8,7 +8,7 @@ export default async function AdminUserDetail({params}:{params:Promise<{id:strin
   const [{data:user},{data:addresses},{data:orders},{data:favorites}] = await Promise.all([
     supabase.from("profiles").select("id,full_name,email,phone,role,created_at,updated_at").eq("id",id).maybeSingle(),
     supabase.from("addresses").select("id,title,full_name,phone,city,district,address_line,is_default,created_at").eq("user_id",id).order("is_default",{ascending:false}),
-    supabase.from("orders").select("id,order_no,status,payment_status,grand_total,currency,created_at").eq("user_id",id).order("created_at",{ascending:false}).limit(50),
+    supabase.from("orders").select("id,order_no,status,payment_status,grand_total,currency,created_at").eq("user_id",id).is("archived_at",null).order("created_at",{ascending:false}).limit(50),
     supabase.from("favorites").select("product_id,products(id,name,slug)").eq("user_id",id).limit(100),
   ]);
   if(!user) notFound();

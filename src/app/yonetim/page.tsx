@@ -10,13 +10,13 @@ export default async function AdminDashboard() {
   const { supabase } = await requireAdmin();
   const [products, orders, users, posts, messages, subscribers, recent, revenueRows, stockRows] = await Promise.all([
     supabase.from("products").select("id", { count: "exact", head: true }),
-    supabase.from("orders").select("id", { count: "exact", head: true }),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("is_test",false).is("archived_at",null),
     supabase.from("profiles").select("id", { count: "exact", head: true }),
     supabase.from("blog_posts").select("id", { count: "exact", head: true }),
     supabase.from("contact_messages").select("id", { count: "exact", head: true }).eq("status","new"),
     supabase.from("newsletter_subscribers").select("id", { count: "exact", head: true }).eq("is_active",true),
-    supabase.from("orders").select("id,order_no,status,payment_status,grand_total,currency,created_at,guest_email").order("created_at",{ascending:false}).limit(8),
-    supabase.from("orders").select("grand_total,status,payment_status").eq("payment_status","paid"),
+    supabase.from("orders").select("id,order_no,status,payment_status,grand_total,currency,created_at,guest_email").eq("is_test",false).is("archived_at",null).order("created_at",{ascending:false}).limit(8),
+    supabase.from("orders").select("grand_total,status,payment_status").eq("payment_status","paid").eq("is_test",false).is("archived_at",null),
     supabase.from("inventory").select("stock,reserved,product_variants(id,sku,product_id,products(id,name,slug))").lte("stock",5).order("stock").limit(20),
   ]);
 

@@ -492,17 +492,22 @@ export async function saveInvoice(fd: FormData) {
 
 export async function savePaymentRecord(fd: FormData) {
   const { supabase }=await requireAdmin(); const orderId=v(fd,"order_id");
+  const {data:originalOrder}=await supabase.from("orders").select("id,payment_status,is_test,archived_at,grand_total,currency,guest_email,guest_phone").eq("id",orderId).maybeSingle();
+  if(!originalOrder || originalOrder.is_test || originalOrder.archived_at) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("Deneme/arşiv siparişine gerçek ödeme kaydedilemez."));
   const existing=await supabase.from("payments").select("id,status").eq("order_id",orderId).order("created_at",{ascending:false}).limit(1).maybeSingle();
   const payload={order_id:orderId,provider:v(fd,"provider")||"manual",provider_reference:v(fd,"provider_reference")||null,amount:Number(v(fd,"amount")||0),status:v(fd,"status")||"pending",updated_at:new Date().toISOString()};
   if(existing.data?.id) await supabase.from("payments").update(payload).eq("id",existing.data.id); else await supabase.from("payments").insert(payload);
-  await supabase.from("orders").update({
+  const {error:orderPaymentError}=await supabase.from("orders").update({
     payment_provider: payload.provider,
     payment_status:payload.status,
     status:payload.status==="paid"?"paid":"awaiting_payment",
     updated_at:new Date().toISOString()
   }).eq("id",orderId);
+  if(orderPaymentError) throw new Error(orderPaymentError.message);
   await audit("update","payment",orderId,payload);
-  if(payload.status==="paid"&&existing.data?.status!=="paid"){
+  if(payload.status==="paid"&&originalOrder.payment_status!=="paid"){
+    await sendMetaPurchase(originalOrder);
+    await recordCheckoutEvent("payment_verified", {}, {orderId});
     try{await createNesInvoiceForOrder(orderId);}catch(error){console.error("NES invoice creation failed after manual payment approval:",error);}
   }
   try { await sendOrderStatusEmail(orderId, payload.status==="paid" ? "Ödemeniz onaylandı" : "Ödeme durumunuz güncellendi"); } catch (mailError) { console.error("Payment mail failed:",mailError); }
@@ -512,18 +517,22 @@ export async function savePaymentRecord(fd: FormData) {
 export async function approveBankTransfer(fd: FormData) {
   const { supabase }=await requireAdmin();
   const orderId=v(fd,"order_id");
-  const {data:order}=await supabase.from("orders").select("id,order_no,grand_total,payment_status").eq("id",orderId).maybeSingle();
+  const {data:order}=await supabase.from("orders").select("id,order_no,grand_total,payment_status,is_test,archived_at").eq("id",orderId).maybeSingle();
   if(!order) redirect("/yonetim/siparisler?error="+encodeURIComponent("Sipariş bulunamadı."));
+  if(order.is_test || order.archived_at) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("Deneme/arşiv siparişi gerçek ödeme olarak onaylanamaz."));
+  if(order.payment_status === "paid") redirect(`/yonetim/siparisler/${orderId}?payment=already-approved`);
   const {data:payment}=await supabase.from("payments").select("id,provider,status,raw_response").eq("order_id",orderId).eq("provider",BANK_TRANSFER.provider).order("created_at",{ascending:false}).limit(1).maybeSingle();
   if(!payment) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("EFT/Havale ödeme kaydı bulunamadı."));
   const now=new Date().toISOString();
   const raw=(payment.raw_response||{}) as Record<string,unknown>;
-  await supabase.from("payments").update({status:"paid",raw_response:{...raw,adminApprovedAt:now},updated_at:now}).eq("id",payment.id);
+  const {error:bankUpdateError}=await supabase.from("payments").update({status:"paid",raw_response:{...raw,adminApprovedAt:now},updated_at:now}).eq("id",payment.id).neq("status","paid");
+  if(bankUpdateError) throw new Error(bankUpdateError.message);
   const {data:justPaid,error:paymentApprovalError}=await supabase.from("orders")
     .update({payment_provider:BANK_TRANSFER.provider,payment_status:"paid",status:"paid",updated_at:now})
     .eq("id",orderId).neq("payment_status","paid").select("id,grand_total,currency,guest_email,guest_phone");
   if(paymentApprovalError) throw new Error(paymentApprovalError.message);
-  if(justPaid?.[0]) await sendMetaPurchase(justPaid[0]);
+  if(!justPaid?.length) redirect(`/yonetim/siparisler/${orderId}?payment=already-approved`);
+  await sendMetaPurchase(justPaid[0]);
   await audit("approve","bank_transfer_payment",orderId,{orderNo:order.order_no});
   if(order.payment_status!=="paid"){
     try{await createNesInvoiceForOrder(orderId);}catch(error){console.error("NES invoice creation failed after EFT approval:",error);}

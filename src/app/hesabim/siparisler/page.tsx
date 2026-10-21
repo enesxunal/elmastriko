@@ -32,7 +32,7 @@ export default async function AccountOrdersPage() {
 
   const [{ data: profile }, { data: orders }] = await Promise.all([
     supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
-    supabase.from("orders").select("id, order_no, status, grand_total, currency, created_at").order("created_at", { ascending: false }),
+    supabase.from("orders").select("id, order_no, status, grand_total, currency, created_at").is("archived_at",null).order("created_at", { ascending: false }),
   ]);
 
   const orderIds = (orders || []).map(order => order.id);

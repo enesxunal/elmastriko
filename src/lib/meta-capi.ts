@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { createAdminClient } from "./supabase/admin";
 
 const PIXEL_ID = "1474952207810125";
 const hash = (value: string) => createHash("sha256").update(value.trim().toLowerCase()).digest("hex");
@@ -8,6 +9,10 @@ export async function sendMetaPurchase(order: {
   guest_email?: string | null; guest_phone?: string | null;
 }, eventTime = Math.floor(Date.now() / 1000)) {
   if (/@example\.invalid$/i.test(order.guest_email || "")) return false;
+  const { data: verified, error } = await createAdminClient().from("orders")
+    .select("is_test,archived_at,payment_status,status,paid_at").eq("id", order.id).maybeSingle();
+  if (error || !verified || verified.is_test || verified.archived_at || verified.payment_status !== "paid" || ["cancelled", "refunded", "returned"].includes(verified.status)) return false;
+  if (verified.paid_at) eventTime = Math.floor(new Date(verified.paid_at).getTime() / 1000);
   const token = process.env.META_CAPI_ACCESS_TOKEN;
   if (!token) { console.warn("Meta CAPI token missing"); return false; }
   const user_data: Record<string, string> = {};

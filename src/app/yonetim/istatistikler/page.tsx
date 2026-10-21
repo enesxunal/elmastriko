@@ -1,3 +1,4 @@
+import type { PaymentActivityReport } from "@/components/PaymentActivityDashboard";
 import CheckoutDiagnosticsDashboard from "@/components/CheckoutDiagnosticsDashboard";
 import type { CheckoutReport } from "@/lib/checkout-diagnostics";
 import Link from "next/link";
@@ -31,6 +32,7 @@ type OrderRow = {
   grand_total: number;
   currency: string;
   created_at: string;
+  paid_at: string | null;
 };
 
 type OrderItemRow = {
@@ -130,9 +132,9 @@ export default async function StatisticsPage({
 
   let orderQuery = supabase
     .from("orders")
-    .select("id,order_no,user_id,guest_email,status,payment_status,subtotal,shipping_fee,discount_total,grand_total,currency,created_at")
+    .select("id,order_no,user_id,guest_email,status,payment_status,subtotal,shipping_fee,discount_total,grand_total,currency,created_at,paid_at").eq("is_test",false).is("archived_at",null)
     .order("created_at", { ascending: true }).lt("created_at", period.to.toISOString());
-  if (prevStartIso) orderQuery = orderQuery.gte("created_at", prevStartIso);
+  if (prevStartIso) orderQuery = orderQuery.or(`created_at.gte.${prevStartIso},paid_at.gte.${prevStartIso}`);
 
   const [
     ordersResult,
@@ -145,6 +147,7 @@ export default async function StatisticsPage({
     behaviorResult,
     previousBehaviorResult,
     checkoutDiagnosticsResult,
+    paymentActivityResult,
   ] = await Promise.all([
     orderQuery,
     supabase.from("order_items").select("order_id,product_id,product_name,sku,color,size,unit_price,quantity,line_total"),
@@ -158,6 +161,7 @@ export default async function StatisticsPage({
       ? supabase.rpc("store_analytics_report", {p_from:period.previousFrom.toISOString(),p_to:period.previousTo.toISOString(),p_bucket:period.bucket})
       : Promise.resolve({data:null,error:null}),
     supabase.rpc("checkout_diagnostics_report", { p_from: period.from.toISOString(), p_to: period.to.toISOString() }),
+    supabase.rpc("store_payment_activity_report", { p_from: period.from.toISOString(), p_to: period.to.toISOString() }),
   ]);
 
   const rawOrders = (ordersResult.data || []) as OrderRow[];
@@ -175,16 +179,16 @@ export default async function StatisticsPage({
   const previousOrders = allOrders.filter((o) => isPrevious(o.created_at));
   const validPaid = (o: OrderRow) => o.payment_status === "paid" && !["cancelled", "refunded"].includes(o.status);
 
-  const paidOrders = currentOrders.filter(validPaid);
-  const previousPaid = previousOrders.filter(validPaid);
+  const paidOrders = allOrders.filter(o => validPaid(o) && o.paid_at && isCurrent(o.paid_at));
+  const previousPaid = allOrders.filter(o => validPaid(o) && o.paid_at && isPrevious(o.paid_at));
   const revenue = paidOrders.reduce((sum, o) => sum + Number(o.grand_total || 0), 0);
   const previousRevenue = previousPaid.reduce((sum, o) => sum + Number(o.grand_total || 0), 0);
   const avgOrder = paidOrders.length ? revenue / paidOrders.length : 0;
   const previousAvg = previousPaid.length
     ? previousPaid.reduce((sum, o) => sum + Number(o.grand_total || 0), 0) / previousPaid.length
     : 0;
-  const paidRate = currentOrders.length ? (paidOrders.length / currentOrders.length) * 100 : 0;
-  const previousPaidRate = previousOrders.length ? (previousPaid.length / previousOrders.length) * 100 : 0;
+  const paidRate = currentOrders.length ? (currentOrders.filter(validPaid).length / currentOrders.length) * 100 : 0;
+  const previousPaidRate = previousOrders.length ? (previousOrders.filter(validPaid).length / previousOrders.length) * 100 : 0;
 
   const currentOrderIds = new Set(currentOrders.map((o) => o.id));
   const paidOrderIds = new Set(paidOrders.map((o) => o.id));
@@ -253,8 +257,14 @@ export default async function StatisticsPage({
     const key = bucketKey(o.created_at,period.bucket);
     const existing = dailyMap.get(key) || { date: key, revenue: 0, orders: 0 };
     existing.orders += 1;
-    if (validPaid(o)) existing.revenue += Number(o.grand_total || 0);
+
     dailyMap.set(key, existing);
+  });
+
+  paidOrders.forEach(o => {
+    const key = bucketKey(o.paid_at!,period.bucket);
+    const row = dailyMap.get(key) || {date:key,revenue:0,orders:0};
+    row.revenue += Number(o.grand_total || 0); dailyMap.set(key,row);
   });
 
   for (const key of rangeBuckets(period)) {
@@ -273,7 +283,7 @@ export default async function StatisticsPage({
   const paidRateChange = change(paidRate, previousPaidRate);
 
   const kpis = [
-    { label: "Net Ciro", value: money(revenue), change: revenueChange, icon: CircleDollarSign, note: "Ödenmiş, iptal/iade hariç" },
+    { label: "Net Ciro", value: money(revenue), change: revenueChange, icon: CircleDollarSign, note: "İlk ödeme onay tarihine göre; denemeler hariç" },
     { label: "Sipariş", value: currentOrders.length.toLocaleString("tr-TR"), change: orderChange, icon: ShoppingBag, note: "Oluşturulan toplam sipariş" },
     { label: "Ort. Sepet", value: money(avgOrder), change: avgChange, icon: TrendingUp, note: "Ödenmiş sipariş ortalaması" },
     { label: "Ödeme Başarı", value: pct(paidRate), change: paidRateChange, icon: PackageCheck, note: "Siparişlerin ödeme oranı" },
@@ -284,7 +294,8 @@ export default async function StatisticsPage({
       <AnalyticsBehaviorDashboard period={period}
         report={behaviorResult.error ? null : behaviorResult.data as AnalyticsReport | null}
         previous={previousBehaviorResult.error ? null : previousBehaviorResult.data as AnalyticsReport | null}
-        error={Boolean(behaviorResult.error)}/>
+        error={Boolean(behaviorResult.error)}
+        paymentActivity={paymentActivityResult.error ? null : paymentActivityResult.data as PaymentActivityReport | null}/>
       <CheckoutDiagnosticsDashboard report={checkoutDiagnosticsResult.error ? null : checkoutDiagnosticsResult.data as CheckoutReport | null}/>
 
       {ordersResult.error && <div className="admin-alert error">Satış verisi okunamadı; aşağıdaki satış değerleri doğrulanamıyor.</div>}

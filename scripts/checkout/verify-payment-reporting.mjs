@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import ts from 'typescript';
+import {createHash} from 'node:crypto';
+const code=ts.transpileModule(fs.readFileSync('src/lib/meta-capi.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+let row,dbError=null,sent=[];
+const context={exports:{},require(name){if(name==='node:crypto')return{createHash};if(name==='./supabase/admin')return{createAdminClient:()=>({from:()=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:row,error:dbError})})})})})};throw Error(name)},process:{env:{META_CAPI_ACCESS_TOKEN:'local-test-token'}},console,Date,AbortSignal,fetch:async(url,options)=>{sent.push(JSON.parse(options.body));return{ok:true}}};
+vm.runInNewContext(code,context);
+const send=context.exports.sendMetaPurchase;
+const order={id:'00000000-0000-4000-8000-000000000001',grand_total:948,guest_email:'buyer@example.org'};
+const paid={is_test:false,archived_at:null,payment_status:'paid',status:'shipped',paid_at:'2026-10-21T08:36:19Z'};
+for(const patch of [{is_test:true},{archived_at:'2026-10-21'},{payment_status:'pending'},{status:'cancelled'},{status:'refunded'}]){row={...paid,...patch};assert.equal(await send(order),false)}
+row=null;assert.equal(await send(order),false);
+row=paid;dbError={code:'test'};assert.equal(await send(order),false);dbError=null;
+assert.equal(sent.length,0);
+assert.equal(await send(order),true);assert.equal(sent.length,1);
+assert.equal(sent[0].data[0].event_time,Math.floor(new Date(paid.paid_at).getTime()/1000));
+assert.equal(sent[0].data[0].event_id,'purchase_'+order.id);
+assert.equal(sent[0].data[0].custom_data.value,948);
+assert.equal(await send({...order,guest_email:'technical@example.invalid'}),false);assert.equal(sent.length,1);
+console.log('Only verified real payments reach Meta; test/archive/pending/cancelled/DB failure blocked; first payment timestamp and stable event ID retained: passed. No external requests made.');
