@@ -1,8 +1,8 @@
 export const BANK_TRANSFER = {
   provider: "bank_transfer",
-  bankName: "Türkiye Finans Bankası",
-  accountHolder: "Halil Elmas",
-  iban: "TR380020600138053693900001",
+  bankName: "Ziraat Bankası",
+  accountHolder: "ELMAS TRİKO SANAYİ VE TİCARET LİMİTED ŞİRKETİ",
+  iban: "TR090001001359983867455001",
 } as const;
 
 export function bankTransferStatusLabel(status?: string | null) {
