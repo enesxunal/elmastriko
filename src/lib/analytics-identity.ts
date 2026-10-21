@@ -10,6 +10,8 @@ export function writeStorage(store:"localStorage"|"sessionStorage",key:string,va
 export function analyticsExclusionReason(path=typeof location!=="undefined"?location.pathname:"") {
   if(typeof window==="undefined")return "unavailable";
   if(!path.startsWith("/")||/^\/(yonetim|api|auth|influencer)(\/|$)/.test(path))return "internal";
+  if(new URLSearchParams(location.search).get("et_test")==="1") writeStorage("sessionStorage","et_technical_test","1");
+  if(readStorage("sessionStorage","et_technical_test")==="1")return "automated";
   if(!["www.elmastriko.com","elmastriko.com"].includes(location.hostname))return "preview";
   if(navigator.webdriver||/bot|crawler|spider|slurp/i.test(navigator.userAgent))return "automated";
   if(navigator.doNotTrack==="1"||(navigator as Navigator & {globalPrivacyControl?:boolean}).globalPrivacyControl)return "privacy";

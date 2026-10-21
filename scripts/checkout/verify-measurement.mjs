@@ -38,5 +38,8 @@ location.pathname="/urun/measurement-product";location.hostname="localhost";trac
 location.hostname="www.elmastriko.com";local.set("et_analytics_opt_out","1");tracking.trackCartAddition(product,line,899);
 local.delete("et_analytics_opt_out");navigator.doNotTrack="1";tracking.trackCartAddition(product,line,899);
 navigator.doNotTrack="0";navigator.webdriver=true;tracking.trackCartAddition(product,line,899);
+navigator.webdriver=false;location.search="?et_test=1";tracking.trackCartAddition(product,line,899);
+location.search="";tracking.trackCartAddition(product,line,899);meta.metaTrack("PageView",{},String(++seq));
+assert.equal(session.get("et_technical_test"),"1");
 await analytics.flushAnalytics();assert.equal(requests.flatMap(x=>x.events).length,beforeEvents);assert.equal(window.fbq.queue.filter(x=>x[0]==="track").length,beforePixel);
 console.log("Shared event IDs, rerender deduplication, distinct repeat adds, checkout deduplication, SKU identity and matching admin/preview/privacy/bot exclusions: passed.");
