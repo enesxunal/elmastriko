@@ -61,8 +61,12 @@ export async function POST(request: NextRequest) {
   if (error) {
     await recordCheckoutEvent("order_failed", payload.diagnostics, { code: checkoutErrorCode(error.message), isTest: /@example\.invalid$/i.test(payload.email) });
     console.error("Store order creation failed", { code: error.code, category: checkoutErrorCode(error.message) });
-    const status = error.message.includes("price_missing") ? 409 : 400;
-    return NextResponse.json({ error: error.message }, { status });
+    const stockUnavailable = checkoutErrorCode(error.message) === "stock";
+    const status = stockUnavailable || error.message.includes("price_missing") ? 409 : 400;
+    const message = stockUnavailable
+      ? "Sepetinizdeki bir ürünün seçilen renk ve bedeninde yeterli stok kalmadı. Lütfen sepetinizi güncelleyin."
+      : error.message;
+    return NextResponse.json({ error: message }, { status });
   }
 
   const result = (data || {}) as OrderResult;
