@@ -282,7 +282,8 @@ export async function updateVariant(fd: FormData) {
   const { supabase } = await requireAdmin(); const productId=v(fd,"product_id"), id=v(fd,"id");
   const { error }=await supabase.from("product_variants").update({sku:v(fd,"sku")||null,color:v(fd,"color")||null,size:v(fd,"size")||null,price:num(fd,"price"),is_active:fd.get("is_active")==="on"}).eq("id",id);
   if(error) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent(error.message));
-  await supabase.from("inventory").upsert({variant_id:id,stock:Number(v(fd,"stock")||0),reserved:Number(v(fd,"reserved")||0),updated_at:new Date().toISOString()});
+  const {error:stockError}=await supabase.rpc("update_inventory_stock",{p_variant_id:id,p_stock:Number(v(fd,"stock")||0)});
+  if(stockError) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent("Stok, aktif rezervasyonun altına indirilemez."));
   await audit("update","variant",id); revalidatePath(`/yonetim/urunler/${productId}`);
 }
 
@@ -290,17 +291,18 @@ export async function updateInventoryOnly(fd: FormData) {
   const { supabase } = await requireAdmin();
   const variantId=v(fd,"variant_id");
   const stock=Math.max(0,Number(v(fd,"stock")||0));
-  const reserved=Math.max(0,Number(v(fd,"reserved")||0));
-  const { error }=await supabase.from("inventory").upsert({variant_id:variantId,stock,reserved,updated_at:new Date().toISOString()});
+  const { error }=await supabase.rpc("update_inventory_stock",{p_variant_id:variantId,p_stock:stock});
   if(error) redirect("/yonetim/stok?error="+encodeURIComponent(error.message));
-  await audit("inventory_update","variant",variantId,{stock,reserved});
+  await audit("inventory_update","variant",variantId,{stock});
   revalidatePath("/yonetim/stok");
   revalidatePath("/yonetim");
 }
 
 export async function deleteVariant(fd: FormData) {
   const { supabase }=await requireAdmin(); const productId=v(fd,"product_id"), id=v(fd,"id");
-  await supabase.from("product_variants").delete().eq("id",id); await audit("delete","variant",id); revalidatePath(`/yonetim/urunler/${productId}`);
+  const {error}=await supabase.from("product_variants").delete().eq("id",id);
+  if(error) redirect(`/yonetim/urunler/${productId}?error=`+encodeURIComponent("Siparişe bağlı varyant silinemez. Satıştan kaldırmak için pasif yapın."));
+  await audit("delete","variant",id); revalidatePath(`/yonetim/urunler/${productId}`);
 }
 
 export async function addProductImages(fd: FormData) {
@@ -496,14 +498,19 @@ export async function savePaymentRecord(fd: FormData) {
   if(!originalOrder || originalOrder.is_test || originalOrder.archived_at) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("Deneme/arşiv siparişine gerçek ödeme kaydedilemez."));
   const existing=await supabase.from("payments").select("id,status").eq("order_id",orderId).order("created_at",{ascending:false}).limit(1).maybeSingle();
   const payload={order_id:orderId,provider:v(fd,"provider")||"manual",provider_reference:v(fd,"provider_reference")||null,amount:Number(v(fd,"amount")||0),status:v(fd,"status")||"pending",updated_at:new Date().toISOString()};
-  if(existing.data?.id) await supabase.from("payments").update(payload).eq("id",existing.data.id); else await supabase.from("payments").insert(payload);
-  const {error:orderPaymentError}=await supabase.from("orders").update({
-    payment_provider: payload.provider,
-    payment_status:payload.status,
-    status:payload.status==="paid"?"paid":"awaiting_payment",
-    updated_at:new Date().toISOString()
-  }).eq("id",orderId);
-  if(orderPaymentError) throw new Error(orderPaymentError.message);
+  if(originalOrder.payment_status==="paid" && payload.status!=="paid") redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("Onaylanmış ödeme bu formdan geri alınamaz. İade sürecini kullanın."));
+  const receiptPayload={...payload,status:payload.status==="paid" ? (existing.data?.status==="paid"?"paid":"pending") : payload.status};
+  const receipt=existing.data?.id
+    ? await supabase.from("payments").update(receiptPayload).eq("id",existing.data.id).select("id").single()
+    : await supabase.from("payments").insert(receiptPayload).select("id").single();
+  if(receipt.error || !receipt.data) throw new Error("Ödeme kaydı kaydedilemedi.");
+  if(payload.status==="paid") {
+    const {error}=await supabase.rpc("confirm_order_payment",{p_order_id:orderId,p_payment_id:receipt.data.id});
+    if(error) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("Ödeme onaylanamadı. Stok durumunu ve sipariş tutarını kontrol edin."));
+  } else {
+    const {error}=await supabase.from("orders").update({payment_provider:payload.provider,payment_status:payload.status,status:"awaiting_payment",updated_at:new Date().toISOString()}).eq("id",orderId);
+    if(error) throw new Error(error.message);
+  }
   await audit("update","payment",orderId,payload);
   if(payload.status==="paid"&&originalOrder.payment_status!=="paid"){
     await sendMetaPurchase(originalOrder);
@@ -525,14 +532,12 @@ export async function approveBankTransfer(fd: FormData) {
   if(!payment) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("EFT/Havale ödeme kaydı bulunamadı."));
   const now=new Date().toISOString();
   const raw=(payment.raw_response||{}) as Record<string,unknown>;
-  const {error:bankUpdateError}=await supabase.from("payments").update({status:"paid",raw_response:{...raw,adminApprovedAt:now},updated_at:now}).eq("id",payment.id).neq("status","paid");
-  if(bankUpdateError) throw new Error(bankUpdateError.message);
-  const {data:justPaid,error:paymentApprovalError}=await supabase.from("orders")
-    .update({payment_provider:BANK_TRANSFER.provider,payment_status:"paid",status:"paid",updated_at:now})
-    .eq("id",orderId).neq("payment_status","paid").select("id,grand_total,currency,guest_email,guest_phone");
-  if(paymentApprovalError) throw new Error(paymentApprovalError.message);
-  if(!justPaid?.length) redirect(`/yonetim/siparisler/${orderId}?payment=already-approved`);
-  await sendMetaPurchase(justPaid[0]);
+  const {data:newlyPaid,error:paymentApprovalError}=await supabase.rpc("confirm_order_payment",{p_order_id:orderId,p_payment_id:payment.id});
+  if(paymentApprovalError) redirect(`/yonetim/siparisler/${orderId}?error=`+encodeURIComponent("Ödeme onaylanamadı. Stok durumunu ve sipariş tutarını kontrol edin."));
+  if(!newlyPaid) redirect(`/yonetim/siparisler/${orderId}?payment=already-approved`);
+  await supabase.from("payments").update({raw_response:{...raw,adminApprovedAt:now}}).eq("id",payment.id);
+  const {data:justPaid}=await supabase.from("orders").select("id,grand_total,currency,guest_email,guest_phone").eq("id",orderId).single();
+  if(justPaid) await sendMetaPurchase(justPaid);
   await audit("approve","bank_transfer_payment",orderId,{orderNo:order.order_no});
   if(order.payment_status!=="paid"){
     try{await createNesInvoiceForOrder(orderId);}catch(error){console.error("NES invoice creation failed after EFT approval:",error);}

@@ -94,7 +94,7 @@ export default async function StockAdmin({ searchParams }:{ searchParams:Promise
         <span>{variant!.color||"Standart"}</span>
         <span>{variant!.size||"Standart"}</span>
         <input name="stock" type="number" min="0" defaultValue={row.stock}/>
-        <input name="reserved" type="number" min="0" defaultValue={row.reserved}/>
+        <input aria-label="Otomatik rezervasyon" readOnly type="number" min="0" defaultValue={row.reserved}/>
         <b className={available===0?"stock-zero":available<=5?"stock-low":"stock-ok"}>{available}</b>
         <button className="variant-save" aria-label="Stoku kaydet"><Save size={14}/></button>
       </form>):<div className="product-list-empty"><PackageSearch size={28}/><strong>Stok kaydı bulunamadı</strong><span>Ürün varyantları eklendiğinde burada görünecek.</span></div>}

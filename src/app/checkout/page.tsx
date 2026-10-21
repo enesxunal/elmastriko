@@ -94,6 +94,8 @@ export default function CheckoutPage() {
     () => ["failed", "pending"].includes(new URLSearchParams(window.location.search).get("payment") || ""),
     () => false,
   );
+  const paymentReview = useSyncExternalStore(onPaymentLocationChange,
+    () => new URLSearchParams(window.location.search).get("payment") === "review", () => false);
   const [paymentSuccess] = useState<{ orderNo: string } | null>(() => {
     if (typeof window === "undefined") return null;
     const params = new URLSearchParams(window.location.search);
@@ -342,6 +344,15 @@ export default function CheckoutPage() {
       setSubmitError(error instanceof Error ? error.message : "Sipariş başlatılamadı.");
       setSubmitting(false);
     }
+  }
+
+  if (paymentReview) {
+    return <><StoreHeader/><main className="checkout-page"><section className="checkout-main">
+      <span className="checkout-kicker">ÖDEME KONTROLÜ</span><h1>Ödemeniz kontrol ediliyor.</h1>
+      <p>Ödeme alındı ancak siparişinizin stok onayı için destek ekibimizin kontrolü gerekiyor. Lütfen tekrar ödeme yapmayın.</p>
+      <a href="https://wa.me/905356007011" target="_blank" rel="noopener noreferrer">WhatsApp’tan bize ulaşın →</a>
+      <p><Link href="/siparis-takip">Siparişimi takip et →</Link></p>
+    </section></main></>;
   }
 
   if (paymentSuccess) {

@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { Heart, Minus, Plus, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import { Product, formatPrice } from "@/lib/catalog";
 import { useStore } from "./StoreProvider";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { trackProductView, trackCartAddition } from "@/lib/commerce-tracking";
 
 export default function ProductPurchase({ product, selectedColor, onColorChange }: { product: Product; selectedColor?: string; onColorChange?: (color: string) => void }) {
@@ -24,14 +24,35 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
   const sizeGuideLabel = product.category === "kadin" ? "Kadın" : "Erkek";
   const isFavorite = favorites.includes(product.slug);
   const hasInventoryData = Boolean(product.variants?.length);
+  const [freshStock, setFreshStock] = useState<Record<string, number> | null>(null);
+  const [checkingStock, setCheckingStock] = useState(false);
+  const [stockError, setStockError] = useState("");
+  const refreshStock = useCallback(async (signal?: AbortSignal) => {
+    const response = await fetch(`/api/catalog/availability/${encodeURIComponent(product.slug)}`, { cache: "no-store", signal });
+    if (!response.ok) throw new Error("stock_unavailable");
+    const data = await response.json() as { variants: Array<{ id: string; available: number }> };
+    const next = Object.fromEntries(data.variants.map(v => [v.id, v.available]));
+    if (!signal?.aborted) setFreshStock(next);
+    return next;
+  }, [product.slug]);
+  useEffect(() => {
+    const controller = new AbortController();
+    const refresh = () => { if (document.visibilityState === "visible") void refreshStock(controller.signal).catch(() => {}); };
+    refresh();
+    const timer = window.setInterval(refresh, 30000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { controller.abort(); window.clearInterval(timer); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+  }, [refreshStock]);
+  const variants = useMemo(() => (product.variants || []).map(v => ({ ...v, available: freshStock === null ? v.available : freshStock[v.id] ?? 0 })), [product.variants, freshStock]);
 
   const selectedVariant = useMemo(() => {
-    if (!product.variants?.length) return null;
-    return product.variants.find(variant =>
+    if (!variants.length) return null;
+    return variants.find(variant =>
       (variant.size || "Standart") === size &&
       (variant.color || "Standart") === color
     ) || null;
-  }, [product.variants, size, color]);
+  }, [variants, size, color]);
 
   const available = hasInventoryData ? (selectedVariant?.available ?? 0) : null;
   const outOfStock = available !== null && available <= 0;
@@ -39,17 +60,18 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
   const safeQty = available === null ? qty : Math.max(1, Math.min(qty, Math.max(1, available)));
 
   const colorHasStock = (candidate: string) => {
-    if (!product.variants?.length) return true;
-    return product.variants.some(v =>
+    if (!variants.length) return true;
+    return variants.some(v =>
       (v.color || "Standart") === candidate &&
       v.available > 0
     );
   };
 
   const sizeHasStock = (candidate: string) => {
-    if (!product.variants?.length) return true;
-    return product.variants.some(v =>
+    if (!variants.length) return true;
+    return variants.some(v =>
       (v.size || "Standart") === candidate &&
+      (v.color || "Standart") === color &&
       v.available > 0
     );
   };
@@ -73,7 +95,14 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
           aria-disabled={!enabled}
           aria-pressed={color === c}
           className={color === c ? "selected" : ""}
-          onClick={() => { setColor(c); setQty(1); setAdded(false); }}
+          onClick={() => {
+            setColor(c);
+            if (!variants.some(v => (v.color || "Standart") === c && (v.size || "Standart") === size && v.available > 0)) {
+              const first = variants.find(v => (v.color || "Standart") === c && v.available > 0);
+              if (first) setSize(first.size || "Standart");
+            }
+            setQty(1); setAdded(false); setStockError("");
+          }}
           key={c}
         ><span>{c}</span>{!enabled && <small>Tükendi</small>}</button>;
       })}</div>
@@ -107,18 +136,29 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
       </div>
       <button
         className="add-cart"
-        disabled={outOfStock || product.price === null}
-        onClick={() => {
-          if (outOfStock || product.price === null) return;
+        disabled={outOfStock || product.price === null || checkingStock}
+        onClick={async () => {
+          if (outOfStock || product.price === null || checkingStock) return;
+          setCheckingStock(true); setStockError(""); setAdded(false);
+          try {
+            const latest = await refreshStock();
+            if (!selectedVariant || (latest[selectedVariant.id] ?? 0) < safeQty) {
+              setStockError("Bu renk ve bedende yeterli stok kalmadı. Lütfen seçiminizi güncelleyin.");
+              return;
+            }
           addToCart({ slug: product.slug, qty: safeQty, size, color });
           trackCartAddition(product, { slug: product.slug, qty: safeQty, color, size }, selectedPrice);
           setAdded(true);
+          } catch {
+            setStockError("Stok bilgisi kontrol edilemedi. Lütfen tekrar deneyin.");
+          } finally { setCheckingStock(false); }
         }}
       >
-        {product.price === null ? "Fiyat bekleniyor" : outOfStock ? "Stokta Yok" : added ? "Sepete Eklendi" : "Sepete Ekle"}
+        {checkingStock ? "Kontrol ediliyor…" : product.price === null ? "Fiyat bekleniyor" : outOfStock ? "Stokta Yok" : added ? "Sepete Eklendi" : "Sepete Ekle"}
       </button>
       <button type="button" className={"fav-btn " + (isFavorite ? "active" : "")} onClick={() => toggleFavorite(product.slug)} aria-label={isFavorite ? product.name + " favorilerden çıkar" : product.name + " favorilere ekle"} aria-pressed={isFavorite}><Heart size={19} fill={isFavorite ? "currentColor" : "none"}/></button>
     </div>
+    {stockError && <p className="stock-message out" role="alert">{stockError}</p>}
     {added && <Link className="go-cart" href="/sepet">Sepete git →</Link>}
 
     {sizeGuideOpen && createPortal(<div role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSizeGuideOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.7)", display: "grid", placeItems: "center", padding: 12 }}>

@@ -32,6 +32,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Bu sipariş zaten ödenmiş." }, { status: 409 });
   }
 
+  const { data: paidReceipt, error: receiptError } = await supabase.from("payments").select("id").eq("order_id", orderId).eq("status", "paid").limit(1).maybeSingle();
+  if (receiptError) return NextResponse.json({ error: "Ödeme durumu kontrol edilemedi. Lütfen tekrar deneyin." }, { status: 503 });
+  if (paidReceipt) return NextResponse.json({ error: "Bu sipariş için ödeme alınmış; kontrol ediliyor. Yeniden ödeme yapmadan WhatsApp üzerinden bize ulaşın." }, { status: 409 });
+
+  const { error: stockError } = await supabase.rpc("ensure_order_stock_reservation", { p_order_id: orderId, p_ttl_minutes: 1440 });
+  if (stockError) {
+    await recordCheckoutEvent("payment_session_failed", {}, { orderId: orderId, code: "stock" });
+    return NextResponse.json({ error: "Seçtiğiniz ürünlerden biri artık stokta yok veya sipariş kapatılmış. Lütfen sepetinizi kontrol edin." }, { status: 409 });
+  }
+
   const { data: existing } = await supabase
     .from("payments")
     .select("id,status")

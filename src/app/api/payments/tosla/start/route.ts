@@ -41,10 +41,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Sipariş tutarı ödeme için uygun değil." }, { status: 409 });
   }
 
-  if (["cancelled", "refunded"].includes(order.status)) return NextResponse.json({ error: "Bu sipariş ödeme için kapalı." }, { status: 409 });
+  if (["cancelled", "refunded", "returned"].includes(order.status)) return NextResponse.json({ error: "Bu sipariş ödeme için kapalı." }, { status: 409 });
 
   if (order.payment_status === "paid") {
     return NextResponse.json({ error: "Bu sipariş zaten ödendi." }, { status: 409 });
+  }
+
+  const { data: paidReceipt, error: receiptError } = await supabase.from("payments").select("id").eq("order_id", order.id).eq("status", "paid").limit(1).maybeSingle();
+  if (receiptError) return NextResponse.json({ error: "Ödeme durumu kontrol edilemedi. Lütfen tekrar deneyin." }, { status: 503 });
+  if (paidReceipt) return NextResponse.json({ error: "Bu sipariş için ödeme alınmış; kontrol ediliyor. Yeniden ödeme yapmadan WhatsApp üzerinden bize ulaşın." }, { status: 409 });
+
+  const { error: stockError } = await supabase.rpc("ensure_order_stock_reservation", { p_order_id: order.id, p_ttl_minutes: 30 });
+  if (stockError) {
+    await recordCheckoutEvent("payment_session_failed", body.diagnostics, { orderId: order.id, code: "stock" });
+    return NextResponse.json({ error: "Seçtiğiniz ürünlerden biri artık stokta yok veya sipariş kapatılmış. Lütfen sepetinizi kontrol edin." }, { status: 409 });
   }
 
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.elmastriko.com").replace(/\/$/, "");

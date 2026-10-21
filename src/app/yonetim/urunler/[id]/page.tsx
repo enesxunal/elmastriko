@@ -135,7 +135,7 @@ export default async function ProductAdminDetail({
                   <input name="size" defaultValue={vr.size||""} placeholder="Beden"/>
                   <input name="price" type="number" step="0.01" defaultValue={vr.price??""} placeholder="Ürün fiyatı"/>
                   <input name="stock" type="number" min="0" defaultValue={inv?.stock??0}/>
-                  <input name="reserved" type="number" min="0" defaultValue={inv?.reserved??0}/>
+                  <input aria-label="Otomatik rezervasyon" readOnly type="number" min="0" defaultValue={inv?.reserved??0}/>
                   <label className="variant-row-toggle"><input type="checkbox" name="is_active" defaultChecked={vr.is_active}/><span>{vr.is_active?"Aktif":"Pasif"}</span></label>
                   <button className="variant-save" aria-label="Varyantı kaydet"><Save size={14}/></button>
                 </form>

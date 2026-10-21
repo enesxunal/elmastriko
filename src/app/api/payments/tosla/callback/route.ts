@@ -119,15 +119,24 @@ export async function POST(request: NextRequest) {
   await supabase
     .from("payments")
     .update(paymentUpdate)
-    .eq("id", payment.id);
+    .eq("id", payment.id)
+    .neq("status", "paid");
 
   let newlyPaid = false;
-  if (order.payment_status !== "paid") {
-    const { data: changed, error: updateError } = await supabase.from("orders")
-      .update({payment_provider:"tosla",payment_status:paymentStatus,status:paid?"paid":"awaiting_payment",updated_at:new Date().toISOString()})
-      .eq("id",order.id).neq("payment_status","paid").select("id");
-    if(updateError) console.error("Payment status update failed",updateError.message);
-    newlyPaid = paid && Boolean(changed?.length);
+  let settlementFailed = false;
+  if (paid) {
+    const { data: confirmed, error: updateError } = await supabase.rpc("confirm_order_payment", { p_order_id: order.id, p_payment_id: payment.id });
+    if (updateError) {
+      settlementFailed = true;
+      await supabase.from("orders").update({payment_status:"review_required",stock_reservation_expires_at:null,updated_at:new Date().toISOString()}).eq("id",order.id).neq("payment_status","paid");
+      console.error("Verified card debit needs order review", { orderId: order.id, code: updateError.code });
+      await recordCheckoutEvent("verification_pending", {}, { orderId: order.id, code: "stock", providerCode: bankCode });
+    } else newlyPaid = Boolean(confirmed);
+  } else if (order.payment_status !== "paid") {
+    const { error: updateError } = await supabase.from("orders")
+      .update({payment_provider:"tosla",payment_status:paymentStatus,status:"awaiting_payment",updated_at:new Date().toISOString()})
+      .eq("id",order.id).neq("payment_status","paid");
+    if(updateError) console.error("Payment status update failed",updateError.code);
   }
   if (order.payment_status !== "paid") {
     await recordCheckoutEvent(newlyPaid ? "payment_verified" : failed ? "payment_failed" : "verification_pending", {}, { orderId: order.id, providerCode: bankCode, ...(failed ? { code: "provider" } as const : {}) });
@@ -138,7 +147,7 @@ export async function POST(request: NextRequest) {
     if(confirmedOrder) await sendMetaPurchase(confirmedOrder);
   }
 
-  if (paid && isNesConfigured()) {
+  if (paid && !settlementFailed && isNesConfigured()) {
     try {
       await createNesInvoiceForOrder(order.id);
     } catch (invoiceError) {
@@ -146,14 +155,14 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (order.payment_status !== "paid") {
+  if (order.payment_status !== "paid" && !settlementFailed) {
     try { await sendOrderNotice(order.id, paid ? "payment_paid" : failed ? "payment_failed" : "status_updated"); }
     catch (error) { console.error("Payment notification failed",error); }
   }
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.elmastriko.com").replace(/\/$/, "");
-  const target = paid
+  const target = paid && !settlementFailed
     ? `${siteUrl}/siparis-basarili?order=${encodeURIComponent(order.order_no)}`
-    : `${siteUrl}/checkout?payment=${failed ? "failed" : "pending"}&order=${encodeURIComponent(order.order_no)}`;
+    : `${siteUrl}/checkout?payment=${settlementFailed ? "review" : failed ? "failed" : "pending"}&order=${encodeURIComponent(order.order_no)}`;
 
   return NextResponse.redirect(target, 303);
 }
