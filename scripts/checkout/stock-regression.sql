@@ -1,4 +1,5 @@
--- Execute inside a transaction and roll back all fixtures. Requires atomic stock migration.
+-- Self-contained rollback-only regression. Requires atomic stock migration.
+begin;
 do $test$
 declare pid uuid:=gen_random_uuid(); va uuid:=gen_random_uuid(); vb uuid:=gen_random_uuid();
  oa uuid:=gen_random_uuid(); ob uuid:=gen_random_uuid(); oc uuid:=gen_random_uuid(); ot uuid:=gen_random_uuid();
@@ -78,3 +79,6 @@ begin
  begin perform public.confirm_order_payment(oa,pay_id);raise exception 'Anonymous approval accepted';
  exception when raise_exception then get stacked diagnostics message=MESSAGE_TEXT;if message<>'admin_required' then raise;end if;end;
 end $test$;
+
+rollback;
+select 'Stock reservation, expiry, retry, atomic payment, idempotency, cancellation, multi-line rollback, dispatched returns and test isolation: passed; all fixtures rolled back' result;
