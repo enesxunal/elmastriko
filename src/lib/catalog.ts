@@ -11,6 +11,7 @@ export type Product = {
   sizes: string[];
   badge?: string;
   description: string;
+  details?: Array<{ label: string; value: string }>;
   variants?: Array<{
     id: string;
     sku?: string | null;

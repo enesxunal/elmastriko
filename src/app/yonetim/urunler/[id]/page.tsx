@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { editedProductText } from "@/lib/product-editorial";
 import { ArrowLeft, ExternalLink, ImagePlus, PackageCheck, Save, Trash2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/admin";
@@ -24,6 +25,7 @@ export default async function ProductAdminDetail({
     supabase.from("site_settings").select("value").eq("key","product_options").maybeSingle(),
   ]);
   if(!product) notFound();
+  const copy = editedProductText({slug:product.slug,name:product.name,description:product.description||""});
 
   const productOptions=(productOptionsRow?.value||{}) as {colors?:string[];sizes?:string[]};
   const optionColors=Array.isArray(productOptions.colors)&&productOptions.colors.length?productOptions.colors:["Siyah","Beyaz","Ekru","Lacivert","Bordo","Yeşil","Haki","Gri","Vizon","Bej","Mürdüm"];
@@ -41,7 +43,7 @@ export default async function ProductAdminDetail({
     <div className="product-detail-titlebar">
       <div>
         <div className="product-detail-kicker">{product.is_active?"YAYINDA":"PASİF"} · /{product.slug}</div>
-        <h1>{product.name}</h1>
+        <h1>{copy.name}</h1>
         <div className="product-detail-summary">
           <span>{variants?.length||0} varyant</span>
           <span>{totalStock} adet kullanılabilir stok</span>
@@ -63,8 +65,8 @@ export default async function ProductAdminDetail({
           <div className="product-editor-card-head"><div><span>1</span><div><h2>Ürün bilgileri</h2><p>Mağazada görünen temel içerik ve fiyat bilgileri.</p></div></div></div>
           <form action={updateProduct} className="product-detail-form">
             <input type="hidden" name="id" value={id}/>
-            <div className="product-field"><label>Ürün adı</label><input name="name" defaultValue={product.name} required/></div>
-            <div className="product-field"><label>Açıklama</label><textarea name="description" defaultValue={product.description||""} rows={7} placeholder="Ürünün kumaşı, kalıbı, kullanım ve bakım bilgileri..."/></div>
+            <div className="product-field"><label>Ürün adı</label><input name="name" defaultValue={copy.name} required/></div>
+            <div className="product-field"><label>Açıklama</label><textarea name="description" defaultValue={copy.description} rows={7} placeholder="Ürünün kumaşı, kalıbı, kullanım ve bakım bilgileri..."/></div>
             <div className="product-two-cols">
               <div className="product-field"><label>Satış fiyatı</label><div className="money-input"><input name="base_price" type="number" min="0" step="0.01" defaultValue={product.base_price??""}/><span>TL</span></div></div>
               <div className="product-field"><label>İndirim öncesi fiyat</label><div className="money-input"><input name="compare_at_price" type="number" min="0" step="0.01" defaultValue={product.compare_at_price??""}/><span>TL</span></div></div>

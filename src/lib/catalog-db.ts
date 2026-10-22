@@ -1,5 +1,6 @@
 import { createPublicClient } from "@/lib/supabase/public";
 import { Product, products as fallbackProducts } from "@/lib/catalog";
+import { applyProductEditorial } from "@/lib/product-editorial";
 
 type DbProduct = {
   id: string;
@@ -105,7 +106,7 @@ async function fetchDbProducts() {
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
-  return (data as unknown as DbProduct[]).map(mapDbProduct);
+  return (data as unknown as DbProduct[]).map(mapDbProduct).map(applyProductEditorial);
 }
 
 export async function getProducts(options?: {
@@ -115,7 +116,7 @@ export async function getProducts(options?: {
   sort?: "newest" | "price-asc" | "price-desc";
 }) {
   const dbProducts = await fetchDbProducts();
-  let list = dbProducts.length ? dbProducts : fallbackProducts;
+  let list = dbProducts.length ? dbProducts : fallbackProducts.map(applyProductEditorial);
 
   if (options?.gender) list = list.filter(p => p.category === options.gender);
   if (options?.query) {
@@ -143,7 +144,8 @@ export async function getProducts(options?: {
 export async function getProductBySlug(slug: string) {
   const dbProducts = await fetchDbProducts();
   if (dbProducts.length) return dbProducts.find(p => p.slug === slug) || null;
-  return fallbackProducts.find(p => p.slug === slug) || null;
+  const backup = fallbackProducts.find(p => p.slug === slug);
+  return backup ? applyProductEditorial(backup) : null;
 }
 
 export async function getProductTypes(gender?: "kadin" | "erkek") {

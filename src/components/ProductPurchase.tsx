@@ -84,8 +84,16 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
     <div className="product-main-price">{formatPrice(selectedPrice)}</div>
     <p className="product-shipping-note">{shippingCampaignActive ? "31 Ekim sonuna kadar kargo ücretsiz. Minimum tutar yok." : shippingLoading ? "Kargo bilgisi yükleniyor…" : selectedPrice !== null && selectedPrice * safeQty >= freeShippingThreshold ? "Bu seçimde kargo ücretsiz." : shippingFee !== null ? `Kargo ${formatPrice(shippingFee)} · ${freeShippingThreshold.toLocaleString("tr-TR")} TL ve üzeri ücretsiz.` : "Kargo bedeli sepette gösterilir."}</p>
     <p className="product-desc">{product.description}</p>
+    {Boolean(product.details?.length) && <section className="product-facts" aria-labelledby="product-facts-title">
+      <h2 id="product-facts-title">Ürün Özellikleri</h2>
+      <dl>
+        {product.details?.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+        {product.colors.length > 0 && <div><dt>Renk{product.colors.length > 1 ? " seçenekleri" : ""}</dt><dd>{product.colors.join(", ")}</dd></div>}
+        {product.sizes.length > 0 && <div><dt>Beden{product.sizes.length > 1 ? " seçenekleri" : ""}</dt><dd>{product.sizes.join(", ")}</dd></div>}
+      </dl>
+    </section>}
 
-    {product.colors.length > 0 && <div className="product-option">
+    {product.colors.length > 1 && <div className="product-option">
       <div className="product-option-head"><label>Renk</label><span>{color}</span></div>
       <div className="option-pills">{product.colors.map(c => {
         const enabled = colorHasStock(c);

@@ -1139,3 +1139,13 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
   .shipping-campaign-toast h2{font-size:26px}
   .shipping-campaign-toast p{font-size:13px}
 }
+
+/* Product facts are editorial details backed by existing product records. */
+.product-facts{margin:17px 0 23px;padding:17px 18px;border:1px solid #dce7de;border-radius:9px;background:#f9fbf8}
+.product-facts h2{font-size:16px;line-height:1.35;font-weight:650;color:#173e2f;margin:0 0 12px}
+.product-facts dl{margin:0;display:grid;gap:0}
+.product-facts dl>div{display:grid;grid-template-columns:minmax(100px,35%) 1fr;gap:12px;padding:8px 0;border-bottom:1px solid #e8eee6}
+.product-facts dl>div:last-child{border-bottom:0;padding-bottom:0}
+.product-facts dt{color:#587365;font-size:12px}
+.product-facts dd{color:#22372d;font-size:13px;line-height:1.5;margin:0}
+@media(max-width:480px){.product-facts{padding:14px}.product-facts dl>div{grid-template-columns:38% 1fr;gap:8px}}

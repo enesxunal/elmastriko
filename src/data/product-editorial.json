@@ -1,0 +1,674 @@
+{
+  "tasarim-desen-triko-hirka": {
+    "name": "Desenli Sakal İplik Kadın Triko Hırka",
+    "description": "Dokulu örgüsü ve sakal iplik görünümüyle öne çıkan bu desenli triko hırka, kısa kesimi, klasik yakası ve düğmeli ön tasarımıyla farklı kombinlere uyum sağlar. Jean, kumaş pantolon veya etekle günlük ve şık görünümler oluşturabilirsiniz.",
+    "details": [
+      {
+        "label": "Doku",
+        "value": "Sakal iplik görünümlü örgü"
+      },
+      {
+        "label": "Yaka",
+        "value": "Klasik yaka"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Önden düğmeli"
+      },
+      {
+        "label": "Kesim",
+        "value": "Kısa model"
+      }
+    ]
+  },
+  "modern-fit-siyah-triko-kazak": {
+    "name": "Modern Fit Siyah Erkek Bisiklet Yaka Triko Kazak",
+    "description": "Siyah rengin sade görünümünü bisiklet yaka ve uzun kollu triko tasarımıyla buluşturan bu erkek kazak, ribanalı manşet ve etek ucu detaylarına sahiptir. Günlük jean kombinlerinde veya kumaş pantolonla daha klasik bir görünümde kullanılabilir.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Bisiklet yaka"
+      },
+      {
+        "label": "Kol",
+        "value": "Uzun kol"
+      },
+      {
+        "label": "Detay",
+        "value": "Ribanalı manşet ve etek ucu"
+      }
+    ]
+  },
+  "modern-fit-ekru-triko-kazak": {
+    "name": "Modern Fit Ekru Erkek Bisiklet Yaka Triko Kazak",
+    "description": "Ekru tonuyla sade bir görünüm sunan bu erkek triko kazak; bisiklet yaka, uzun kol ve ribanalı bitiş detaylarıyla tamamlanır. Jean ve kumaş pantolonlarla kolayca eşleştirilebilen zamansız bir parçadır.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Bisiklet yaka"
+      },
+      {
+        "label": "Kol",
+        "value": "Uzun kol"
+      },
+      {
+        "label": "Detay",
+        "value": "Ribanalı manşet ve etek ucu"
+      }
+    ]
+  },
+  "modern-fit-lacivert-triko-kazak": {
+    "name": "Modern Fit Lacivert Erkek Bisiklet Yaka Triko Kazak",
+    "description": "Lacivert triko kazak, bisiklet yaka ve uzun kollu tasarımıyla sade bir erkek giyim alternatifidir. Ribanalı yaka, manşet ve etek ucu detayları günlük kombinlerden daha klasik görünümlere kadar farklı stilleri tamamlar.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Bisiklet yaka"
+      },
+      {
+        "label": "Kol",
+        "value": "Uzun kol"
+      },
+      {
+        "label": "Detay",
+        "value": "Ribanalı yaka ve manşet"
+      }
+    ]
+  },
+  "modern-fit-bordo-triko-kazak": {
+    "name": "Modern Fit Bordo Erkek Bisiklet Yaka Triko Kazak",
+    "description": "Bordo tonuyla kombinlere renk katan bu erkek triko kazak, bisiklet yaka ve uzun kollu tasarıma sahiptir. Ribanalı manşet ve etek ucu detaylarıyla jean veya kumaş pantolon üzerinde kullanılabilir.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Bisiklet yaka"
+      },
+      {
+        "label": "Kol",
+        "value": "Uzun kol"
+      },
+      {
+        "label": "Detay",
+        "value": "Ribanalı manşet ve etek ucu"
+      }
+    ]
+  },
+  "poloyakatriko-kazak": {
+    "name": "Erkek Polo Yaka Dikey Örgü Triko Kazak",
+    "description": "Polo yaka ve dikey örgü detaylarıyla öne çıkan erkek triko kazak, günlük ve yarı klasik kombinlere uygun sade bir modeldir. Mevcut ürün kaydında kumaş içeriği %70 pamuk olarak belirtilmiştir.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Polo yaka"
+      },
+      {
+        "label": "Desen",
+        "value": "Dikey örgü detayı"
+      },
+      {
+        "label": "Kumaş bilgisi",
+        "value": "%70 pamuk (mevcut ürün kaydı)"
+      }
+    ]
+  },
+  "gold-dokunus-boucle-ceket": {
+    "name": "Gold Düğme Detaylı Siyah Bouclé Kadın Ceket",
+    "description": "Siyah dokulu yüzeyi, gold renkli düğmeleri ve kısa formuyla dikkat çeken kadın ceket, ön fermuar ve iki kapaklı cep detayıyla tamamlanır. Kumaş pantolon, jean ve eteklerle günlük veya şık kombinlerde kullanılabilir.",
+    "details": [
+      {
+        "label": "Doku",
+        "value": "Bukle görünümlü"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Ön fermuar"
+      },
+      {
+        "label": "Detay",
+        "value": "Gold renkli düğmeler ve iki kapaklı cep"
+      },
+      {
+        "label": "Kesim",
+        "value": "Kısa"
+      }
+    ]
+  },
+  "inci-suslemeli-triko-tunik": {
+    "name": "İnci Görünümlü Süslemeli Ekru Kadın Triko Tunik",
+    "description": "Ekru rengindeki triko tunik, yarım boğaz yakası ve omuzdan göğüs bölümüne uzanan inci görünümlü süslemeleriyle öne çıkar. Oversize kalıbıyla jean ve kumaş pantolonlarla kombinlenebilir. Mevcut ürün bilgisinde uzunluk 84 cm olarak belirtilmiştir.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Yarım boğaz"
+      },
+      {
+        "label": "Kalıp",
+        "value": "Oversize"
+      },
+      {
+        "label": "Detay",
+        "value": "İnci görünümlü süsleme"
+      },
+      {
+        "label": "Ürün boyu",
+        "value": "84 cm (mevcut ürün kaydı)"
+      }
+    ]
+  },
+  "tas-islemeli-triko-tunik": {
+    "name": "Taş İşlemeli Kiremit Kadın Triko Tunik",
+    "description": "Kiremit tonundaki triko tunik, ön yüzündeki inci görünümlü taş işlemeleri ve yan yırtmaçlarıyla sade kombinlere hareket katar. Bisiklet yakalı, uzun kollu formu günlük ve şık kullanımlara uygundur. Mevcut ürün bilgisinde boy 84 cm olarak belirtilir.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Bisiklet yaka"
+      },
+      {
+        "label": "Kol",
+        "value": "Uzun kol"
+      },
+      {
+        "label": "Detay",
+        "value": "Taş işleme ve yan yırtmaç"
+      },
+      {
+        "label": "Ürün boyu",
+        "value": "84 cm (mevcut ürün kaydı)"
+      }
+    ]
+  },
+  "bogaz-detayli-triko-kazak": {
+    "name": "Yarım Boğaz Ekru Oversize Kadın Triko Kazak",
+    "description": "Yarım boğaz yakası ve oversize formuyla öne çıkan ekru kadın triko kazak, rahat siluetiyle günlük kombinlerde kullanılabilir. Mevcut ürün açıklamasında ürün boyu 84 cm olarak belirtilmiştir.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Yarım boğaz"
+      },
+      {
+        "label": "Kalıp",
+        "value": "Oversize"
+      },
+      {
+        "label": "Ürün boyu",
+        "value": "84 cm (mevcut ürün kaydı)"
+      }
+    ]
+  },
+  "cizgi-detayli-triko-kazak-beyaz": {
+    "name": "Kontrast Çizgili Beyaz Erkek Triko Kazak",
+    "description": "Beyaz triko üzerine uygulanan kontrast çizgi detayları bu erkek kazağa sportif bir görünüm kazandırır. Bisiklet yaka, uzun kol ve göğüs ile kollarda devam eden çizgiler günlük kombinleri tamamlar.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Bisiklet yaka"
+      },
+      {
+        "label": "Kol",
+        "value": "Uzun kol"
+      },
+      {
+        "label": "Desen",
+        "value": "Göğüs ve kollarda kontrast çizgiler"
+      }
+    ]
+  },
+  "cizgi-detayli-triko-kazak-bordo": {
+    "name": "Kontrast Çizgili Bordo Erkek Triko Kazak",
+    "description": "Bordo triko kazakta göğüs ve kol boyunca uzanan kontrast çizgiler öne çıkar. Bisiklet yaka ve uzun kollu tasarımıyla jean ve günlük pantolonlarla kolayca kombinlenebilir.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Bisiklet yaka"
+      },
+      {
+        "label": "Kol",
+        "value": "Uzun kol"
+      },
+      {
+        "label": "Desen",
+        "value": "Kontrast çizgi detayları"
+      }
+    ]
+  },
+  "cizgi-detayli-triko-kazak-kahverengi": {
+    "name": "Kontrast Çizgili Kahverengi Erkek Triko Kazak",
+    "description": "Kahverengi tonunu çizgili detaylarla tamamlayan bu erkek triko kazak, bisiklet yaka ve uzun kollu yapısıyla günlük giyime uygundur. Göğüs ve kollarda kontrast şerit görünümü bulunur.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Bisiklet yaka"
+      },
+      {
+        "label": "Kol",
+        "value": "Uzun kol"
+      },
+      {
+        "label": "Desen",
+        "value": "Göğüs ve kol çizgileri"
+      }
+    ]
+  },
+  "cizgi-detayli-triko-kazak": {
+    "name": "Kontrast Çizgili Siyah Erkek Triko Kazak",
+    "description": "Siyah zemin üzerinde kontrast şeritleriyle öne çıkan erkek triko kazak, bisiklet yaka ve uzun kollu tasarıma sahiptir. Günlük jean veya sade kumaş pantolon kombinlerine sportif bir dokunuş katar.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Bisiklet yaka"
+      },
+      {
+        "label": "Kol",
+        "value": "Uzun kol"
+      },
+      {
+        "label": "Desen",
+        "value": "Kontrast şeritler"
+      }
+    ]
+  },
+  "haki-dokulu-triko-hirka": {
+    "name": "Gold Düğmeli Haki Dokulu Kadın Triko Hırka",
+    "description": "Haki tonlu dokulu triko hırka, polo yaka görünümü ve gold renkli düğmeleriyle tamamlanır. Uzun kollu formu sayesinde jean veya kumaş pantolonla günlük ve daha özenli kombinlerde kullanılabilir.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Polo yaka"
+      },
+      {
+        "label": "Kol",
+        "value": "Uzun kol"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Önden düğmeli"
+      },
+      {
+        "label": "Detay",
+        "value": "Gold renkli düğmeler"
+      }
+    ]
+  },
+  "kruvaze-ekru-triko-takim": {
+    "name": "Ekru Kruvaze Kadın Triko Takım",
+    "description": "Kruvaze görünümü ve ekru rengiyle sade bir stil sunan kadın triko takım, parçaların birlikte kullanılmasıyla bütünlüklü bir görünüm oluşturur. Parçalar, farklı kombinlerde değerlendirmek için de uygundur.",
+    "details": [
+      {
+        "label": "Model",
+        "value": "Kruvaze görünüm"
+      },
+      {
+        "label": "Ürün grubu",
+        "value": "Triko takım"
+      }
+    ]
+  },
+  "diamond-desenli-hirka": {
+    "name": "Diamond Desenli Düğmeli Kadın Triko Hırka",
+    "description": "Beyaz tonlarındaki diamond desenli kadın triko hırka, tüylü görünümlü dokusu ve düğmeli ön tasarımıyla dikkat çeker. Sade pantolon ve eteklerle bir araya getirildiğinde deseni ön plana çıkar.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Diamond motifleri"
+      },
+      {
+        "label": "Doku",
+        "value": "Tüylü görünümlü örgü"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Önden düğmeli"
+      }
+    ]
+  },
+  "nortic-desen-hirka": {
+    "name": "Nordic Desenli Gri Kadın Triko Hırka",
+    "description": "Gri tonuyla ve geometrik Nordic desenleriyle öne çıkan kadın hırka, tüylü görünümlü dokusuyla kış kombinlerinde değerlendirilebilir. Sade alt parçalarla kullanıldığında modelin deseni öne çıkar.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Nordic geometrik motifler"
+      },
+      {
+        "label": "Doku",
+        "value": "Tüylü görünümlü örgü"
+      }
+    ]
+  },
+  "siyah-kapusonlu-pelus-hirka": {
+    "name": "Siyah Kapüşonlu Peluş Kadın Hırka",
+    "description": "Siyah kapüşonlu peluş hırka, dokulu yüzeyi ve kapüşonlu formuyla günlük kombinlere uyum sağlar. Farklı alt giyim parçalarıyla katmanlı bir görünüm oluşturmak için kullanılabilir.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Kapüşonlu"
+      },
+      {
+        "label": "Doku",
+        "value": "Peluş görünümlü yüzey"
+      }
+    ]
+  },
+  "kahve-vizon-cicek-desenli-kapusonlu-hirka": {
+    "name": "Kahve-Vizon Çiçek Desenli Kapüşonlu Kadın Hırka",
+    "description": "Kahve ve vizon tonlarını çiçek desenleriyle buluşturan kapüşonlu kadın hırka, fermuarlı ön tasarımı ve dokulu yüzeyiyle öne çıkar. Jean ve düz renk pantolonlarla spor-şık kombinler oluşturur.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Çiçek motifleri"
+      },
+      {
+        "label": "Yaka",
+        "value": "Kapüşonlu"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Ön fermuar"
+      }
+    ]
+  },
+  "siyah-gri-cicek-desenli-kapusonlu-hirka": {
+    "name": "Siyah-Gri Çiçek Desenli Kapüşonlu Kadın Hırka",
+    "description": "Siyah ve gri kontrastıyla öne çıkan çiçek desenli kadın hırka, kapüşonlu ve fermuarlı modeliyle günlük giyim için tercih edilebilir. Sade parçalarla birlikte kullanıldığında desenleri ön plana çıkar.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Çiçek motifleri"
+      },
+      {
+        "label": "Yaka",
+        "value": "Kapüşonlu"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Ön fermuar"
+      }
+    ]
+  },
+  "murdum-geometrik-desenli-hirka": {
+    "name": "Mürdüm Geometrik Desenli Kadın Triko Hırka",
+    "description": "Mürdüm tonundaki geometrik motifler ve gold renkli düğmeler bu kadın triko hırkanın belirgin detaylarıdır. Yakalı ve önden düğmeli tasarımı, sade kombinlere desenli bir alternatif sunar.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Geometrik motifler"
+      },
+      {
+        "label": "Yaka",
+        "value": "Yakalı"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Önden düğmeli"
+      },
+      {
+        "label": "Detay",
+        "value": "Gold renkli düğmeler"
+      }
+    ]
+  },
+  "haki-geometrik-desenli-hirks": {
+    "name": "Haki Geometrik Desenli Kadın Triko Hırka",
+    "description": "Haki tonlarında geometrik desenli kadın hırka; yakalı formu, dokulu yüzeyi ve gold renkli düğmeleriyle öne çıkar. Jean ve düz renk pantolonlarla desenin belirgin olduğu kombinler oluşturur.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Geometrik motifler"
+      },
+      {
+        "label": "Yaka",
+        "value": "Yakalı"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Önden düğmeli"
+      },
+      {
+        "label": "Detay",
+        "value": "Gold renkli düğmeler"
+      }
+    ]
+  },
+  "haki-lacivert-baklava-desenli-hirka": {
+    "name": "Baklava Desenli Gold Düğmeli Kadın Triko Hırka",
+    "description": "Baklava desenleriyle hareketlenen kadın triko hırka, yuvarlak yakası ve gold renkli düğmeleriyle günlük kombinlere farklı bir görünüm katar. Mevcut renk seçenekleri ürün sayfasından incelenebilir.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Baklava motifleri"
+      },
+      {
+        "label": "Yaka",
+        "value": "Yuvarlak yaka"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Önden düğmeli"
+      },
+      {
+        "label": "Detay",
+        "value": "Gold renkli düğmeler"
+      }
+    ]
+  },
+  "beyaz-kapusonlu-pelus-hirka": {
+    "name": "Beyaz Kapüşonlu Peluş Kadın Hırka",
+    "description": "Beyaz kapüşonlu peluş hırka, dokulu yüzeyi ve açık rengiyle günlük kombinleri tamamlar. Sade üst ve alt giyim parçalarıyla katmanlı bir stil oluşturmak için kullanılabilir.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Kapüşonlu"
+      },
+      {
+        "label": "Doku",
+        "value": "Peluş görünümlü yüzey"
+      }
+    ]
+  },
+  "ekru-lacivert-ekose-hirka-etek-takim": {
+    "name": "Ekru-Lacivert Ekose Hırka ve Etek Takım",
+    "description": "Ekru ve lacivert ekose desenini hırka ve etek olarak bir araya getiren kadın triko takım, uyumlu iki parçayla bütünlüklü bir görünüm sunar. Parçaların desenleri, düz renk aksesuarlarla tamamlanabilir.",
+    "details": [
+      {
+        "label": "Ürün grubu",
+        "value": "Hırka ve etek takım"
+      },
+      {
+        "label": "Desen",
+        "value": "Ekose"
+      }
+    ]
+  },
+  "bisiklet-yaka-kisa-kollu-triko-kazak": {
+    "name": "Siyah Kısa Kollu Bisiklet Yaka Erkek Triko Kazak",
+    "description": "Siyah kısa kollu erkek triko kazak, bisiklet yaka ve sade örgü görünümüyle öne çıkar. Jean, chino ve kumaş pantolonlarla günlük veya yarı klasik kombinlerde değerlendirilebilir.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Bisiklet yaka"
+      },
+      {
+        "label": "Kol",
+        "value": "Kısa kol"
+      },
+      {
+        "label": "Desen",
+        "value": "Düz görünümlü örgü"
+      }
+    ]
+  },
+  "murdum-pelus-kapusonlu-hirka": {
+    "name": "Mürdüm Kapüşonlu Peluş Kadın Hırka",
+    "description": "Mürdüm tonuyla dikkat çeken kapüşonlu peluş kadın hırka, dokulu yüzeyi sayesinde sade kombinlere renk katar. Günlük pantolon ve düz renk üstlerle kullanılabilir.",
+    "details": [
+      {
+        "label": "Yaka",
+        "value": "Kapüşonlu"
+      },
+      {
+        "label": "Doku",
+        "value": "Peluş görünümlü yüzey"
+      }
+    ]
+  },
+  "kontrast-serit-detayli-kisa-kollu-triko-hirka": {
+    "name": "Kontrast Şeritli Kısa Kollu Kadın Triko Hırka",
+    "description": "Kontrast şerit detaylarına sahip kısa kollu kadın triko hırka, gold renkli düğmeleri ve cep görünümüyle tamamlanır. Düz renk pantolon ve eteklerle şık günlük kombinlerde kullanılabilir.",
+    "details": [
+      {
+        "label": "Kol",
+        "value": "Kısa kol"
+      },
+      {
+        "label": "Desen",
+        "value": "Kontrast şerit"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Önden düğmeli"
+      },
+      {
+        "label": "Detay",
+        "value": "Gold renkli düğmeler ve cep"
+      }
+    ]
+  },
+  "elmas-urun-1": {
+    "name": "Zincir Detaylı Siyah Triko Hırka ve Etek Takım",
+    "description": "Siyah iki parçalı triko takım, V yaka ve düğmeli üst ile uzun pileli etekten oluşur. Gold renkli zincir detayları takıma hareket katar; parçalar birlikte şık bir kombin oluşturur.",
+    "details": [
+      {
+        "label": "Ürün grubu",
+        "value": "İki parçalı takım"
+      },
+      {
+        "label": "Yaka",
+        "value": "V yaka üst"
+      },
+      {
+        "label": "Etek",
+        "value": "Uzun pileli"
+      },
+      {
+        "label": "Detay",
+        "value": "Gold renkli zincir"
+      }
+    ]
+  },
+  "elmas-urun-4": {
+    "name": "Gri-Beyaz Dokulu Gold Düğmeli Kadın Hırka",
+    "description": "Gri dokulu yüzeyi, beyaz ön pat ve yaka detaylarıyla tamamlanan kadın triko hırka, gold renkli düğmeleriyle öne çıkar. Klasik pantolon ve jeanlerle farklı kombinlere uyum sağlar.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Gri-beyaz kontrast"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Önden düğmeli"
+      },
+      {
+        "label": "Detay",
+        "value": "Gold renkli düğmeler"
+      }
+    ]
+  },
+  "elmas-urun-2": {
+    "name": "Bordo-Lacivert Baklava Desenli Kadın Hırka",
+    "description": "Bordo, lacivert ve ekru tonlarını bir araya getiren baklava desenli kadın hırka, yuvarlak yaka ve gold renkli düğmelerle tamamlanır. Tek renk alt parçalarla desenin belirginleştiği kombinler oluşturur.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Baklava motifleri"
+      },
+      {
+        "label": "Yaka",
+        "value": "Yuvarlak yaka"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Önden düğmeli"
+      },
+      {
+        "label": "Detay",
+        "value": "Gold renkli düğmeler"
+      }
+    ]
+  },
+  "elmas-urun-9": {
+    "name": "Ekru-Bej Çiçek Desenli Kadın Triko Kazak",
+    "description": "Ekru zemin üzerindeki bej çiçek motifleriyle öne çıkan kadın triko kazak, dokulu görünümü ve kısa düğme detayıyla günlük kombinlere zarif bir dokunuş katar. Jean ve düz renk pantolonlarla kullanılabilir.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Çiçek motifleri"
+      },
+      {
+        "label": "Detay",
+        "value": "Kısa düğme görünümü"
+      }
+    ]
+  },
+  "elmas-urun-8": {
+    "name": "Lacivert-Ekru Çizgili Düğmeli Yün Hırka",
+    "description": "Lacivert ve ekru yatay çizgileriyle öne çıkan düğmeli kadın hırka, yuvarlak yakası ve gold renkli düğmeleriyle marin esintili bir görünüm sunar. Düz renk pantolon ve eteklerle kombinlenebilir.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Yatay çizgiler"
+      },
+      {
+        "label": "Yaka",
+        "value": "Yuvarlak yaka"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Önden düğmeli"
+      },
+      {
+        "label": "Detay",
+        "value": "Gold renkli düğmeler"
+      }
+    ]
+  },
+  "elmas-urun-7": {
+    "name": "Vizon Geometrik Desenli Gold Düğmeli Hırka",
+    "description": "Vizon tonlarındaki geometrik motifler, dokulu örgü yüzey ve gold renkli düğmelerle tamamlanır. Yakalı ve önden düğmeli bu kadın hırka, sade pantolonlarla desenin ön plana çıktığı kombinler oluşturur.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Geometrik motifler"
+      },
+      {
+        "label": "Yaka",
+        "value": "Yakalı"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Önden düğmeli"
+      },
+      {
+        "label": "Detay",
+        "value": "Gold renkli düğmeler"
+      }
+    ]
+  },
+  "elmas-urun-6": {
+    "name": "Ekru-Vizon Çiçek Desenli Kapüşonlu Kadın Hırka",
+    "description": "Ekru ve vizon tonlarının çiçek motifleriyle buluştuğu kapüşonlu kadın hırka, fermuarlı tasarımı ve dokulu yüzeyiyle öne çıkar. Düz renk parçalarla sportif ve şık kombinler oluşturabilir.",
+    "details": [
+      {
+        "label": "Desen",
+        "value": "Çiçek motifleri"
+      },
+      {
+        "label": "Yaka",
+        "value": "Kapüşonlu"
+      },
+      {
+        "label": "Kapatma",
+        "value": "Ön fermuar"
+      }
+    ]
+  }
+}
