@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Truck, X } from "lucide-react";
 import { useShippingCampaign } from "@/hooks/useShippingCampaign";
@@ -23,28 +23,26 @@ function lastShown() {
 export default function ShippingCampaignPopup() {
   const active = useShippingCampaign();
   const pathname = usePathname();
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [visible, setVisible] = useState(false);
   const excluded = /^\/(checkout|sepet|odeme|yonetim|hesabim|auth|influencer|siparis-basarili|siparis-takip)(\/|$)/.test(pathname || "");
   useEffect(() => {
     if (!active || excluded) return;
-    const dialog = dialogRef.current;
     const timer = window.setTimeout(() => {
-      if (!dialog || dialog.open || !canShowShippingPopup(lastShown())) return;
-      if (rememberShown(Date.now())) dialog.showModal();
+      if (canShowShippingPopup(lastShown()) && rememberShown(Date.now())) setVisible(true);
     }, 1500);
-    return () => { window.clearTimeout(timer); dialog?.close(); };
+    return () => window.clearTimeout(timer);
   }, [active, excluded, pathname]);
-  if (!active || excluded) return null;
-  return <dialog ref={dialogRef} className="shipping-campaign-dialog" aria-labelledby="shipping-campaign-title" aria-describedby="shipping-campaign-description" onClick={event => { if (event.target === event.currentTarget) dialogRef.current?.close(); }}>
+  if (!active || excluded || !visible) return null;
+  return <aside className="shipping-campaign-dialog shipping-campaign-toast" role="status" aria-label="Ücretsiz kargo duyurusu">
     <div className="shipping-campaign-inner">
-      <button type="button" className="shipping-campaign-close" aria-label="Duyuruyu kapat" onClick={() => dialogRef.current?.close()}><X size={22}/></button>
+      <button type="button" className="shipping-campaign-close" aria-label="Duyuruyu kapat" onClick={() => setVisible(false)}><X size={20}/></button>
       <span className="shipping-campaign-eyebrow">ELMAS TRİKO · EKİM FIRSATI</span>
-      <div className="shipping-campaign-icon"><Truck size={34} strokeWidth={1.4}/></div>
+      <div className="shipping-campaign-icon"><Truck size={24} strokeWidth={1.4}/></div>
       <h2 id="shipping-campaign-title">Kargo bizden.</h2>
       <p id="shipping-campaign-description">31 Ekim sonuna kadar tüm siparişlerde <strong>kargo ücretsiz.</strong></p>
-      <p className="shipping-campaign-detail">Minimum sepet tutarı yok. Kod girmenize gerek yok; sepetinize otomatik uygulanır.</p>
-      <button type="button" className="shipping-campaign-continue" autoFocus onClick={() => dialogRef.current?.close()}>Alışverişe devam et →</button>
+      <p className="shipping-campaign-detail">Minimum sepet tutarı yok. Otomatik uygulanır.</p>
+      <button type="button" className="shipping-campaign-continue" onClick={() => setVisible(false)}>Alışverişe devam et →</button>
       <small>31 Ekim 2026, 23.59’a kadar · Türkiye içi gönderimler</small>
     </div>
-  </dialog>;
+  </aside>;
 }
