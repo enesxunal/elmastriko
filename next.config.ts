@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { productSeoAliases } from "./src/lib/product-seo-slugs";
 
 const cspReportOnly = [
   "default-src 'self'",
@@ -37,7 +38,14 @@ const nextConfig: NextConfig = {
   compress: true,
   images: { formats: ["image/avif", "image/webp"] },
   async redirects() {
-    return [{ source: "/kadin/triko", destination: "/kadin", permanent: true }];
+    return [
+      { source: "/kadin/triko", destination: "/kadin", permanent: true },
+      ...Object.entries(productSeoAliases).map(([oldSlug, seoSlug]) => ({
+        source: `/urun/${oldSlug}`,
+        destination: `/urun/${seoSlug}`,
+        permanent: true,
+      })),
+    ];
   },
   async headers() {
     return [

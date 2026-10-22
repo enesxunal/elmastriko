@@ -1,4 +1,5 @@
 "use client";
+import { toProductSeoSlug } from "@/lib/product-seo-slugs";
 import type { Product } from "./catalog";
 import type { CartLine } from "@/components/StoreProvider";
 import { analyticsAllowed, currentAnalyticsPage, trackStoreEvent } from "./analytics-client";
@@ -9,7 +10,7 @@ export function trackProductView(product: Product) {
   try {
     if (!analyticsAllowed()) return;
     const page = currentAnalyticsPage();
-    if (page.path !== "/urun/" + product.slug) return;
+    if (page.path !== "/urun/" + toProductSeoSlug(product.slug)) return;
     const item = gaItem(product);
     const id = page.viewItemId!;
     if (!gaViews.has(id)) { gaViews.add(id); if (gaViews.size > 2000) gaViews.delete(gaViews.values().next().value!); if (item) gaEvent("view_item", { currency: "TRY", value: item.price, items: [item] }); }

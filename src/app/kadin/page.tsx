@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { toProductSeoSlug } from "@/lib/product-seo-slugs";
 import Link from "next/link";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
@@ -56,7 +57,7 @@ export default async function WomenPage({ searchParams }: { searchParams: Promis
       itemListElement: list.map((product, index) => ({
         "@type": "ListItem",
         position: index + 1,
-        url: `${siteUrl}/urun/${product.slug}`,
+        url: `${siteUrl}/urun/${toProductSeoSlug(product.slug)}`,
         name: product.name,
       })),
     },

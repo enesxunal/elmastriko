@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { toProductSeoSlug } from "@/lib/product-seo-slugs";
 import HomePageClient from "@/components/HomePageClient";
 import { getProducts } from "@/lib/catalog-db";
 
@@ -7,14 +8,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: { absolute: "Elmas Triko | Resmi Online Mağaza ve Triko Modelleri" },
   description: "Elmas Triko resmi online mağazası. Kadın triko, hırka, kazak, takım ve yeni sezon koleksiyonlarını keşfedin; güncel renk, beden ve stok seçeneklerini inceleyin.",
-  alternates: { canonical: "/" },
+  alternates: { canonical: "https://www.elmastriko.com/" },
   openGraph: {
     type: "website",
     locale: "tr_TR",
     siteName: "Elmas Triko",
     title: "Elmas Triko | Resmi Online Mağaza ve Triko Modelleri",
     description: "Elmas Triko kadın ve erkek triko koleksiyonlarını, yeni sezon hırka ve kazak modellerini online keşfedin.",
-    url: "https://www.elmastriko.com",
+    url: "https://www.elmastriko.com/",
     images: [{ url: "/images/hero-banner.webp", alt: "Elmas Triko yeni sezon triko koleksiyonu" }],
   },
   twitter: {
@@ -40,7 +41,7 @@ export default async function HomePage() {
     "@context": "https://schema.org",
     "@type": "WebPage",
     "@id": "https://www.elmastriko.com/#webpage",
-    url: "https://www.elmastriko.com",
+    url: "https://www.elmastriko.com/",
     name: "Elmas Triko | Resmi Online Mağaza ve Triko Modelleri",
     description: metadata.description,
     isPartOf: { "@id": "https://www.elmastriko.com/#website" },
@@ -60,7 +61,7 @@ export default async function HomePage() {
     itemListElement: initialProducts.map((product, index) => ({
       "@type": "ListItem",
       position: index + 1,
-      url: `https://www.elmastriko.com/urun/${product.slug}`,
+      url: `https://www.elmastriko.com/urun/${toProductSeoSlug(product.slug)}`,
       name: product.name,
       image: product.image.startsWith("http") ? product.image : `https://www.elmastriko.com${product.image}`,
     })),

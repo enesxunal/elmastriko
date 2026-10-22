@@ -2,6 +2,7 @@
 
 import { trackCartAddition } from "@/lib/commerce-tracking";
 import Link from "next/link";
+import { toProductSeoSlug } from "@/lib/product-seo-slugs";
 import { Check, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { Product, formatPrice } from "@/lib/catalog";
@@ -28,12 +29,12 @@ export default function ProductCard({ product }: { product: Product }) {
   }
 
   return <article className="catalog-card">
-    <Link href={"/urun/" + product.slug} className="catalog-card-image">
+    <Link href={"/urun/" + toProductSeoSlug(product.slug)} className="catalog-card-image">
       <img src={product.image} alt={`Elmas Triko ${product.name}`}/>
       {product.badge && <span>{product.badge}</span>}
     </Link>
     <div className="catalog-card-info">
-      <div><Link href={"/urun/" + product.slug}><h3>{product.name}</h3></Link><p>{product.colors[0]}</p></div>
+      <div><Link href={"/urun/" + toProductSeoSlug(product.slug)}><h3>{product.name}</h3></Link><p>{product.colors[0]}</p></div>
       <div className="catalog-price"><strong>{formatPrice(product.price)}</strong><FavoriteButton slug={product.slug}/></div>
     </div>
     <button

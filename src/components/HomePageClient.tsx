@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 "use client";
+import { toProductSeoSlug } from "@/lib/product-seo-slugs";
 
 import AgencySignature from "./AgencySignature";
 
@@ -125,7 +126,7 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
         <div className="product-grid">
           {products.map((product, i) => (
             <article className={"product-card product-" + (i + 1)} key={product.name}>
-              <a href={"/urun/" + product.slug} className="product-image-wrap">
+              <a href={"/urun/" + toProductSeoSlug(product.slug)} className="product-image-wrap">
                 <img src={product.image} alt={product.name} />
                 <span className="product-badge">{product.badge || "Yeni"}</span>
                 <span className="quick-add"><ArrowRight size={16}/> Ürünü incele</span>

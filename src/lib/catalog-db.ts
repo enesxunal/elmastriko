@@ -74,7 +74,19 @@ function mapDbProduct(row: DbProduct): Product {
     colors: unique(variants.map(v => v.color)).length ? unique(variants.map(v => v.color)) : ["Standart"],
     sizes: unique(variants.map(v => v.size)).length ? unique(variants.map(v => v.size)) : ["Standart"],
     badge: row.is_featured ? "Öne Çıkan" : undefined,
-    description: row.description || "Elmas Triko yeni sezon koleksiyonundan seçili parça.",
+    // Replace only the three legacy one-line placeholders; genuine catalogue edits take precedence.
+    description: (() => {
+      const text = row.description?.trim();
+      if (text === "Farklı renk seçenekleri ile ısı ve konfor sağlar") {
+        const copy: Record<string, string> = {
+          "beyaz-kapusonlu-pelus-hirka": "Beyaz kapüşonlu peluş hırka, açık tonuyla günlük kombinlere uyum sağlayan yumuşak dokulu bir parçadır. Beden seçeneklerini, güncel fiyatını ve stok durumunu Elmas Triko online mağazasında inceleyebilirsiniz.",
+          "murdum-pelus-kapusonlu-hirka": "Mürdüm kapüşonlu peluş hırka, belirgin rengi ve yumuşak dokusuyla sade kombinlere renk katmak için tercih edilebilir. Beden seçeneklerini, güncel fiyatını ve stok durumunu Elmas Triko online mağazasında inceleyebilirsiniz.",
+          "siyah-kapusonlu-pelus-hirka": "Siyah kapüşonlu peluş hırka, farklı renklerle kolayca eşleşebilen ve günlük katmanlı kombinlere uyum sağlayan bir modeldir. Beden seçeneklerini, güncel fiyatını ve stok durumunu Elmas Triko online mağazasında inceleyebilirsiniz.",
+        };
+        if (copy[row.slug]) return copy[row.slug];
+      }
+      return text || "Elmas Triko yeni sezon koleksiyonundan seçili parça.";
+    })(),
     variants: mappedVariants,
   };
 }

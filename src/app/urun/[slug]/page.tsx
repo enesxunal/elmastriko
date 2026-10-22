@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { toCatalogProductSlug, toProductSeoSlug } from "@/lib/product-seo-slugs";
 import { notFound } from "next/navigation";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
@@ -26,20 +27,20 @@ function productMetaDescription(product: {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const product = await getProductBySlug(toCatalogProductSlug(slug));
   if (!product) return {};
   const title = product.name;
   const description = productMetaDescription(product);
   return {
     title,
     description,
-    alternates: { canonical: `/urun/${product.slug}` },
+    alternates: { canonical: `/urun/${toProductSeoSlug(product.slug)}` },
     openGraph: {
       title,
       description,
       images: product.images?.[0] ? [product.images[0]] : undefined,
       type: "website",
-      url: `${siteUrl}/urun/${product.slug}`,
+      url: `${siteUrl}/urun/${toProductSeoSlug(product.slug)}`,
     },
     twitter: {
       card: "summary_large_image",
@@ -52,7 +53,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = await getProductBySlug(slug);
+  const product = await getProductBySlug(toCatalogProductSlug(slug));
   if (!product) notFound();
 
   const related = (await getProducts({ gender: product.category })).filter(p => p.slug !== product.slug).slice(0, 4);
@@ -66,11 +67,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     size: variant.size || undefined,
     image: absoluteImages,
     brand: { "@type": "Brand", name: "Elmas Triko" },
-    isVariantOf: { "@id": `${siteUrl}/urun/${product.slug}#product` },
+    isVariantOf: { "@id": `${siteUrl}/urun/${toProductSeoSlug(product.slug)}#product` },
     audience: { "@type": "PeopleAudience", suggestedGender: product.category === "kadin" ? "female" : "male" },
     offers: {
       "@type": "Offer",
-      url: `${siteUrl}/urun/${product.slug}`,
+      url: `${siteUrl}/urun/${toProductSeoSlug(product.slug)}`,
       priceCurrency: "TRY",
       price: variant.price ?? product.price ?? undefined,
       availability: variant.available > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
@@ -82,10 +83,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const productSchema = product.variants?.length ? {
     "@context": "https://schema.org",
     "@type": "ProductGroup",
-    "@id": `${siteUrl}/urun/${product.slug}#product`,
+    "@id": `${siteUrl}/urun/${toProductSeoSlug(product.slug)}#product`,
     name: product.name,
     description: product.description,
-    url: `${siteUrl}/urun/${product.slug}`,
+    url: `${siteUrl}/urun/${toProductSeoSlug(product.slug)}`,
     image: absoluteImages,
     category: product.type,
     brand: { "@type": "Brand", name: "Elmas Triko" },
@@ -99,10 +100,10 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   } : {
     "@context": "https://schema.org",
     "@type": "Product",
-    "@id": `${siteUrl}/urun/${product.slug}#product`,
+    "@id": `${siteUrl}/urun/${toProductSeoSlug(product.slug)}#product`,
     name: product.name,
     description: product.description,
-    url: `${siteUrl}/urun/${product.slug}`,
+    url: `${siteUrl}/urun/${toProductSeoSlug(product.slug)}`,
     image: absoluteImages,
     category: product.type,
     brand: { "@type": "Brand", name: "Elmas Triko" },
@@ -115,7 +116,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     ...(product.price !== null ? {
       offers: {
         "@type": "Offer",
-        url: `${siteUrl}/urun/${product.slug}`,
+        url: `${siteUrl}/urun/${toProductSeoSlug(product.slug)}`,
         priceCurrency: "TRY",
         price: product.price,
         seller: { "@id": `${siteUrl}/#organization` },
@@ -133,7 +134,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: siteUrl },
       { "@type": "ListItem", position: 2, name: product.category === "kadin" ? "Kadın" : "Erkek", item: `${siteUrl}/${product.category}` },
-      { "@type": "ListItem", position: 3, name: product.name, item: `${siteUrl}/urun/${product.slug}` },
+      { "@type": "ListItem", position: 3, name: product.name, item: `${siteUrl}/urun/${toProductSeoSlug(product.slug)}` },
     ],
   };
 

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { toProductSeoSlug } from "@/lib/product-seo-slugs";
 import { createPublicClient } from "@/lib/supabase/public";
 
 import { editorialPosts } from "@/lib/editorial-content";
@@ -42,12 +43,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticRoutes.map(route=>({
-      url:base+route.path,
+      url:route.path ? base + route.path : `${base}/`,
       changeFrequency:route.changeFrequency,
       priority:route.priority,
     })),
     ...(products||[]).map(product=>({
-      url:`${base}/urun/${product.slug}`,
+      url:`${base}/urun/${toProductSeoSlug(product.slug)}`,
       lastModified:product.updated_at?new Date(product.updated_at):undefined,
       changeFrequency:"weekly" as const,
       priority:.85
