@@ -1171,3 +1171,31 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
   .product-facts-support a{align-self:flex-start}
 }
 @media(max-width:350px){.product-facts-grid{grid-template-columns:1fr}}
+
+/* Fixed WhatsApp contact, above the safe area and clear of the shipping campaign toast. */
+.floating-whatsapp{
+  position:fixed;
+  right:22px;
+  bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+  z-index:910;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  background:#25d366;
+  color:#fff;
+  box-shadow:0 5px 18px rgba(13,85,40,.26);
+  transition:transform .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.floating-whatsapp:hover{background:#20bd5a;transform:translateY(-2px);box-shadow:0 8px 24px rgba(13,85,40,.33)}
+.floating-whatsapp:focus-visible{outline:3px solid #16462b;outline-offset:4px}
+.floating-whatsapp svg{display:block;width:31px;height:31px}
+.shipping-campaign-dialog.shipping-campaign-toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px))}
+@media(max-width:600px){
+  .floating-whatsapp{right:16px;bottom:calc(16px + env(safe-area-inset-bottom, 0px));width:54px;height:54px}
+  .floating-whatsapp svg{width:29px;height:29px}
+  .shipping-campaign-dialog.shipping-campaign-toast{bottom:calc(86px + env(safe-area-inset-bottom, 0px))}
+}
+@media(prefers-reduced-motion:reduce){.floating-whatsapp{transition:none}.floating-whatsapp:hover{transform:none}}

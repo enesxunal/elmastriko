@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { StoreProvider } from "@/components/StoreProvider";
 import ShippingCampaignPopup from "@/components/ShippingCampaignPopup";
+import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 import AnalyticsTracker from "@/components/AnalyticsTracker";
 import MetaPageView from "@/components/MetaPageView";
 import InfluencerReferralCapture from "@/components/InfluencerReferralCapture";
@@ -96,6 +97,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <MetaPageView/>
     <AnalyticsTracker/>
     <InfluencerReferralCapture/>
-    <StoreProvider>{children}<ShippingCampaignPopup/></StoreProvider>
+    <StoreProvider>{children}<ShippingCampaignPopup/><FloatingWhatsApp/></StoreProvider>
   </body></html>;
 }
