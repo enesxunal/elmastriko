@@ -10,7 +10,11 @@ export default async function AccountProfilePage({ searchParams }: { searchParam
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/hesabim");
-  const { data: profile } = await supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle();
+  const [{ data: profile }, { data: latestOrder }] = await Promise.all([
+    supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle(),
+    supabase.from("orders").select("guest_phone").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+  ]);
+  const suggestedPhone = profile?.phone || latestOrder?.guest_phone || "";
 
   return <><StoreHeader/><AccountShell name={profile?.full_name || user.email || "Hesabım"} email={user.email || ""} current="/hesabim/profil">
     <div className="account-section-head"><span>PROFİL</span><h1>Profil bilgilerim</h1><p>İletişim ve hesap bilgilerinizi burada yönetin.</p></div>
@@ -20,7 +24,9 @@ export default async function AccountProfilePage({ searchParams }: { searchParam
         <input type="hidden" name="return_to" value="/hesabim/profil"/>
         <label>Ad Soyad<input name="full_name" defaultValue={profile?.full_name || ""} placeholder="Ad Soyad" required/></label>
         <label>E-posta<input value={user.email || ""} disabled/></label>
-        <label>Telefon<input name="phone" defaultValue={profile?.phone || ""} placeholder="Telefon"/></label>
+        <label>Telefon<input name="phone" type="tel" inputMode="tel" autoComplete="tel" defaultValue={suggestedPhone} placeholder="05XX XXX XX XX"/>
+          {!profile?.phone && latestOrder?.guest_phone && <small>Son siparişinizdeki numara önerildi. Hesabınıza kaydetmek için “Bilgileri Güncelle” seçeneğini kullanın.</small>}
+        </label>
         <button type="submit">Bilgileri Güncelle</button>
       </form>
     </div>

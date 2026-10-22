@@ -4,12 +4,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendNewOrderEmails } from "@/lib/mail";
+import { saveCheckoutProfile } from "@/lib/checkout-profile";
+import { normaliseCheckoutPhone } from "@/lib/checkout-phone";
 
 type OrderPayload = {
   email: string;
   phone?: string;
+  saveToProfile?: boolean;
   shipping: {
     fullName: string;
+    title?: string;
     city: string;
     district: string;
     postalCode?: string;
@@ -55,6 +59,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Sipariş bilgileri eksik." }, { status: 400 });
   }
 
+  const validatedPhone = normaliseCheckoutPhone(payload.phone || "");
+  if (!validatedPhone) return NextResponse.json({ error: "Telefon numarasını 05XX XXX XX XX biçiminde girin." }, { status: 400 });
+  payload.phone = validatedPhone;
+
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_store_order", { payload });
 
@@ -87,6 +95,9 @@ export async function POST(request: NextRequest) {
   }
 
   if (result.orderId) {
+    // The order is already committed; profile saving must never affect payment.
+    try { await saveCheckoutProfile(supabase, { ...payload, phone: validatedPhone }); }
+    catch { console.error("Checkout profile save unavailable"); }
     await recordCheckoutEvent("order_created", payload.diagnostics, { orderId: result.orderId, isTest: /@example\.invalid$/i.test(payload.email) });
     try { await sendNewOrderEmails(result.orderId); } catch (mailError) { console.error("New order mail failed:", mailError); }
   }

@@ -11,10 +11,15 @@ export default async function AccountAddressesPage({ searchParams }: { searchPar
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/hesabim");
 
-  const [{ data: profile }, { data: addresses }] = await Promise.all([
+  const [{ data: profile }, { data: addresses }, { data: latestOrder }] = await Promise.all([
     supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle(),
-    supabase.from("addresses").select("id, title, full_name, phone, city, district, postal_code, address_line, is_default").order("is_default", { ascending: false }).order("created_at", { ascending: false }),
+    supabase.from("addresses").select("id, title, full_name, phone, city, district, postal_code, address_line, is_default").eq("user_id", user.id).order("is_default", { ascending: false }).order("created_at", { ascending: false }),
+    supabase.from("orders").select("id,guest_phone").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
+  // Only prefill from an order tied to this authenticated user; guest orders never merge by email.
+  const { data: recentDelivery } = (!addresses?.length && latestOrder?.id)
+    ? await supabase.from("order_addresses").select("full_name,phone,city,district,postal_code,address_line").eq("order_id", latestOrder.id).eq("kind", "shipping").maybeSingle()
+    : { data: null };
 
   return <><StoreHeader/><AccountShell name={profile?.full_name || user.email || "Hesabım"} email={user.email || ""} current="/hesabim/adresler">
     <div className="account-section-head"><span>ADRESLER</span><h1>Teslimat adreslerim</h1><p>Kayıtlı adreslerinizi düzenleyin veya yeni adres ekleyin.</p></div>
@@ -51,14 +56,15 @@ export default async function AccountAddressesPage({ searchParams }: { searchPar
         <form className="address-form" action={addAddress}>
           <input type="hidden" name="return_to" value="/hesabim/adresler"/>
           <h3>Yeni adres ekle</h3>
+          {recentDelivery && <p className="account-order-address-note">Son siparişinizdeki adres bilgilerini hazır doldurduk. Kalıcı olarak kaydetmek için “Adresi Kaydet” butonuna basın.</p>}
           <div className="form-grid">
-            <input name="title" placeholder="Adres başlığı" required/>
-            <input name="full_name" defaultValue={profile?.full_name || ""} placeholder="Ad Soyad" required/>
-            <input name="phone" defaultValue={profile?.phone || ""} placeholder="Telefon"/>
-            <input name="city" placeholder="İl" required/>
-            <input name="district" placeholder="İlçe" required/>
-            <input name="postal_code" placeholder="Posta kodu"/>
-            <input className="full" name="address_line" placeholder="Açık adres" required/>
+            <input name="title" defaultValue={recentDelivery ? "Son sipariş adresim" : ""} placeholder="Adres başlığı" required/>
+            <input name="full_name" defaultValue={recentDelivery?.full_name || profile?.full_name || ""} placeholder="Ad Soyad" required/>
+            <input name="phone" defaultValue={recentDelivery?.phone || profile?.phone || latestOrder?.guest_phone || ""} placeholder="Telefon"/>
+            <input name="city" defaultValue={recentDelivery?.city || ""} placeholder="İl" required/>
+            <input name="district" defaultValue={recentDelivery?.district || ""} placeholder="İlçe" required/>
+            <input name="postal_code" defaultValue={recentDelivery?.postal_code || ""} placeholder="Posta kodu"/>
+            <input className="full" name="address_line" defaultValue={recentDelivery?.address_line || ""} placeholder="Açık adres" required/>
           </div>
           <label className="check-row"><input type="checkbox" name="is_default"/> Varsayılan adres yap</label>
           <button type="submit">Adresi Kaydet</button>

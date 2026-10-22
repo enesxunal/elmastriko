@@ -12,6 +12,7 @@ import { useCartCatalog } from "@/hooks/useCartCatalog";
 import { useCommerceSettings } from "@/hooks/useCommerceSettings";
 import { FormEvent, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { gaEvent, gaCart } from "@/lib/ga4";
+import { normaliseCheckoutPhone, checkoutFieldMessages } from "@/lib/checkout-phone";
 
 type CreatedOrder = {
   orderId: string;
@@ -85,6 +86,8 @@ export default function CheckoutPage() {
   const [eftOrder, setEftOrder] = useState<{ orderId: string; orderNo: string; status: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [invalidField, setInvalidField] = useState("");
+  const [signedIn, setSignedIn] = useState(false);
   const [couponInput, setCouponInput] = useState("");
   const [coupon, setCoupon] = useState<{ code: string; percent: number } | null>(null);
   const [couponMessage, setCouponMessage] = useState("");
@@ -157,6 +160,7 @@ export default function CheckoutPage() {
         if (!response.ok) return;
         const context = await response.json() as CheckoutContext;
         if (cancelled || !context.user) return;
+        setSignedIn(true);
         setInternalTest(context.profile?.role === "admin");
 
         const form = formRef.current;
@@ -210,7 +214,14 @@ export default function CheckoutPage() {
       const firstName = String(form.get("firstName") || "").trim();
       const lastName = String(form.get("lastName") || "").trim();
       const email = String(form.get("email") || "").trim();
-      const phone = String(form.get("phone") || "").trim();
+      const phoneInput = String(form.get("phone") || "").trim();
+      const phone = normaliseCheckoutPhone(phoneInput);
+      if (!phone) {
+        setInvalidField("phone");
+        formRef.current?.querySelector<HTMLInputElement>('[name="phone"]')?.focus();
+        trackCheckoutProgress("form_invalid", "validation", "contact");
+        throw new Error("Telefon numarasını 05XX XXX XX XX biçiminde girin.");
+      }
       const addressLine = String(form.get("addressLine") || "").trim();
       const city = String(form.get("city") || "").trim();
       const district = String(form.get("district") || "").trim();
@@ -237,8 +248,10 @@ export default function CheckoutPage() {
           diagnostics: { sessionId: analytics?.sessionId, attemptId: checkoutAttemptId() },
           email,
           phone,
+          saveToProfile: signedIn && form.get("saveProfile") === "on",
           shipping: {
             fullName,
+            title: String(form.get("addressTitle") || "").trim(),
             city,
             district,
             postalCode,
@@ -383,10 +396,14 @@ export default function CheckoutPage() {
     <form ref={formRef} id="checkout-form" className="checkout-main" onSubmit={handleSubmit}
       onFocusCapture={() => { if (!formStarted.current) { formStarted.current = true; trackCheckoutProgress("form_started"); } }}
       onChange={() => { if (!formStarted.current) { formStarted.current = true; trackCheckoutProgress("form_started"); } }}
+      onInputCapture={event => {
+        if ((event.target as HTMLInputElement).name === invalidField) setInvalidField("");
+      }}
       onInvalidCapture={event => {
+        const name = (event.target as HTMLInputElement).name;
+        if (formRef.current?.querySelector(":invalid") === event.target) setInvalidField(name);
         if (Date.now() - invalidAt.current < 1000) return;
         invalidAt.current = Date.now();
-        const name = (event.target as HTMLInputElement).name;
         trackCheckoutProgress("form_invalid", "validation", ["firstName", "lastName", "email", "phone"].includes(name) ? "contact" : ["companyName", "taxOffice", "taxNumber", "invoiceEmail"].includes(name) ? "invoice" : "address");
       }}>
       {internalTest && <p role="status" className="checkout-error-box">Yönetici hesabıyla oluşturulan sipariş deneme olarak kaydedilir; gerçek satış istatistiklerine ve Meta satın alma olaylarına dahil edilmez.</p>}
@@ -394,9 +411,28 @@ export default function CheckoutPage() {
       {paymentReturn && <p role="alert" className="checkout-error-box">Ödeme henüz tamamlanmadı. Bankanızdan ücret çekildiyse tekrar ödeme yapmadan bizimle iletişime geçin.</p>}
       <div className="checkout-progress"><span className="done">01 Sepet</span><span className="active">02 Bilgiler</span><span>03 Ödeme</span></div>
       <span className="checkout-kicker">GÜVENLİ ÖDEME</span><h1>Sipariş bilgileri</h1><p className="checkout-intro">Teslimat ve fatura bilgilerinizi kontrol edin, ardından kart veya EFT / Havale ödeme yöntemini seçin.</p>
-      <div className="checkout-step"><span>01</span><div><h2>İletişim</h2><div className="form-grid"><input required name="firstName" autoComplete="given-name" placeholder="Ad"/><input required name="lastName" autoComplete="family-name" placeholder="Soyad"/><input required name="email" type="email" autoComplete="email" placeholder="E-posta"/><input required name="phone" autoComplete="tel" placeholder="Telefon"/></div></div></div>
-      <div className="checkout-step"><span>02</span><div><h2>Teslimat adresi</h2><div className="form-grid"><input required name="addressLine" autoComplete="street-address" className="full" placeholder="Adres"/><input required name="city" autoComplete="address-level1" placeholder="İl"/><input required name="district" autoComplete="address-level2" placeholder="İlçe"/><input name="postalCode" autoComplete="postal-code" placeholder="Posta kodu"/><input name="addressTitle" placeholder="Adres başlığı"/></div></div></div>
-      <div className="checkout-step"><span>03</span><div><h2>Fatura</h2><div className="invoice-type-switch"><button type="button" className={invoiceType === "individual" ? "selected" : ""} onClick={() => setInvoiceType("individual")}>Bireysel</button><button type="button" className={invoiceType === "company" ? "selected" : ""} onClick={() => setInvoiceType("company")}>Kurumsal</button></div>{invoiceType === "company" && <div className="form-grid invoice-company-fields"><input required name="companyName" placeholder="Firma unvanı"/><input required name="taxOffice" placeholder="Vergi dairesi"/><input required name="taxNumber" placeholder="Vergi / T.C. no"/><input name="invoiceEmail" type="email" placeholder="E-fatura e-posta"/></div>}<label className="check-row"><input name="sameBilling" type="checkbox" defaultChecked/> Fatura adresi teslimat adresi ile aynı</label><p className="checkout-note">Fatura bilgileriniz siparişinizle birlikte kaydedilir.</p></div></div>
+      <div className="checkout-step"><span>01</span><div><h2>İletişim</h2><p className="checkout-field-intro">Sipariş bilgilendirmeleri ve teslimat için kullanılır.</p>
+        <div className="form-grid checkout-field-grid">
+          <label>Ad <input required name="firstName" autoComplete="given-name" placeholder="Adınız"/></label>
+          <label>Soyad <input required name="lastName" autoComplete="family-name" placeholder="Soyadınız"/></label>
+          <label>E-posta <input required name="email" type="email" autoComplete="email" inputMode="email" placeholder="ornek@eposta.com"/></label>
+          <label>Telefon <input required name="phone" type="tel" autoComplete="tel" inputMode="tel" maxLength={22} placeholder="05XX XXX XX XX" onBlur={e => { const phone = normaliseCheckoutPhone(e.currentTarget.value); if (phone) e.currentTarget.value = phone; }} aria-describedby="checkout-phone-hint"/></label>
+        </div>
+        <p className="checkout-field-hint" id="checkout-phone-hint">Başına 0 veya +90 yazarak girebilirsiniz. Boşluklar otomatik düzeltilir.</p>
+        {invalidField && ["firstName","lastName","email","phone"].includes(invalidField) && <p className="checkout-field-alert" role="alert">{checkoutFieldMessages[invalidField]}</p>}
+      </div></div>
+      <div className="checkout-step"><span>02</span><div><h2>Teslimat adresi</h2>
+        <div className="form-grid checkout-field-grid">
+          <label className="full">Açık adres <input required name="addressLine" autoComplete="street-address" placeholder="Mahalle, sokak, bina ve daire numarası"/></label>
+          <label>İl <input required name="city" autoComplete="address-level1" placeholder="İl"/></label>
+          <label>İlçe <input required name="district" autoComplete="address-level2" placeholder="İlçe"/></label>
+          <label>Posta kodu <span className="checkout-optional">İsteğe bağlı</span><input name="postalCode" inputMode="numeric" autoComplete="postal-code" placeholder="Posta kodu"/></label>
+          {signedIn && <label>Adres başlığı <span className="checkout-optional">İsteğe bağlı</span><input name="addressTitle" placeholder="Ev / İş"/></label>}
+        </div>
+        {signedIn && <label className="check-row checkout-save-details"><input name="saveProfile" type="checkbox" defaultChecked/> Telefonumu ve teslimat adresimi hesabıma kaydet</label>}
+        {invalidField && ["addressLine","city","district"].includes(invalidField) && <p className="checkout-field-alert" role="alert">{checkoutFieldMessages[invalidField]}</p>}
+      </div></div>
+      <div className="checkout-step"><span>03</span><div><h2>Fatura</h2><div className="invoice-type-switch"><button type="button" className={invoiceType === "individual" ? "selected" : ""} onClick={() => setInvoiceType("individual")}>Bireysel</button><button type="button" className={invoiceType === "company" ? "selected" : ""} onClick={() => setInvoiceType("company")}>Kurumsal</button></div>{invoiceType === "company" && <div className="form-grid invoice-company-fields"><input required name="companyName" placeholder="Firma unvanı"/><input required name="taxOffice" placeholder="Vergi dairesi"/><input required name="taxNumber" placeholder="Vergi / T.C. no"/><input name="invoiceEmail" type="email" placeholder="E-fatura e-posta"/></div>}<label className="check-row"><input name="sameBilling" type="checkbox" defaultChecked/> Fatura adresi teslimat adresi ile aynı</label><p className="checkout-note">Fatura bilgileriniz siparişinizle birlikte kaydedilir.</p>{invalidField && ["companyName","taxOffice","taxNumber","invoiceEmail"].includes(invalidField) && <p className="checkout-field-alert" role="alert">{checkoutFieldMessages[invalidField]}</p>}</div></div>
       <div className="checkout-step payment-step"><span>04</span><div><h2>Ödeme yöntemi</h2>
         <p className="checkout-payment-help">Bilgilerinizi kontrol ettikten sonra ödeme yönteminize dokunun. Siparişiniz oluşturularak seçtiğiniz ödeme adımına geçilir.</p>
         <p className="checkout-payment-total"><span>Toplam</span><b>{hasUnknownPrice ? "—" : commerceLoading ? "Hesaplanıyor" : total === null ? "Kargo tutarı onayda" : formatPrice(total)}</b></p>
