@@ -84,14 +84,6 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
     <div className="product-main-price">{formatPrice(selectedPrice)}</div>
     <p className="product-shipping-note">{shippingCampaignActive ? "31 Ekim sonuna kadar kargo ücretsiz. Minimum tutar yok." : shippingLoading ? "Kargo bilgisi yükleniyor…" : selectedPrice !== null && selectedPrice * safeQty >= freeShippingThreshold ? "Bu seçimde kargo ücretsiz." : shippingFee !== null ? `Kargo ${formatPrice(shippingFee)} · ${freeShippingThreshold.toLocaleString("tr-TR")} TL ve üzeri ücretsiz.` : "Kargo bedeli sepette gösterilir."}</p>
     <p className="product-desc">{product.description}</p>
-    {Boolean(product.details?.length) && <section className="product-facts" aria-labelledby="product-facts-title">
-      <h2 id="product-facts-title">Ürün Özellikleri</h2>
-      <dl>
-        {product.details?.map(({ label, value }) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
-        {product.colors.length > 0 && <div><dt>Renk{product.colors.length > 1 ? " seçenekleri" : ""}</dt><dd>{product.colors.join(", ")}</dd></div>}
-        {product.sizes.length > 0 && <div><dt>Beden{product.sizes.length > 1 ? " seçenekleri" : ""}</dt><dd>{product.sizes.join(", ")}</dd></div>}
-      </dl>
-    </section>}
 
     {product.colors.length > 1 && <div className="product-option">
       <div className="product-option-head"><label>Renk</label><span>{color}</span></div>
@@ -181,6 +173,28 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
       <div><RotateCcw size={17}/><span><b>İade ve değişim desteği</b><small><Link href="/kargo-iade">Koşulları inceleyin →</Link></small></span></div>
       <div><ShieldCheck size={17}/><span><b>Güvenli ödeme</b><small>3D Secure kart ve EFT</small></span></div>
     </div>
+    {Boolean(product.details?.length) && <section className="product-facts" aria-labelledby="product-facts-title">
+      <div className="product-facts-heading">
+        <div>
+          <span className="product-facts-eyebrow">ÜRÜN REHBERİ</span>
+          <h2 id="product-facts-title">Modelin detayları</h2>
+          <p>Ürünün tasarımını ve mevcut seçeneklerini yakından inceleyin.</p>
+        </div>
+      </div>
+      <dl className="product-facts-grid">
+        <div className="product-fact"><dt>Ürün grubu</dt><dd>{product.category === "kadin" ? "Kadın" : "Erkek"} · {product.type}</dd></div>
+        {product.details?.map(({ label, value }) => <div className="product-fact" key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+        {product.colors.length > 0 && <div className="product-fact"><dt>Renk{product.colors.length > 1 ? " seçenekleri" : ""}</dt><dd>{product.colors.join(", ")}</dd></div>}
+        {product.sizes.length > 0 && <div className="product-fact"><dt>Beden{product.sizes.length > 1 ? " seçenekleri" : ""}</dt><dd>{product.sizes.join(", ")}</dd></div>}
+      </dl>
+      <div className="product-facts-support">
+        <div>
+          <strong>Ürün hakkında merak ettiğiniz bir şey mi var?</strong>
+          <p>Kumaş, kalıp ve ölçü sorularınız için ekibimize danışabilirsiniz.</p>
+        </div>
+        <a href={"https://wa.me/905356007011?text=" + encodeURIComponent(`Merhaba, ${product.name} ürünü hakkında bilgi almak istiyorum.`)} target="_blank" rel="noopener noreferrer">Ürünü sorun <span aria-hidden="true">↗</span></a>
+      </div>
+    </section>}
     <p className="dispatch-note">Ödeme onayından sonra <strong>1–2 iş gününde kargoya teslim.</strong></p>
     <div className="purchase-help">
       <details><summary>Beden seçiminde yardım</summary><p>Satın almadan önce beden tablosunu inceleyin. Kalıp ve ölçü sorularınız için <a href="https://wa.me/905356007011" target="_blank" rel="noopener noreferrer">WhatsApp’tan bize yazın</a>.</p><button type="button" onClick={() => setSizeGuideOpen(true)}>Beden tablosunu aç →</button></details>
