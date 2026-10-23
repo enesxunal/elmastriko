@@ -3,7 +3,7 @@
 import { useCommerceSettings } from "@/hooks/useCommerceSettings";
 import Link from "next/link";
 import { createPortal } from "react-dom";
-import { Heart, Minus, Plus, RotateCcw, ShieldCheck, Truck } from "lucide-react";
+import { Heart, Minus, Plus, RotateCcw, ShieldCheck, ShoppingBag, Truck } from "lucide-react";
 import { Product, formatPrice } from "@/lib/catalog";
 import { useStore } from "./StoreProvider";
 import { useMemo, useState, useEffect, useCallback } from "react";
@@ -78,6 +78,23 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
 
   useEffect(() => { trackProductView(product); }, [product]);
 
+  async function handleAddToCart() {
+    if (outOfStock || product.price === null || checkingStock) return;
+    setCheckingStock(true); setStockError(""); setAdded(false);
+    try {
+      const latest = await refreshStock();
+      if (!selectedVariant || (latest[selectedVariant.id] ?? 0) < safeQty) {
+        setStockError("Bu renk ve bedende yeterli stok kalmadı. Lütfen seçiminizi güncelleyin.");
+        return;
+      }
+      addToCart({ slug: product.slug, qty: safeQty, size, color });
+      trackCartAddition(product, { slug: product.slug, qty: safeQty, color, size }, selectedPrice);
+      setAdded(true);
+    } catch {
+      setStockError("Stok bilgisi kontrol edilemedi. Lütfen tekrar deneyin.");
+    } finally { setCheckingStock(false); }
+  }
+
   return <>
     <span className="product-category">{product.category === "kadin" ? "Kadın" : "Erkek"} / {product.type}</span>
     <h1>{product.name}</h1>
@@ -118,7 +135,7 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
           aria-disabled={!enabled}
           aria-pressed={size === s}
           className={size === s ? "selected" : ""}
-          onClick={() => { setSize(s); setQty(1); setAdded(false); }}
+          onClick={() => { setSize(s); setQty(1); setAdded(false); setStockError(""); }}
           key={s}
         ><span>{s}</span>{!enabled && <small>Tükendi</small>}</button>;
       })}</div>
@@ -137,22 +154,7 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
       <button
         className="add-cart"
         disabled={outOfStock || product.price === null || checkingStock}
-        onClick={async () => {
-          if (outOfStock || product.price === null || checkingStock) return;
-          setCheckingStock(true); setStockError(""); setAdded(false);
-          try {
-            const latest = await refreshStock();
-            if (!selectedVariant || (latest[selectedVariant.id] ?? 0) < safeQty) {
-              setStockError("Bu renk ve bedende yeterli stok kalmadı. Lütfen seçiminizi güncelleyin.");
-              return;
-            }
-          addToCart({ slug: product.slug, qty: safeQty, size, color });
-          trackCartAddition(product, { slug: product.slug, qty: safeQty, color, size }, selectedPrice);
-          setAdded(true);
-          } catch {
-            setStockError("Stok bilgisi kontrol edilemedi. Lütfen tekrar deneyin.");
-          } finally { setCheckingStock(false); }
-        }}
+        onClick={handleAddToCart}
       >
         {checkingStock ? "Kontrol ediliyor…" : product.price === null ? "Fiyat bekleniyor" : outOfStock ? "Stokta Yok" : added ? "Sepete Eklendi" : "Sepete Ekle"}
       </button>
@@ -160,6 +162,25 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
     </div>
     {stockError && <p className="stock-message out" role="alert">{stockError}</p>}
     {added && <Link className="go-cart" href="/sepet">Sepete git →</Link>}
+
+    <section className="mobile-product-buybar" aria-label="Hızlı satın alma">
+      <div className="mobile-product-buybar-info">
+        <strong>{formatPrice(selectedPrice)}</strong>
+        {product.sizes.length > 0 ? <label>
+          <span>Beden</span>
+          <select aria-label="Hızlı satın alma beden seçimi" value={size} onChange={event => { setSize(event.target.value); setQty(1); setAdded(false); setStockError(""); }}>
+            {product.sizes.map(s => <option key={s} value={s} disabled={!sizeHasStock(s)}>{s}{!sizeHasStock(s) ? " · Tükendi" : ""}</option>)}
+          </select>
+        </label> : <small>{color}{safeQty > 1 ? ` · ${safeQty} adet` : ""}</small>}
+      </div>
+      {added ? <Link href="/sepet" className="mobile-product-buybar-action"><ShoppingBag size={18}/>Sepete git</Link> : <button
+        type="button"
+        className="mobile-product-buybar-action"
+        disabled={outOfStock || product.price === null || checkingStock}
+        onClick={handleAddToCart}
+      ><ShoppingBag size={18}/>{checkingStock ? "Kontrol ediliyor…" : product.price === null ? "Fiyat bekleniyor" : outOfStock ? "Stokta yok" : "Sepete ekle"}</button>}
+      <div className="mobile-product-buybar-feedback" role="status" aria-live="polite">{stockError || (added ? `${size} beden${safeQty > 1 ? ` · ${safeQty} adet` : ""} sepete eklendi.` : "")}</div>
+    </section>
 
     {sizeGuideOpen && createPortal(<div role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setSizeGuideOpen(false); }} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.7)", display: "grid", placeItems: "center", padding: 12 }}>
       <div role="dialog" aria-modal="true" aria-label={`${sizeGuideLabel} beden tablosu`} onKeyDown={event => { if (event.key === "Escape") setSizeGuideOpen(false); }} style={{ background: "white", borderRadius: 14, width: "min(100%, 720px)", maxHeight: "95dvh", overflow: "auto" }}>
