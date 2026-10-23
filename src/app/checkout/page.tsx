@@ -1,5 +1,6 @@
 "use client";
 import { checkoutAttemptId, trackCheckoutProgress } from "@/lib/checkout-diagnostics-client";
+import { CHECKOUT_FIELDS, type CheckoutField } from "@/lib/checkout-diagnostics";
 import { trackCheckoutStart } from "@/lib/commerce-tracking";
 import { analyticsOrderContext, flushAnalytics } from "@/lib/analytics-client";
 
@@ -142,6 +143,20 @@ export default function CheckoutPage() {
   }, []);
   const formStarted = useRef(false);
   const invalidAt = useRef(0);
+  const completedGroups = useRef(new Set<string>());
+  function trackCompletedGroups() {
+    const form = formRef.current;
+    if (!form) return;
+    for (const [group, names] of [["contact", ["firstName", "lastName", "email", "phone"]], ["address", ["addressLine", "city", "district"]]] as const) {
+      if (completedGroups.current.has(group)) continue;
+      const valid = names.every(name => {
+        const input = form.elements.namedItem(name);
+        return input instanceof HTMLInputElement && input.value.trim() && input.validity.valid && (name !== "phone" || normaliseCheckoutPhone(input.value));
+      });
+      if (valid) { completedGroups.current.add(group); trackCheckoutProgress(group === "contact" ? "contact_completed" : "address_completed"); }
+    }
+  }
+
   const checkoutSent=useRef(false);
   useEffect(() => { if (!loading && !commerceLoading && lines.length && !checkoutSent.current) { checkoutSent.current = true; trackCheckoutStart(lines); } }, [loading, commerceLoading, lines]);
 
@@ -217,9 +232,10 @@ export default function CheckoutPage() {
       const phoneInput = String(form.get("phone") || "").trim();
       const phone = normaliseCheckoutPhone(phoneInput);
       if (!phone) {
+        failureCode = "server";
         setInvalidField("phone");
         formRef.current?.querySelector<HTMLInputElement>('[name="phone"]')?.focus();
-        trackCheckoutProgress("form_invalid", "validation", "contact");
+        trackCheckoutProgress("form_invalid", "validation", "contact", "phone");
         throw new Error("Telefon numarasını 05XX XXX XX XX biçiminde girin.");
       }
       const addressLine = String(form.get("addressLine") || "").trim();
@@ -395,7 +411,7 @@ export default function CheckoutPage() {
   return <><StoreHeader/><main className="checkout-page">
     <form ref={formRef} id="checkout-form" className="checkout-main" onSubmit={handleSubmit}
       onFocusCapture={() => { if (!formStarted.current) { formStarted.current = true; trackCheckoutProgress("form_started"); } }}
-      onChange={() => { if (!formStarted.current) { formStarted.current = true; trackCheckoutProgress("form_started"); } }}
+      onChange={() => { if (!formStarted.current) { formStarted.current = true; trackCheckoutProgress("form_started"); } trackCompletedGroups(); }}
       onInputCapture={event => {
         if ((event.target as HTMLInputElement).name === invalidField) setInvalidField("");
       }}
@@ -404,7 +420,7 @@ export default function CheckoutPage() {
         if (formRef.current?.querySelector(":invalid") === event.target) setInvalidField(name);
         if (Date.now() - invalidAt.current < 1000) return;
         invalidAt.current = Date.now();
-        trackCheckoutProgress("form_invalid", "validation", ["firstName", "lastName", "email", "phone"].includes(name) ? "contact" : ["companyName", "taxOffice", "taxNumber", "invoiceEmail"].includes(name) ? "invoice" : "address");
+        trackCheckoutProgress("form_invalid", "validation", ["firstName", "lastName", "email", "phone"].includes(name) ? "contact" : ["companyName", "taxOffice", "taxNumber", "invoiceEmail"].includes(name) ? "invoice" : "address", CHECKOUT_FIELDS.includes(name as CheckoutField) ? name as CheckoutField : undefined);
       }}>
       {internalTest && <p role="status" className="checkout-error-box">Yönetici hesabıyla oluşturulan sipariş deneme olarak kaydedilir; gerçek satış istatistiklerine ve Meta satın alma olaylarına dahil edilmez.</p>}
       <Link href="/sepet" className="checkout-back">← Sepete dön</Link>

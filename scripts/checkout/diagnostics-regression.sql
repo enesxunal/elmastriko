@@ -1,13 +1,13 @@
 begin;
 -- All synthetic events below are rolled back. No orders or payments are created.
 select set_config('request.jwt.claim.sub',(select id::text from public.profiles where role='admin' limit 1),true);
-insert into public.checkout_diagnostics(session_id,attempt_id,stage,created_at,is_test) values
+insert into public.checkout_diagnostics(session_id,attempt_id,stage,occurred_at,is_test) values
 ('10000000-0000-4000-8000-000000000020','10000000-0000-4000-8000-000000000021','form_started','2090-01-01 10:00Z',false),
 ('10000000-0000-4000-8000-000000000020','10000000-0000-4000-8000-000000000021','form_submitted','2090-01-01 10:01Z',false),
 ('10000000-0000-4000-8000-000000000020','10000000-0000-4000-8000-000000000021','form_submitted','2090-01-01 10:02Z',false),
 ('10000000-0000-4000-8000-000000000030','10000000-0000-4000-8000-000000000031','form_started','2090-01-01 10:00Z',false),
 ('10000000-0000-4000-8000-000000000030','10000000-0000-4000-8000-000000000031','order_created','2090-01-01 10:01Z',true);
-insert into public.checkout_diagnostics(session_id,attempt_id,stage,error_code,field_group,created_at) values
+insert into public.checkout_diagnostics(session_id,attempt_id,stage,error_code,field_group,occurred_at) values
 ('10000000-0000-4000-8000-000000000020','10000000-0000-4000-8000-000000000021','form_invalid','validation','contact','2090-01-01 10:03Z');
 do $$declare r jsonb; n integer; begin
  r:=public.checkout_diagnostics_report('2090-01-01','2090-01-02');

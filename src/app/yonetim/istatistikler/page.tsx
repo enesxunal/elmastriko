@@ -296,7 +296,7 @@ export default async function StatisticsPage({
         previous={previousBehaviorResult.error ? null : previousBehaviorResult.data as AnalyticsReport | null}
         error={Boolean(behaviorResult.error)}
         paymentActivity={paymentActivityResult.error ? null : paymentActivityResult.data as PaymentActivityReport | null}/>
-      <CheckoutDiagnosticsDashboard report={checkoutDiagnosticsResult.error ? null : checkoutDiagnosticsResult.data as CheckoutReport | null}/>
+      <CheckoutDiagnosticsDashboard productNames={Object.fromEntries(products.map(p=>[p.slug,p.name]))} report={checkoutDiagnosticsResult.error ? null : checkoutDiagnosticsResult.data as CheckoutReport | null}/>
 
       {ordersResult.error && <div className="admin-alert error">Satış verisi okunamadı; aşağıdaki satış değerleri doğrulanamıyor.</div>}
       <section className="analytics-traffic-title commerce-title"><div><span>TİCARET ANALİTİĞİ</span><h2>Satış ve ürün performansı</h2><p className="analytics-helper">Bilinen teknik test siparişleri satış, sipariş ve müşteri hesaplarına dahil edilmez. Sipariş kayıtları yönetimde korunur.</p></div></section>

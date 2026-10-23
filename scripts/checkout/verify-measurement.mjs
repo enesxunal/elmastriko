@@ -13,7 +13,7 @@ const context=vm.createContext({window,location,navigator,document:{referrer:"",
  crypto:{randomUUID:()=>`10000000-0000-4000-8000-${String(++seq).padStart(12,"0")}`},innerWidth:390,Date,URL,URLSearchParams,Set,Map,Blob,AbortSignal,
  setTimeout:()=>1,clearTimeout:()=>{},fetch:async(url,options)=>{requests.push(JSON.parse(options.body));return{ok:true};}});
 const cache=new Map();
-function load(file){file=path.resolve(file);if(cache.has(file))return cache.get(file);const exports={};cache.set(file,exports);const output=ts.transpileModule(fs.readFileSync(file,"utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText;const wrapper=vm.runInContext(`(function(require,exports){${output}\n})`,context);wrapper(spec=>load(path.resolve(path.dirname(file),spec+".ts")),exports);return exports;}
+function load(file){file=path.resolve(file);if(cache.has(file))return cache.get(file);const exports={};cache.set(file,exports);const output=ts.transpileModule(fs.readFileSync(file,"utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText;const wrapper=vm.runInContext(`(function(require,exports){${output}\n})`,context);wrapper(spec=>load(spec.startsWith("@/")?path.resolve("src",spec.slice(2)+".ts"):path.resolve(path.dirname(file),spec+".ts")),exports);return exports;}
 const analytics=load("src/lib/analytics-client.ts"),meta=load("src/lib/meta-pixel.ts"),tracking=load("src/lib/commerce-tracking.ts");
 const product={slug:"measurement-product",name:"Product",type:"Kazak",category:"erkek",price:899,variants:[{id:"variant-1",sku:"ET-S",size:"S",color:"Ekru",price:899,available:5}]};
 const line={slug:product.slug,qty:1,size:"S",color:"Ekru"};
