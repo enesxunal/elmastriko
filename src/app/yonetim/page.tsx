@@ -1,3 +1,4 @@
+import { isPaidSale, NON_SALE_ORDER_STATUS_FILTER } from "@/lib/order-reporting";
 import { orderLabels, paymentLabels } from "@/lib/admin-order-labels";
 import { basitKargo } from "@/lib/integrations/basitkargo";
 import { invoiceIntegration, isNesConfigured } from "@/lib/integrations/invoice";
@@ -8,9 +9,10 @@ import { requireAdmin } from "@/lib/admin";
 
 export default async function AdminDashboard() {
   const { supabase } = await requireAdmin();
-  const [products, orders, users, posts, messages, subscribers, recent, revenueRows, stockRows] = await Promise.all([
+  const [products, orders, waitingOrders, users, posts, messages, subscribers, recent, revenueRows, stockRows] = await Promise.all([
     supabase.from("products").select("id", { count: "exact", head: true }),
-    supabase.from("orders").select("id", { count: "exact", head: true }).eq("is_test",false).is("archived_at",null),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("is_test",false).is("archived_at",null).eq("payment_status","paid").not("status","in",NON_SALE_ORDER_STATUS_FILTER),
+    supabase.from("orders").select("id", { count: "exact", head: true }).eq("is_test",false).is("archived_at",null).in("payment_status",["pending","customer_notified"]).not("status","in",NON_SALE_ORDER_STATUS_FILTER),
     supabase.from("profiles").select("id", { count: "exact", head: true }),
     supabase.from("blog_posts").select("id", { count: "exact", head: true }),
     supabase.from("contact_messages").select("id", { count: "exact", head: true }).eq("status","new"),
@@ -34,13 +36,13 @@ export default async function AdminDashboard() {
     {name:"Ödeme / Tosla", status:paymentConfigured && paymentLive?"Canlı ayarları tanımlı (işlem testi gerekli)":paymentConfigured?"Test modu / kontrol gerekli":"Yapılandırma gerekli", ok:paymentConfigured && paymentLive},
   ];
   const revenue=(revenueRows.data||[])
-    .filter(o=>!["cancelled","refunded"].includes(o.status))
+    .filter(isPaidSale)
     .reduce((sum,o)=>sum+Number(o.grand_total||0),0);
   const lowStock=(stockRows.data||[]).filter(row=>Number(row.stock)-Number(row.reserved)<=5);
 
   const primary = [
-    {label:"Toplam Ciro", value: revenue.toLocaleString("tr-TR")+" TL", note:"Ödemesi tamamlanan siparişler", icon:CircleDollarSign},
-    {label:"Siparişler", value:orders.count||0, note:"Toplam sipariş", icon:ShoppingCart},
+    {label:"Toplam Ciro", value: revenueRows.error ? "—" : revenue.toLocaleString("tr-TR")+" TL", note:revenueRows.error ? "Veri alınamadı; sayfayı yenileyin" : "Ödemesi tamamlanan siparişler", icon:CircleDollarSign},
+    {label:"Ödenmiş siparişler", value:orders.error ? "—" : orders.count ?? 0, note:waitingOrders.error ? "Bekleyen ödeme bilgisi alınamadı" : `${waitingOrders.count ?? 0} ödeme bekliyor · Satışa dahil değil`, icon:ShoppingCart},
     {label:"Ürünler", value:products.count||0, note:"Katalogdaki ürün", icon:Boxes},
     {label:"Müşteriler", value:users.count||0, note:"Kayıtlı hesap", icon:Users},
   ];
@@ -73,7 +75,7 @@ export default async function AdminDashboard() {
 
     <section className="admin-dashboard-grid">
       <div className="admin-section admin-orders-panel">
-        <div className="admin-section-head"><div><span>OPERASYON</span><h2>Son Siparişler</h2></div><Link href="/yonetim/siparisler">Tüm siparişler <ArrowUpRight size={14}/></Link></div>
+        <div className="admin-section-head"><div><span>OPERASYON</span><h2>Son sipariş kayıtları</h2></div><Link href="/yonetim/siparisler">Tüm siparişler <ArrowUpRight size={14}/></Link></div>
         <div className="admin-table">{recent.data?.length ? recent.data.map(o=><Link href={"/yonetim/siparisler/"+o.id} className="admin-row admin-row-link" key={o.id}><b>{o.order_no}</b><span>{o.guest_email||"Üye kullanıcı"}</span><span className="admin-pill">{orderLabels[o.status] || "Kontrol gerekli"}</span><span className="admin-pill muted">{paymentLabels[o.payment_status] || "Kontrol gerekli"}</span><strong>{Number(o.grand_total).toLocaleString("tr-TR")} {o.currency}</strong></Link>) : <div className="admin-empty-state"><ShoppingCart size={24}/><b>Henüz sipariş yok</b><span>Yeni siparişler burada görünecek.</span></div>}</div>
       </div>
 

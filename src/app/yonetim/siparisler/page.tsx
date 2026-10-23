@@ -1,3 +1,4 @@
+import { isPaidSale } from "@/lib/order-reporting";
 import Link from "next/link";
 import { CheckCircle2, Clock3, PackageCheck, ShoppingBag } from "lucide-react";
 import { requireAdmin } from "@/lib/admin";
@@ -16,15 +17,15 @@ function statusLabel(value:string){
 export default async function OrdersAdmin({searchParams}:{searchParams:Promise<{archive?:string}>}){
   const archived=(await searchParams).archive === "1";
   const {supabase}=await requireAdmin();
-  let query=supabase.from("orders").select("id,order_no,status,payment_status,grand_total,currency,guest_email,guest_phone,created_at,is_test").order("created_at",{ascending:false}).limit(100);
+  let query=supabase.from("orders").select("id,order_no,status,payment_status,grand_total,currency,guest_email,guest_phone,created_at,is_test,archived_at").order("created_at",{ascending:false}).limit(100);
 
-  query = archived ? query.not("archived_at","is",null) : query.is("archived_at",null);
+  query = archived ? query.or("archived_at.not.is.null,is_test.eq.true") : query.is("archived_at",null).eq("is_test",false);
   const {data:orders}=await query;
   const list=orders||[];
-  const paid=list.filter(o=>!o.is_test&&o.payment_status==="paid").length;
+  const paid=list.filter(isPaidSale).length;
   const waiting=list.filter(o=>["pending","customer_notified","rejected"].includes(o.payment_status)||o.status==="awaiting_payment").length;
   const shipping=list.filter(o=>["ready_to_ship","shipped"].includes(o.status)).length;
-  const revenue=list.filter(o=>!o.is_test&&o.payment_status==="paid"&&!["cancelled","refunded"].includes(o.status)).reduce((sum,o)=>sum+Number(o.grand_total||0),0);
+  const revenue=list.filter(isPaidSale).reduce((sum,o)=>sum+Number(o.grand_total||0),0);
 
   return <main className="admin-page admin-orders-page">
     <div className="admin-page-head admin-orders-head">
@@ -33,7 +34,7 @@ export default async function OrdersAdmin({searchParams}:{searchParams:Promise<{
 
     <p><Link href={archived ? "/yonetim/siparisler" : "/yonetim/siparisler?archive=1"}>{archived ? "Gerçek siparişlere dön" : "Deneme arşivini göster"}</Link></p>
     <section className="admin-order-kpis">
-      <article><span><ShoppingBag size={16}/> Toplam sipariş</span><strong>{list.length}</strong><small>Son 100 kayıt</small></article>
+      <article><span><ShoppingBag size={16}/> Sipariş kayıtları</span><strong>{list.length}</strong><small>Ödenmemiş kayıtlar dahil · Son 100 kayıt</small></article>
       <article><span><CheckCircle2 size={16}/> Ödemesi tamamlanan</span><strong>{paid}</strong><small>{revenue.toLocaleString("tr-TR")} TL ciro</small></article>
       <article><span><Clock3 size={16}/> Aksiyon bekleyen</span><strong>{waiting}</strong><small>Ödeme veya işlem bekliyor</small></article>
       <article><span><PackageCheck size={16}/> Kargo sürecinde</span><strong>{shipping}</strong><small>Hazır veya gönderildi</small></article>

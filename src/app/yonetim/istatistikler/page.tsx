@@ -1,3 +1,4 @@
+import { isPaidSale } from "@/lib/order-reporting";
 import type { PaymentActivityReport } from "@/components/PaymentActivityDashboard";
 import CheckoutDiagnosticsDashboard from "@/components/CheckoutDiagnosticsDashboard";
 import type { CheckoutReport } from "@/lib/checkout-diagnostics";
@@ -177,7 +178,7 @@ export default async function StatisticsPage({
 
   const currentOrders = allOrders.filter((o) => isCurrent(o.created_at));
   const previousOrders = allOrders.filter((o) => isPrevious(o.created_at));
-  const validPaid = (o: OrderRow) => o.payment_status === "paid" && !["cancelled", "refunded"].includes(o.status);
+  const validPaid = isPaidSale;
 
   const paidOrders = allOrders.filter(o => validPaid(o) && o.paid_at && isCurrent(o.paid_at));
   const previousPaid = allOrders.filter(o => validPaid(o) && o.paid_at && isPrevious(o.paid_at));
@@ -284,7 +285,7 @@ export default async function StatisticsPage({
 
   const kpis = [
     { label: "Net Ciro", value: money(revenue), change: revenueChange, icon: CircleDollarSign, note: "İlk ödeme onay tarihine göre; denemeler hariç" },
-    { label: "Sipariş", value: currentOrders.length.toLocaleString("tr-TR"), change: orderChange, icon: ShoppingBag, note: "Oluşturulan toplam sipariş" },
+    { label: "Sipariş kaydı", value: currentOrders.length.toLocaleString("tr-TR"), change: orderChange, icon: ShoppingBag, note: "Ödenmemiş kayıtlar dahil; satış sayısı değildir" },
     { label: "Ort. Sepet", value: money(avgOrder), change: avgChange, icon: TrendingUp, note: "Ödenmiş sipariş ortalaması" },
     { label: "Ödeme Başarı", value: pct(paidRate), change: paidRateChange, icon: PackageCheck, note: "Siparişlerin ödeme oranı" },
   ];
@@ -299,7 +300,7 @@ export default async function StatisticsPage({
       <CheckoutDiagnosticsDashboard productNames={Object.fromEntries(products.map(p=>[p.slug,p.name]))} report={checkoutDiagnosticsResult.error ? null : checkoutDiagnosticsResult.data as CheckoutReport | null}/>
 
       {ordersResult.error && <div className="admin-alert error">Satış verisi okunamadı; aşağıdaki satış değerleri doğrulanamıyor.</div>}
-      <section className="analytics-traffic-title commerce-title"><div><span>TİCARET ANALİTİĞİ</span><h2>Satış ve ürün performansı</h2><p className="analytics-helper">Bilinen teknik test siparişleri satış, sipariş ve müşteri hesaplarına dahil edilmez. Sipariş kayıtları yönetimde korunur.</p></div></section>
+      <section className="analytics-traffic-title commerce-title"><div><span>TİCARET ANALİTİĞİ</span><h2>Satış ve ürün performansı</h2><p className="analytics-helper">Satış ve ciro yalnızca ödemesi tamamlanan siparişlerden hesaplanır. Sipariş kaydı sayısı ödenmemiş kayıtları da içerir. Teknik denemeler hariçtir.</p></div></section>
 
       <section className="analytics-kpis">
         {kpis.map(({ label, value, change: delta, icon: Icon, note }) => (
