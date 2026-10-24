@@ -25,7 +25,7 @@ export default function ProductCard({ product }: { product: Product }) {
     addToCart({ slug: product.slug, qty: 1, size, color });
     trackCartAddition(product, { slug: product.slug, qty: 1, size, color }, firstAvailable?.price ?? product.price);
     setAdded(true);
-    window.setTimeout(() => setAdded(false), 1800);
+    window.setTimeout(() => setAdded(false), 8000);
   }
 
   return <article className="catalog-card">
@@ -45,5 +45,6 @@ export default function ProductCard({ product }: { product: Product }) {
     >
       {added ? <><Check size={14}/> Sepete eklendi</> : outOfStock ? "Stokta yok" : product.price === null ? "Fiyat bekleniyor" : <><ShoppingBag size={14}/> Sepete ekle</>}
     </button>
+    {added && <div className="catalog-added-note" role="status"><span>{size}{color !== "Standart" ? ` · ${color}` : ""} sepete eklendi.</span><Link href="/sepet">Sepete git →</Link></div>}
   </article>;
 }

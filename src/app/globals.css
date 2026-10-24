@@ -1180,3 +1180,33 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
 
 /* Customer journeys share the store's checkout events and keep detail readable on mobile. */
 .journey-stage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:18px;margin:24px 0}.journey-stage-grid>div{border-bottom:1px solid #e2e6e1;padding-bottom:14px}.journey-stage-grid small{display:block;color:#66726a}.journey-stage-grid b{display:block;font-size:25px;margin:8px 0}.customer-journeys{display:grid;gap:12px;margin:18px 0}.customer-journey{border:1px solid #dfe6df;border-radius:12px;background:#fff;overflow:hidden}.customer-journey summary{display:grid;grid-template-columns:minmax(190px,1fr) minmax(220px,2fr) auto;gap:18px;padding:18px;cursor:pointer;list-style:none}.customer-journey summary::-webkit-details-marker{display:none}.journey-identity,.journey-outcome{display:grid;gap:5px}.customer-journey small{color:#68766d;font-size:13px}.journey-open{color:#315e4b;font-size:13px;align-self:center}.journey-timeline{list-style:none;margin:0 18px 20px;padding:0;border-top:1px solid #e4e9e3}.journey-timeline li{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;padding:12px 0;border-bottom:1px solid #edf0eb}.journey-timeline time{font-size:12px;color:#68766d}.journey-timeline li>div{display:grid;gap:4px;overflow-wrap:anywhere}.journey-timeline span{font-size:13px;color:#68766d}.journey-timeline .journey-error{color:#9b4037}.journey-timeline .has-issue{border-left:3px solid #b66050;padding-left:12px}@media(max-width:700px){.customer-journey summary{grid-template-columns:1fr;gap:12px}.journey-timeline li{grid-template-columns:1fr;gap:5px}.journey-stage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.journey-open{justify-self:start}}
+
+/* 2026-10-25: Mobile conversion improvements, no price or fulfillment changes. */
+.hero-shop-paths{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;max-width:610px}
+.hero-shop-paths a{display:inline-flex;align-items:center;min-height:34px;padding:8px 12px;border:1px solid rgba(255,255,255,.55);border-radius:999px;color:white;background:rgba(12,21,17,.34);font-size:11px;line-height:1.2;backdrop-filter:blur(4px)}
+.hero-shop-paths a:hover,.hero-shop-paths a:focus-visible{background:rgba(255,255,255,.2);border-color:white}
+.catalog-added-note{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:2px 12px 14px;font-size:11px;color:#315b44}
+.catalog-added-note a{text-decoration:underline;text-underline-offset:3px;font-weight:700;white-space:nowrap}
+.checkout-mobile-intro{display:none}
+.cart-mobile-action{display:none}
+@media(max-width:1050px){.checkout-page .checkout-summary{order:0}}
+@media(max-width:700px){
+ .checkout-page{padding-bottom:36px}
+ .checkout-mobile-intro{display:grid;gap:8px;padding:14px 16px;margin:0 0 8px;background:#edf4ee;border:1px solid #d7e5d9;border-radius:12px;color:#203c2c}
+ .checkout-mobile-intro>div{display:flex;justify-content:space-between;align-items:center;gap:14px}
+ .checkout-mobile-intro span{font-size:10px;letter-spacing:.1em;font-weight:700}
+ .checkout-mobile-intro strong{font-size:19px;white-space:nowrap}
+ .checkout-mobile-intro small{font-size:11px;color:#3c5946}
+ .checkout-mobile-intro a{width:max-content;font-size:11px;text-decoration:underline;text-underline-offset:3px}
+ .checkout-main{padding-bottom:18px}
+ .checkout-main>h1{font-size:clamp(30px,9vw,41px)}
+ .checkout-step{padding:20px 0}
+ .checkout-step h2{font-size:21px}
+ .checkout-payment-help{font-size:12px;line-height:1.6}
+ .cart-page{padding-bottom:calc(140px + env(safe-area-inset-bottom,0px))}
+ .cart-mobile-action{position:fixed;left:0;right:0;bottom:0;z-index:850;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px calc(11px + env(safe-area-inset-bottom,0px));background:rgba(255,255,255,.98);border-top:1px solid #dcd5cb;box-shadow:0 -8px 24px rgba(20,40,30,.08)}
+ .cart-mobile-action>div{display:grid;gap:3px}.cart-mobile-action small{font-size:9px;color:#766e64}.cart-mobile-action strong{font-size:18px;color:#213b2d}
+ .cart-mobile-action>a{display:grid;place-items:center;min-height:46px;padding:0 18px;border-radius:10px;background:#173d31;color:white;font-size:12px;font-weight:700;white-space:nowrap}
+ body:has(.cart-mobile-action) .floating-whatsapp{bottom:calc(105px + env(safe-area-inset-bottom,0px))}
+ body:has(.cart-mobile-action) .shipping-campaign-dialog.shipping-campaign-toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))}
+}

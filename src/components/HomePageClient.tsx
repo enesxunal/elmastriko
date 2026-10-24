@@ -63,6 +63,7 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
             <a href="/kadin" className="btn btn-light">Kadın koleksiyonu <ArrowRight size={16} /></a>
             <a href="/erkek" className="btn btn-line">Erkek koleksiyonu <ArrowRight size={16} /></a>
           </div>
+          <nav className="hero-shop-paths" aria-label="Koleksiyona hızlı erişim"><Link href="/kadin/hirka">Kadın hırkalar</Link><Link href="/erkek">Erkek kazaklar</Link><Link href="/yeni-gelenler">Yeni gelenler</Link></nav>
         </div>
         <a className="scroll-note" href="#manifesto"><span>Keşfet</span><i /></a>
       </section>

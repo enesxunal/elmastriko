@@ -46,13 +46,15 @@ export default function CartPage() {
         <div><span>Ara toplam</span><b>{hasUnknownPrice ? "Fiyat listesi bekleniyor" : formatPrice(subtotal)}</b></div>
         <div><span>Kargo</span><b>{commerceLoading ? "Hesaplanıyor" : freeShipping ? "Ücretsiz" : hasUnknownPrice ? "Hesaplanacak" : effectiveShippingFee === null ? "Kargo tutarı onayda" : formatPrice(effectiveShippingFee)}</b></div>
         <div className="summary-total"><span>Toplam</span><b>{hasUnknownPrice || total === null ? "—" : formatPrice(total)}</b></div>
-        {lines.length > 0 && total !== null ? <Link href="/checkout">Güvenli Ödemeye Geç</Link> : <span className="disabled-checkout">Güvenli Ödemeye Geç</span>}
+        {lines.length > 0 && total !== null && !hasUnknownPrice && !commerceLoading ? <Link href="/checkout">Güvenli Ödemeye Geç</Link> : <span className="disabled-checkout">Güvenli Ödemeye Geç</span>}
         <div className="cart-trust-list">
           <span><b>3D Secure</b><small>Tosla İşim Sanal POS ile korumalı ödeme</small></span>
           <span><b>Sipariş hazırlığı</b><small>Ödeme onayından sonra 1–2 iş gününde kargoya teslim</small></span>
-          <span><b>Kolay takip</b><small>Hesabınızdan sipariş ve kargo durumunu izleyin</small></span>
+          <span><b>Teslimat ve iade koşulları</b><small><Link href="/kargo-iade">Satın almadan önce inceleyin →</Link></small></span>
+          <span><b>Üyelik zorunlu değil</b><small>Misafir olarak güvenle sipariş verebilirsiniz.</small></span>
         </div>
       </aside>
     </div>
+    {lines.length > 0 && !loading && !commerceLoading && !hasUnknownPrice && total !== null && <div className="cart-mobile-action"><div><small>TOPLAM · KARGO DAHİL</small><strong>{formatPrice(total)}</strong></div><Link href="/checkout">Ödemeye geç →</Link></div>}
   </main><StoreFooter/></>;
 }

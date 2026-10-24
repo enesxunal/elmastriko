@@ -426,7 +426,8 @@ export default function CheckoutPage() {
       <Link href="/sepet" className="checkout-back">← Sepete dön</Link>
       {paymentReturn && <p role="alert" className="checkout-error-box">Ödeme henüz tamamlanmadı. Bankanızdan ücret çekildiyse tekrar ödeme yapmadan bizimle iletişime geçin.</p>}
       <div className="checkout-progress"><span className="done">01 Sepet</span><span className="active">02 Bilgiler</span><span>03 Ödeme</span></div>
-      <span className="checkout-kicker">GÜVENLİ ÖDEME</span><h1>Sipariş bilgileri</h1><p className="checkout-intro">Teslimat ve fatura bilgilerinizi kontrol edin, ardından kart veya EFT / Havale ödeme yöntemini seçin.</p>
+      <span className="checkout-kicker">GÜVENLİ ÖDEME</span><h1>Sipariş bilgileri</h1><p className="checkout-intro">Üye olmadan siparişinizi tamamlayabilirsiniz. Teslimat bilgilerinizi girdikten sonra ödeme yönteminizi seçin.</p>
+      <div className="checkout-mobile-intro" aria-live="polite"><div><span>ÖDENECEK TOPLAM</span><strong>{hasUnknownPrice || commerceLoading || total === null ? "Hesaplanıyor" : formatPrice(total)}</strong></div><small>{shippingCampaignActive || freeShipping ? "Kargo ücretsiz" : "Kargo dahil toplam"} · 3D Secure kart veya havale</small><Link href="/kargo-iade">Teslimat ve iade koşulları →</Link></div>
       <div className="checkout-step"><span>01</span><div><h2>İletişim</h2><p className="checkout-field-intro">Sipariş bilgilendirmeleri ve teslimat için kullanılır.</p>
         <div className="form-grid checkout-field-grid">
           <label>Ad <input required name="firstName" autoComplete="given-name" placeholder="Adınız"/></label>
