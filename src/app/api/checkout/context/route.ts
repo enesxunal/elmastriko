@@ -29,7 +29,7 @@ export async function GET() {
 
   return NextResponse.json({
     user: { email: user.email || "" },
-    profile: profile || null,
+    profile: profile ? { ...profile, full_name: profile.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "" } : { full_name: user.user_metadata?.full_name || user.user_metadata?.name || "", phone: null, role: null },
     address: address || null,
   }, {
     headers: { "Cache-Control": "no-store" },

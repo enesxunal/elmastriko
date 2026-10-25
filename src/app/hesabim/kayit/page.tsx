@@ -7,6 +7,7 @@ import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import { createClient } from "@/lib/supabase/server";
 import { signUp } from "@/app/auth/actions";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 export default async function RegisterPage({ searchParams }: { searchParams: Promise<{ error?: string; message?: string }> }) {
   const params = await searchParams;
@@ -23,6 +24,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
     <section className="account-auth-card">
       <span>KAYIT</span>
       <h2>Hesap Oluştur</h2>
+      <GoogleAuthButton/>
       {params.error && <div className="auth-message error">{authErrorTR({message:params.error})}</div>}
       {params.message && <div className="auth-message">{params.message}</div>}
       <form action={signUp} className="account-auth-form">

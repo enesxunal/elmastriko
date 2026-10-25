@@ -6,6 +6,7 @@ import { analyticsOrderContext, flushAnalytics } from "@/lib/analytics-client";
 
 import StoreHeader from "@/components/StoreHeader";
 import BankTransferPaymentCard from "@/components/BankTransferPaymentCard";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 import Link from "next/link";
 import { formatPrice } from "@/lib/catalog";
 import { useStore } from "@/components/StoreProvider";
@@ -410,7 +411,7 @@ export default function CheckoutPage() {
 
   return <><StoreHeader/><main className="checkout-page">
     <form ref={formRef} id="checkout-form" className="checkout-main" onSubmit={handleSubmit}
-      onFocusCapture={() => { if (!formStarted.current) { formStarted.current = true; trackCheckoutProgress("form_started"); } }}
+      onFocusCapture={(event) => { if ((event.target as HTMLElement).closest("[data-google-auth]")) return; if (!formStarted.current) { formStarted.current = true; trackCheckoutProgress("form_started"); } }}
       onChange={() => { if (!formStarted.current) { formStarted.current = true; trackCheckoutProgress("form_started"); } trackCompletedGroups(); }}
       onInputCapture={event => {
         if ((event.target as HTMLInputElement).name === invalidField) setInvalidField("");
@@ -427,6 +428,7 @@ export default function CheckoutPage() {
       {paymentReturn && <p role="alert" className="checkout-error-box">Ödeme henüz tamamlanmadı. Bankanızdan ücret çekildiyse tekrar ödeme yapmadan bizimle iletişime geçin.</p>}
       <div className="checkout-progress"><span className="done">01 Sepet</span><span className="active">02 Bilgiler</span><span>03 Ödeme</span></div>
       <span className="checkout-kicker">GÜVENLİ ÖDEME</span><h1>Sipariş bilgileri</h1><p className="checkout-intro">Üye olmadan siparişinizi tamamlayabilirsiniz. Teslimat bilgilerinizi girdikten sonra ödeme yönteminizi seçin.</p>
+      {!signedIn && <GoogleAuthButton next="/checkout"/>}
       <div className="checkout-mobile-intro" aria-live="polite"><div><span>ÖDENECEK TOPLAM</span><strong>{hasUnknownPrice || commerceLoading || total === null ? "Hesaplanıyor" : formatPrice(total)}</strong></div><small>{shippingCampaignActive || freeShipping ? "Kargo ücretsiz" : "Kargo dahil toplam"} · 3D Secure kart veya havale</small><Link href="/kargo-iade">Teslimat ve iade koşulları →</Link></div>
       <div className="checkout-step"><span>01</span><div><h2>İletişim</h2><p className="checkout-field-intro">Sipariş bilgilendirmeleri ve teslimat için kullanılır.</p>
         <div className="form-grid checkout-field-grid">

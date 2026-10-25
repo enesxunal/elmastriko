@@ -8,6 +8,7 @@ import StoreFooter from "@/components/StoreFooter";
 import AccountShell from "@/components/AccountShell";
 import { createClient } from "@/lib/supabase/server";
 import { signIn } from "@/app/auth/actions";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<{ error?: string; message?: string; reset?: string }> }) {
   const params = await searchParams;
@@ -61,6 +62,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     <section className="account-auth-card">
       <span>GİRİŞ</span>
       <h2>Giriş Yap</h2>
+      <GoogleAuthButton/>
       {params.error && <div className="auth-message error">{authErrorTR({message:params.error})}</div>}
       {params.message && <div className="auth-message">{params.message}</div>}
       <form action={signIn} className="account-auth-form">

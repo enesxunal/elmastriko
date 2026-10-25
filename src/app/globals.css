@@ -1210,3 +1210,16 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
  body:has(.cart-mobile-action) .floating-whatsapp{bottom:calc(105px + env(safe-area-inset-bottom,0px))}
  body:has(.cart-mobile-action) .shipping-campaign-dialog.shipping-campaign-toast{bottom:calc(170px + env(safe-area-inset-bottom,0px))}
 }
+
+/* Optional Google OAuth. The button remains hidden until Supabase enables Google. */
+.google-auth{width:100%}
+.google-auth-button{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:52px;padding:12px 16px;border:1px solid #d7d5ce;border-radius:9px;background:#fff;color:#252a26;font:600 13px/1.4 Arial,sans-serif;cursor:pointer;transition:background .15s,border-color .15s}
+.google-auth-button:hover:not(:disabled){background:#f7f8f6;border-color:#82988b}
+.google-auth-button:focus-visible{outline:3px solid #629981;outline-offset:2px}
+.google-auth-button:disabled{opacity:.65;cursor:wait}
+.google-auth-error{font-size:12px;color:#9b3730;margin:7px 0 0}
+.account-auth-card>.google-auth{margin:0 0 20px}
+.account-auth-card>.google-auth:after{content:'veya e-posta ile devam edin';display:block;text-align:center;font-size:11px;color:#8a8177;margin:17px 0 0}
+.checkout-google-option{margin:12px 0 22px;max-width:420px}
+.checkout-google-option>small{display:block;margin-top:8px;font-size:11px;line-height:1.5;color:#71695f}
+@media(max-width:700px){.google-auth-button{min-height:50px;font-size:13px}.checkout-google-option{max-width:none}}
