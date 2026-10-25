@@ -83,25 +83,52 @@ export async function createProduct(fd: FormData) {
 
 export async function updateProduct(fd: FormData) {
   const { supabase } = await requireAdmin();
-  const id = v(fd,"id");
-  const gender = v(fd,"gender") || "kadin";
-  const { data: matchedCategory } = await supabase.from("categories").select("id").eq("slug",gender).maybeSingle();
-  const { error } = await supabase.from("products").update({
-    slug: v(fd,"slug"),
-    name: v(fd,"name"),
-    description: v(fd,"description") || null,
-    category_id: matchedCategory?.id || v(fd,"category_id") || null,
+  const id = v(fd, "id");
+  const gender = v(fd, "gender");
+  const type = v(fd, "product_type");
+  if (!/^[0-9a-f-]{36}$/i.test(id)) redirect("/yonetim/urunler?error=Geçersiz ürün kimliği");
+  function fail(message: string): never {
+    redirect(`/yonetim/urunler/${id}?error=` + encodeURIComponent(message));
+  }
+  if (!["kadin", "erkek", "unisex"].includes(gender)) fail("Geçerli bir kategori seçin.");
+  if (!type) fail("Alt kategori seçilmeden ürün kaydedilemez.");
+
+  // Resolve the canonical category slug, never reuse an unrelated hidden category ID.
+  const { data: matchedCategory, error: categoryError } = await supabase.from("categories")
+    .select("id").eq("slug", gender).maybeSingle();
+  if (categoryError) fail("Kategori kontrol edilemedi: " + categoryError.message);
+  if (!matchedCategory && gender !== "unisex") fail("Seçilen kategori veritabanında bulunamadı.");
+
+  // An RLS policy can silently affect zero rows. Always require the modified row.
+  const { data: saved, error } = await supabase.from("products").update({
+    slug: v(fd, "slug"),
+    name: v(fd, "name"),
+    description: v(fd, "description") || null,
+    category_id: matchedCategory?.id || null,
     gender,
-    product_type: v(fd,"product_type") || null,
-    base_price: num(fd,"base_price"),
-    compare_at_price: num(fd,"compare_at_price"),
+    product_type: type,
+    base_price: num(fd, "base_price"),
+    compare_at_price: num(fd, "compare_at_price"),
     is_active: fd.get("is_active") === "on",
     is_featured: fd.get("is_featured") === "on",
     updated_at: new Date().toISOString(),
-  }).eq("id", id);
-  if (error) redirect(`/yonetim/urunler/${id}?error=` + encodeURIComponent(error.message));
-  await audit("update", "product", id);
-  revalidatePath("/yonetim/urunler"); revalidatePath(`/yonetim/urunler/${id}`); revalidatePath("/kadin"); revalidatePath("/erkek");
+  }).eq("id", id).select("id,gender,category_id,product_type").maybeSingle();
+  if (error) fail("Ürün kaydedilemedi: " + error.message);
+  if (!saved) fail("Değişiklik kaydedilmedi. Yönetici yetkisi ve veritabanı izinlerini kontrol edin.");
+  if (saved.gender !== gender || saved.category_id !== (matchedCategory?.id || null) || saved.product_type !== type) {
+    fail("Kategori değişikliği veritabanında doğrulanamadı. Tekrar deneyin.");
+  }
+  await audit("update", "product", id, { gender, productType: type });
+  revalidatePath("/yonetim/urunler");
+  revalidatePath(`/yonetim/urunler/${id}`);
+  revalidatePath("/kadin");
+  revalidatePath("/erkek");
+  revalidatePath("/kadin/hirka");
+  revalidatePath("/kadin/kazak");
+  revalidatePath("/kadin/takim");
+  revalidatePath("/yeni-gelenler");
+  revalidatePath("/erkek/yeni-gelenler");
+  redirect(`/yonetim/urunler/${id}?saved=1`);
 }
 
 export async function deleteProduct(fd: FormData) {

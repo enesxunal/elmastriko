@@ -12,10 +12,10 @@ export default async function ProductAdminDetail({
   searchParams,
 }:{
   params:Promise<{id:string}>;
-  searchParams:Promise<{error?:string;created?:string;variants_created?:string}>;
+  searchParams:Promise<{error?:string;created?:string;variants_created?:string;saved?:string}>;
 }){
   const {id}=await params;
-  const {error,created,variants_created}=await searchParams;
+  const {error,created,variants_created,saved}=await searchParams;
   const {supabase}=await requireAdmin();
 
   const [{data:product},{data:variants},{data:images},{data:productOptionsRow}] = await Promise.all([
@@ -56,6 +56,7 @@ export default async function ProductAdminDetail({
     </div>
 
     {created&&<div className="admin-alert success"><PackageCheck size={16}/> Ürün, varyantları ve başlangıç stoğuyla birlikte oluşturuldu.</div>}
+    {saved&&<div className="admin-alert success" role="status"><PackageCheck size={16}/> Ürün ve kategori değişiklikleri kaydedildi.</div>}
     {variants_created&&<div className="admin-alert success"><PackageCheck size={16}/> {variants_created} varyant otomatik oluşturuldu.</div>}
     {error&&<div className="admin-alert error">{error}</div>}
 

@@ -12,15 +12,20 @@ export default function ProductTaxonomyFields({
 }) {
   const safeGender=(initialGender&&initialGender in PRODUCT_TAXONOMY?initialGender:"kadin") as ProductGender;
   const [gender,setGender]=useState<ProductGender>(safeGender);
+  const [subcategory,setSubcategory]=useState(initialSubcategory||"");
   const options=useMemo(()=>PRODUCT_TAXONOMY[gender],[gender]);
-  const visibleOptions=initialSubcategory && !options.includes(initialSubcategory as never)
-    ? [initialSubcategory,...options]
+  const visibleOptions=gender===safeGender && subcategory && !options.includes(subcategory as never)
+    ? [subcategory,...options]
     : [...options];
+  function changeGender(next: ProductGender) {
+    setGender(next);
+    setSubcategory(current => PRODUCT_TAXONOMY[next].includes(current as never) ? current : "");
+  }
 
   return <div className="product-two-cols">
     <div className="product-field">
       <label>Kategori</label>
-      <select name="gender" value={gender} onChange={e=>setGender(e.target.value as ProductGender)}>
+      <select name="gender" value={gender} onChange={e=>changeGender(e.target.value as ProductGender)}>
         <option value="kadin">Kadın</option>
         <option value="erkek">Erkek</option>
         <option value="unisex">Unisex</option>
@@ -28,7 +33,7 @@ export default function ProductTaxonomyFields({
     </div>
     <div className="product-field">
       <label>Alt kategori</label>
-      <select name="product_type" defaultValue={initialSubcategory||""} key={gender} required>
+      <select name="product_type" value={subcategory} onChange={e=>setSubcategory(e.target.value)} required>
         <option value="">Alt kategori seçin</option>
         {visibleOptions.map(item=><option key={item} value={item}>{item}</option>)}
       </select>
