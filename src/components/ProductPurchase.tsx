@@ -191,7 +191,7 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
     </div>, document.body)}
 
     <div className="product-assurances">
-      <div><Truck size={17}/><span><b>{shippingCampaignActive ? "Kargo bizden" : "Ücretsiz kargo"}</b><small>{shippingCampaignActive ? "31 Ekim’e kadar tüm siparişlerde" : "5.000 TL ve üzeri siparişlerde"}</small></span></div>
+      <div><Truck size={17}/><span><b>{shippingCampaignActive ? "Kargo bizden" : "Ücretsiz kargo"}</b><small>{isBlackFridayActive() ? "30 Kasım sonuna kadar tüm siparişlerde" : shippingCampaignActive ? "31 Ekim’e kadar tüm siparişlerde" : "5.000 TL ve üzeri siparişlerde"}</small></span></div>
       <div><RotateCcw size={17}/><span><b>İade ve değişim desteği</b><small><Link href="/kargo-iade">Koşulları inceleyin →</Link></small></span></div>
       <div><ShieldCheck size={17}/><span><b>Güvenli ödeme</b><small>3D Secure kart ve EFT</small></span></div>
     </div>

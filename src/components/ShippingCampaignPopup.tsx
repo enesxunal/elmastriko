@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Truck, X } from "lucide-react";
 import { useShippingCampaign } from "@/hooks/useShippingCampaign";
+import { isBlackFridayActive } from "@/lib/black-friday";
 import { canShowShippingPopup, POPUP_STORAGE_KEY, POPUP_COOLDOWN } from "@/lib/shipping-campaign";
 
 function rememberShown(now: number) {
@@ -26,13 +27,13 @@ export default function ShippingCampaignPopup() {
   const [visible, setVisible] = useState(false);
   const excluded = /^\/(checkout|sepet|odeme|yonetim|hesabim|auth|influencer|siparis-basarili|siparis-takip)(\/|$)/.test(pathname || "");
   useEffect(() => {
-    if (!active || excluded) return;
+    if (!active || excluded || isBlackFridayActive()) return;
     const timer = window.setTimeout(() => {
       if (canShowShippingPopup(lastShown()) && rememberShown(Date.now())) setVisible(true);
     }, 1500);
     return () => window.clearTimeout(timer);
   }, [active, excluded, pathname]);
-  if (!active || excluded || !visible) return null;
+  if (!active || excluded || !visible || isBlackFridayActive()) return null;
   return <aside className="shipping-campaign-dialog shipping-campaign-toast" role="status" aria-label="Ücretsiz kargo duyurusu">
     <div className="shipping-campaign-inner">
       <button type="button" className="shipping-campaign-close" aria-label="Duyuruyu kapat" onClick={() => setVisible(false)}><X size={20}/></button>
