@@ -351,11 +351,16 @@ export default async function StatisticsPage({
         cartSessions={confirmedCartSessions}
         cartEventDetails={cartEventDetails}
         verifiedSales={{orders:paidOrders.length,revenue,error:Boolean(ordersResult.error)}}/>
+      <div id="analitik-kampanya" className="analytics-anchor-group">
+        <div className="analytics-section-heading"><span>PAZARLAMA</span><h2>Kampanya performansı</h2><p>Banner ve popup etkileşimleri; satışlarla karıştırılmadan izlenir.</p></div>
       <CampaignPerformancePanel events={campaignEvents} error={Boolean(campaignEventsResult.error)} truncated={campaignEvents.length === 10000}/>
+      </div>
+      <div id="analitik-teknik" className="analytics-anchor-group">
       <CheckoutDiagnosticsDashboard productNames={Object.fromEntries(products.map(p=>[p.slug,p.name]))} report={checkoutDiagnosticsResult.error ? null : checkoutDiagnosticsResult.data as CheckoutReport | null}/>
+      </div>
 
       {ordersResult.error && <div className="admin-alert error">Satış verisi okunamadı; aşağıdaki satış değerleri doğrulanamıyor.</div>}
-      <section className="analytics-traffic-title commerce-title"><div><span>TİCARET ANALİTİĞİ</span><h2>Satış ve ürün performansı</h2><p className="analytics-helper">Satış ve ciro yalnızca ödemesi tamamlanan siparişlerden hesaplanır. Sipariş kaydı sayısı ödenmemiş kayıtları da içerir. Teknik denemeler hariçtir.</p></div></section>
+      <section id="analitik-urunler" className="analytics-traffic-title commerce-title"><div><span>TİCARET ANALİTİĞİ</span><h2>Satış ve ürün performansı</h2><p className="analytics-helper">Satış ve ciro yalnızca ödemesi tamamlanan siparişlerden hesaplanır. Sipariş kaydı sayısı ödenmemiş kayıtları da içerir. Teknik denemeler hariçtir.</p></div></section>
 
       <section className="analytics-kpis">
         {kpis.map(({ label, value, change: delta, icon: Icon, note }) => (

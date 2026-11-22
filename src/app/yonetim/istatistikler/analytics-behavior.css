@@ -46,3 +46,31 @@
 .behavior-sales-breakdown strong{font-size:30px;line-height:1.1;color:#173d31}
 .behavior-sales-breakdown span{font-size:11px;color:#60776a;line-height:1.4}
 @media(max-width:700px){.behavior-sales-breakdown{grid-template-columns:1fr}.behavior-sales-breakdown>div{padding:14px}}
+
+/* 2026 analytics information hierarchy: simple overview, optional drilldown. */
+.analytics-section-nav{position:sticky;top:70px;z-index:12;display:flex;align-items:center;gap:6px;padding:10px 12px;margin:18px 0 25px;max-width:100%;overflow-x:auto;white-space:nowrap;background:rgba(249,250,247,.97);backdrop-filter:blur(12px);border:1px solid #dce5da;border-radius:13px;box-shadow:0 8px 24px rgba(18,54,36,.055);scrollbar-width:thin}
+.analytics-section-nav a{display:inline-flex;align-items:center;min-height:39px;padding:9px 14px;border-radius:8px;color:#3a5747;font-size:12px;font-weight:650;text-decoration:none;transition:background .15s,color .15s}
+.analytics-section-nav a:hover,.analytics-section-nav a:focus-visible{background:#173d31;color:#fff;outline:none}
+.analytics-page [id^="analitik-"]{scroll-margin-top:158px}
+.analytics-anchor-group{display:grid;gap:12px}
+.analytics-section-heading{padding:3px 1px 0;display:grid;gap:4px}
+.analytics-section-heading>span{color:#77907c;letter-spacing:.13em;font-size:10px;font-weight:750}
+.analytics-section-heading h2{font-size:22px;letter-spacing:-.03em;margin:0;color:#20372a}
+.analytics-section-heading p{font-size:12px;color:#718275;margin:0}
+.analytics-disclosure{padding:0!important;overflow:hidden}
+.analytics-disclosure>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 21px}
+.analytics-disclosure>summary::-webkit-details-marker{display:none}
+.analytics-disclosure>summary>span:first-child{display:grid;gap:4px}
+.analytics-disclosure>summary small{font-size:10px;letter-spacing:.1em;color:#788c7e;font-weight:700}
+.analytics-disclosure>summary b{font-size:16px;color:#193a29}
+.analytics-disclosure-action{border:1px solid #d3e1d5;border-radius:7px;padding:8px 11px;color:#285741;font-size:11px;font-weight:700;flex-shrink:0}
+.analytics-disclosure[open] .analytics-disclosure-action{background:#eaf2e9}
+.analytics-disclosure-content{padding:0 21px 20px}
+.analytics-disclosure-content>.admin-section-head{display:none}
+.analytics-detail-toggle{border-top:1px solid #e2e8df;margin-top:14px;padding-top:12px}
+.analytics-detail-toggle>summary{cursor:pointer;color:#23513d;font-size:12px;font-weight:700;padding:10px 0;list-style:revert}
+.analytics-detail-toggle[open]>summary{margin-bottom:12px}
+.analytics-page .behavior-event-totals{margin-bottom:16px}
+.analytics-page .analytics-traffic-title.commerce-title{padding-top:14px}
+.analytics-page .session-journey-list,.analytics-page .customer-journeys{max-height:900px;overflow-y:auto;scrollbar-width:thin}
+@media(max-width:760px){.analytics-section-nav{top:53px;border-radius:9px;margin:12px 0 18px;padding:7px;gap:3px}.analytics-section-nav a{padding:8px 10px;font-size:11px}.analytics-page [id^="analitik-"]{scroll-margin-top:125px}.analytics-section-heading h2{font-size:19px}.analytics-disclosure>summary{padding:16px}.analytics-disclosure-content{padding:0 14px 16px}.analytics-disclosure-action{font-size:10px;padding:7px}}

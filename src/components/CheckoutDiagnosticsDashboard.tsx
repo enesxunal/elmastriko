@@ -17,6 +17,8 @@ export default function CheckoutDiagnosticsDashboard({ report, productNames = {}
       })}</div>
       <p className="analytics-helper">“Ödeme sayfası hazır”, üst tablodaki InitiateCheckout ile aynı kayıttır. Sayfayı açmak, forma başlamak veya ödeme yapmak anlamına gelmez. Havale ve kart ayrı adımlardır.</p>
       {report.issues.length>0&&<div className="behavior-table-scroll"><h3>Kaydedilen hatalar</h3><table><thead><tr><th>Adım</th><th>Hata</th><th>Alan</th><th>Olay</th></tr></thead><tbody>{report.issues.map((row,i)=><tr key={i}><td>{checkoutStageLabels[row.stage]}</td><td>{checkoutErrorLabels[row.code]||"Bilinmeyen neden"}{row.provider_code?` · Sağlayıcı kodu ${row.provider_code}`:""}</td><td>{checkoutFieldLabels[row.field_name||""]||groups[row.field_group||""]||"—"}</td><td>{row.count}</td></tr>)}</tbody></table></div>}
+      <details className="analytics-detail-toggle checkout-journey-details">
+        <summary>Son müşteri ziyaretlerini ve ödeme adımlarını incele</summary>
       <h3>Son müşteri ziyaretleri</h3>
       <p className="analytics-helper">Seçili dönemdeki son 30 ziyaret. Ayrıntıyı açarak sıralı adımları ve kaydedilen hataları görebilirsiniz.</p>
       {!report.recent.length?<p>Bu dönemde kaydedilen sepet veya ödeme adımı yok.</p>:<div className="customer-journeys">{report.recent.map(row=><details className="customer-journey" key={row.attempt_id}>
@@ -25,6 +27,7 @@ export default function CheckoutDiagnosticsDashboard({ report, productNames = {}
           <time dateTime={event.at}>{time(event.at)}</time><div><b>{checkoutStageLabels[event.stage]||event.stage}</b>{(event.product_name||event.path)&&<span>{event.product_name||(event.path?.startsWith("/urun/")?productNames[toCatalogProductSlug(event.path.slice(6))]:null)||journeyPageLabel(event.path)}</span>}{event.code&&<span className="journey-error">{checkoutErrorLabels[event.code]||"Kaydedilen hata"}{event.field_name?` · ${checkoutFieldLabels[event.field_name]||"Alan"}`:event.field_group?` · ${groups[event.field_group]||"Alan grubu"}`:""}{event.provider_code?` · Sağlayıcı kodu ${event.provider_code}`:""}</span>}</div>
         </li>)}</ol>{row.event_count>row.timeline.length&&<p className="analytics-helper">Bu ziyaretin son {row.timeline.length} adımı gösteriliyor ({row.event_count} kayıt).</p>}
       </details>)}</div>}
+      </details>
       <p className="analytics-helper">Form ve kart bilgilerinin içeriği kaydedilmez. Hatalarda yalnızca alan adı tutulur. Yeni alan ayrıntıları {report.detailStartedAt?time(report.detailStartedAt):"bu güncelleme"} itibarıyla toplanır; geçmişte kaydedilmemiş etkileşim veya ayrılma nedeni üretilemez. 30 dk sessizlik, ziyaretçinin neden ayrıldığını kanıtlamaz.</p>
     </>}
   </section>;
