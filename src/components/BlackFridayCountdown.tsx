@@ -14,13 +14,13 @@ export default function BlackFridayCountdown() {
   }, []);
 
   // No misleading campaign after expiry, including on pages left open.
-  if (now !== null && !isBlackFridayActive(now)) return null;
+  if (!isBlackFridayActive(now ?? Date.now())) return null;
   const ms = Math.max(0, BLACK_FRIDAY_END_MS - (now ?? BLACK_FRIDAY_END_MS));
   const days = Math.floor(ms / 86400000);
   const hours = Math.floor((ms / 3600000) % 24);
   const minutes = Math.floor((ms / 60000) % 60);
   const seconds = Math.floor((ms / 1000) % 60);
-  const two = (n: number) => String(n).padStart(2, "0");
+  const two = (n: number) => now === null ? "--" : String(n).padStart(2, "0");
 
   return <div className="bf-countdown" aria-label="Black Friday kampanyası">
     <Link href="/yeni-gelenler" className="bf-countdown-message">
