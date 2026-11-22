@@ -1,5 +1,6 @@
 "use client";
 import { checkoutAttemptId, trackCheckoutProgress } from "@/lib/checkout-diagnostics-client";
+import { blackFridayDiscount, isBlackFridayActive } from "@/lib/black-friday";
 import { CHECKOUT_FIELDS, type CheckoutField } from "@/lib/checkout-diagnostics";
 import { trackCheckoutStart } from "@/lib/commerce-tracking";
 import { analyticsOrderContext, flushAnalytics } from "@/lib/analytics-client";
@@ -110,7 +111,8 @@ export default function CheckoutPage() {
   });
   const hasUnknownPrice = lines.some(x => x.unitPrice === null);
   const subtotal = lines.reduce((sum, x) => sum + ((x.unitPrice || 0) * x.line.qty), 0);
-  const discount = coupon ? Math.round(subtotal * coupon.percent) / 100 : 0;
+  const blackFriday = isBlackFridayActive();
+  const discount = blackFriday ? blackFridayDiscount(subtotal) : coupon ? Math.round(subtotal * coupon.percent) / 100 : 0;
   const discountedSubtotal = subtotal - discount;
   const freeShipping = discountedSubtotal >= freeShippingThreshold;
   const effectiveShippingFee = lines.length === 0 ? 0 : freeShipping ? 0 : shippingFee;
@@ -292,7 +294,7 @@ export default function CheckoutPage() {
                 postalCode,
                 addressLine,
               },
-          affiliateCode: coupon?.code || undefined,
+          affiliateCode: blackFriday ? undefined : coupon?.code || undefined,
           items: lines.map(({ line }) => ({
             slug: line.slug,
             qty: line.qty,
@@ -471,12 +473,13 @@ export default function CheckoutPage() {
       {loading && cart.length > 0 ? <p>Sepet güncelleniyor...</p> : lines.length === 0 ? <p>Sepetiniz boş.</p> : lines.map(({ line, product }) => <div className="mini-product" key={line.slug + line.size + line.color}><img src={product.image} alt={product.name}/><p><b>{product.name}</b><br/><small>{line.qty} adet {line.size ? "· " + line.size : ""}{line.color ? " · " + line.color : ""}</small></p></div>)}
       <hr/>
       <p><span>Ara toplam</span><b>{hasUnknownPrice ? "Fiyat listesi bekleniyor" : formatPrice(subtotal)}</b></p>
-      <div className="affiliate-checkout-promo"><label htmlFor="affiliate-promo-code">İndirim kodu</label><div><input id="affiliate-promo-code" type="text" autoComplete="off" placeholder="İndirim kodu" value={couponInput} onChange={e=>{setCouponInput(e.target.value.toUpperCase());if (coupon?.code!==e.target.value.toUpperCase()){setCoupon(null);setCouponMessage("");}}}/><button type="button" onClick={applyCoupon} disabled={couponLoading}>{couponLoading?"Kontrol ediliyor":"Uygula"}</button></div>{couponMessage&&<small role="status">{couponMessage}</small>}{coupon&&<button type="button" className="affiliate-promo-clear" onClick={()=>{setCoupon(null);setCouponInput("");setCouponMessage("İndirim kaldırıldı.");void fetch("/api/influencer/clear",{method:"POST"}).catch(()=>undefined)}}>Kodu kaldır</button>}</div>
-      {coupon&&<p><span>{coupon.code} indirimi (%{coupon.percent})</span><b>-{formatPrice(discount)}</b></p>}
+      {!blackFriday && <div className="affiliate-checkout-promo"><label htmlFor="affiliate-promo-code">İndirim kodu</label><div><input id="affiliate-promo-code" type="text" autoComplete="off" placeholder="İndirim kodu" value={couponInput} onChange={e=>{setCouponInput(e.target.value.toUpperCase());if (coupon?.code!==e.target.value.toUpperCase()){setCoupon(null);setCouponMessage("");}}}/><button type="button" onClick={applyCoupon} disabled={couponLoading}>{couponLoading?"Kontrol ediliyor":"Uygula"}</button></div>{couponMessage&&<small role="status">{couponMessage}</small>}{coupon&&<button type="button" className="affiliate-promo-clear" onClick={()=>{setCoupon(null);setCouponInput("");setCouponMessage("İndirim kaldırıldı.");void fetch("/api/influencer/clear",{method:"POST"}).catch(()=>undefined)}}>Kodu kaldır</button>}</div>}
+      {blackFriday && <p><span>BLACK FRIDAY · %25 indirim</span><b>-{formatPrice(discount)}</b></p>}
+      {!blackFriday && coupon&&<p><span>{coupon.code} indirimi (%{coupon.percent})</span><b>-{formatPrice(discount)}</b></p>}
       <p><span>Kargo</span><b>{commerceLoading ? "Hesaplanıyor" : freeShipping ? "Ücretsiz" : hasUnknownPrice ? "Hesaplanacak" : effectiveShippingFee === null ? "Kargo tutarı onayda" : formatPrice(effectiveShippingFee)}</b></p>
       <p className="checkout-grand-total"><span>Toplam</span><b>{hasUnknownPrice ? "—" : commerceLoading ? "Hesaplanıyor" : total === null ? "Kargo tutarı onayda" : formatPrice(total)}</b></p>
       <div className="checkout-trust">
-        {shippingCampaignActive && <span><b>Kargo bizden</b><small>31 Ekim sonuna kadar minimum tutar olmadan ücretsiz.</small></span>}
+        {shippingCampaignActive && <span><b>Kargo bizden</b><small>{blackFriday ? "30 Kasım sonuna kadar minimum tutar olmadan ücretsiz." : "31 Ekim sonuna kadar minimum tutar olmadan ücretsiz."}</small></span>}
         {paymentMethod === "card"
           ? <span><b>3D Secure koruması</b><small>Kart bilgileriniz Elmas Triko sunucularında tutulmaz.</small></span>
           : <span><b>Manuel ödeme kontrolü</b><small>EFT/Havale ödemesi banka hesabı kontrol edildikten sonra onaylanır.</small></span>}

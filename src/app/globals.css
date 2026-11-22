@@ -1223,3 +1223,21 @@ footer{background:#101210;color:white;padding:70px 4vw 22px}
 .checkout-google-option{margin:12px 0 22px;max-width:420px}
 .checkout-google-option>small{display:block;margin-top:8px;font-size:11px;line-height:1.5;color:#71695f}
 @media(max-width:700px){.google-auth-button{min-height:50px;font-size:13px}.checkout-google-option{max-width:none}}
+
+/* Black Friday — headerın üstünde, masaüstü/mobil geri sayım. */
+.bf-countdown{min-height:56px;padding:8px 3vw;display:flex;align-items:center;justify-content:center;gap:28px;background:#571d32;color:#fff6e9;border-bottom:1px solid #8d5062}
+.bf-countdown-message{display:flex;align-items:center;gap:13px;min-width:0;font-size:11px;letter-spacing:.06em;font-weight:600;text-align:center}
+.bf-countdown-message>strong{font-size:15px;letter-spacing:.16em;white-space:nowrap}
+.bf-countdown-message b{color:#ffda85}
+.bf-countdown-message em{font-style:normal;color:#d9a8b8}
+.bf-countdown-clock{display:flex;align-items:center;gap:4px;white-space:nowrap}
+.bf-countdown-clock>.bf-clock-label{font-size:9px;letter-spacing:.15em;margin-right:7px;color:#e8cfda}
+.bf-countdown-clock>span:not(.bf-clock-label){display:grid;place-items:center;min-width:32px}
+.bf-countdown-clock b{font-size:17px;font-variant-numeric:tabular-nums;line-height:1.25}
+.bf-countdown-clock small{font-size:8px;letter-spacing:.07em;color:#edccd6}
+.bf-countdown-clock i{font-style:normal;font-size:17px;align-self:flex-start}
+.bf-sale-price{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.bf-sale-price del{color:#948b84;font-size:.8em;font-weight:400}
+.bf-sale-price strong{color:#8b203e}
+.bf-sale-tag{font-size:10px;letter-spacing:.07em;font-weight:700;color:#9b2444}
+@media(max-width:700px){.bf-countdown{min-height:77px;gap:7px;flex-direction:column;padding:8px 9px}.bf-countdown-message{gap:6px;flex-wrap:wrap;justify-content:center;font-size:10px;letter-spacing:0}.bf-countdown-message>strong{font-size:13px;letter-spacing:.1em}.bf-countdown-clock>.bf-clock-label{font-size:8px}.bf-countdown-clock b{font-size:14px}.bf-countdown-clock small{font-size:7px}}

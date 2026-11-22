@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 "use client";
 import { toProductSeoSlug } from "@/lib/product-seo-slugs";
+import { blackFridayPrice, isBlackFridayActive } from "@/lib/black-friday";
 
 import AgencySignature from "./AgencySignature";
 
@@ -26,7 +27,7 @@ function displayPrice(price: number | null) {
   return new Intl.NumberFormat("tr-TR", {
     style: "currency",
     currency: "TRY",
-    maximumFractionDigits: 0,
+    maximumFractionDigits: 2,
   }).format(price);
 }
 
@@ -138,7 +139,7 @@ export default function Home({ initialProducts = [] }: { initialProducts?: HomeP
                   <p>{product.colors?.length ? product.colors.join(" / ") : "Elmas Triko"}</p>
                 </div>
                 <div className="price-row">
-                  <strong>{displayPrice(product.price)}</strong>
+                  <span className="bf-sale-price">{isBlackFridayActive() && product.price !== null ? <><del>{displayPrice(product.price)}</del><strong>{displayPrice(blackFridayPrice(product.price))}</strong></> : <strong>{displayPrice(product.price)}</strong>}</span>
                   <FavoriteButton slug={product.slug}/>
                 </div>
               </div>

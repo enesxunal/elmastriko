@@ -6,6 +6,7 @@ import { toProductSeoSlug } from "@/lib/product-seo-slugs";
 import { Check, ShoppingBag } from "lucide-react";
 import { useState } from "react";
 import { Product, formatPrice } from "@/lib/catalog";
+import { blackFridayPrice, isBlackFridayActive } from "@/lib/black-friday";
 import FavoriteButton from "./FavoriteButton";
 import { useStore } from "./StoreProvider";
 
@@ -31,11 +32,11 @@ export default function ProductCard({ product }: { product: Product }) {
   return <article className="catalog-card">
     <Link href={"/urun/" + toProductSeoSlug(product.slug)} className="catalog-card-image">
       <img src={product.image} alt={`Elmas Triko ${product.name}`}/>
-      {product.badge && <span>{product.badge}</span>}
+      {isBlackFridayActive() ? <span>BLACK FRIDAY -%25</span> : product.badge && <span>{product.badge}</span>}
     </Link>
     <div className="catalog-card-info">
       <div><Link href={"/urun/" + toProductSeoSlug(product.slug)}><h3>{product.name}</h3></Link><p>{product.colors[0]}</p></div>
-      <div className="catalog-price"><strong>{formatPrice(product.price)}</strong><FavoriteButton slug={product.slug}/></div>
+      <div className="catalog-price"><span className="bf-sale-price">{isBlackFridayActive() && product.price !== null ? <><del>{formatPrice(product.price)}</del><strong>{formatPrice(blackFridayPrice(product.price))}</strong></> : <strong>{formatPrice(product.price)}</strong>}</span><FavoriteButton slug={product.slug}/></div>
     </div>
     <button
       type="button"

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createPortal } from "react-dom";
 import { Heart, Minus, Plus, RotateCcw, ShieldCheck, ShoppingBag, Truck } from "lucide-react";
 import { Product, formatPrice } from "@/lib/catalog";
+import { blackFridayPrice, isBlackFridayActive } from "@/lib/black-friday";
 import { useStore } from "./StoreProvider";
 import { useMemo, useState, useEffect, useCallback } from "react";
 import { trackProductView, trackCartAddition } from "@/lib/commerce-tracking";
@@ -98,8 +99,8 @@ export default function ProductPurchase({ product, selectedColor, onColorChange 
   return <>
     <span className="product-category">{product.category === "kadin" ? "Kadın" : "Erkek"} / {product.type}</span>
     <h1>{product.name}</h1>
-    <div className="product-main-price">{formatPrice(selectedPrice)}</div>
-    <p className="product-shipping-note">{shippingCampaignActive ? "31 Ekim sonuna kadar kargo ücretsiz. Minimum tutar yok." : shippingLoading ? "Kargo bilgisi yükleniyor…" : selectedPrice !== null && selectedPrice * safeQty >= freeShippingThreshold ? "Bu seçimde kargo ücretsiz." : shippingFee !== null ? `Kargo ${formatPrice(shippingFee)} · ${freeShippingThreshold.toLocaleString("tr-TR")} TL ve üzeri ücretsiz.` : "Kargo bedeli sepette gösterilir."}</p>
+    <div className="product-main-price">{isBlackFridayActive() && selectedPrice !== null ? <span className="bf-sale-price"><del>{formatPrice(selectedPrice)}</del><strong>{formatPrice(blackFridayPrice(selectedPrice))}</strong><small className="bf-sale-tag">BLACK FRIDAY -%25</small></span> : formatPrice(selectedPrice)}</div>
+    <p className="product-shipping-note">{isBlackFridayActive() ? "30 Kasım sonuna kadar tüm siparişlerde kargo ücretsiz." : shippingCampaignActive ? "31 Ekim sonuna kadar kargo ücretsiz. Minimum tutar yok." : shippingLoading ? "Kargo bilgisi yükleniyor…" : selectedPrice !== null && selectedPrice * safeQty >= freeShippingThreshold ? "Bu seçimde kargo ücretsiz." : shippingFee !== null ? `Kargo ${formatPrice(shippingFee)} · ${freeShippingThreshold.toLocaleString("tr-TR")} TL ve üzeri ücretsiz.` : "Kargo bedeli sepette gösterilir."}</p>
     <p className="product-desc">{product.description}</p>
 
     {product.colors.length > 1 && <div className="product-option">

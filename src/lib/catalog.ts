@@ -84,5 +84,5 @@ export const STANDARD_SHIPPING_FEE: number | null = null;
 
 export function formatPrice(price: number | null) {
   if (price === null) return "Fiyat yakında";
-  return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 }).format(price);
+  return new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 2 }).format(price);
 }

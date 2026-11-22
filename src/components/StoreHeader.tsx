@@ -1,6 +1,8 @@
 "use client";
 
 import { useShippingCampaign } from "@/hooks/useShippingCampaign";
+import { isBlackFridayActive } from "@/lib/black-friday";
+import BlackFridayCountdown from "./BlackFridayCountdown";
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
@@ -36,8 +38,9 @@ export default function StoreHeader() {
 
   return (
     <>
+      <BlackFridayCountdown/>
       <div className="topbar">
-        <span>{shippingCampaignActive ? "31 Ekim’e kadar kargo bizden" : "5.000 TL ve üzeri ücretsiz kargo"}</span>
+        <span>{isBlackFridayActive() ? "30 Kasım sonuna kadar tüm siparişlerde kargo ücretsiz" : shippingCampaignActive ? "31 Ekim’e kadar kargo bizden" : "5.000 TL ve üzeri ücretsiz kargo"}</span>
         <span className="topbar-center">Yeni sezon · 2026</span>
         <span>Güvenli ödeme</span>
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { trackCartAddition } from "@/lib/commerce-tracking";
+import { blackFridayDiscount, blackFridayPrice, isBlackFridayActive } from "@/lib/black-friday";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import Link from "next/link";
@@ -18,10 +19,13 @@ export default function CartPage() {
   const { freeShippingThreshold, shippingFee, shippingCampaignActive, loading: commerceLoading } = useCommerceSettings();
   const hasUnknownPrice = lines.some(x => x.unitPrice === null);
   const subtotal = lines.reduce((sum, x) => sum + ((x.unitPrice || 0) * x.line.qty), 0);
-  const freeShipping = subtotal >= freeShippingThreshold;
+  const blackFriday = isBlackFridayActive();
+  const discount = blackFriday ? blackFridayDiscount(subtotal) : 0;
+  const discountedSubtotal = subtotal - discount;
+  const freeShipping = discountedSubtotal >= freeShippingThreshold;
   const effectiveShippingFee = lines.length === 0 ? 0 : freeShipping ? 0 : shippingFee;
-  const remaining = Math.max(0, freeShippingThreshold - subtotal);
-  const total = effectiveShippingFee === null ? null : subtotal + effectiveShippingFee;
+  const remaining = Math.max(0, freeShippingThreshold - discountedSubtotal);
+  const total = effectiveShippingFee === null ? null : discountedSubtotal + effectiveShippingFee;
   const sentView = useRef(false);
   useEffect(() => { if (!loading && lines.length && !sentView.current) {sentView.current=true;gaEvent("view_cart",gaCart(lines));} },[loading,lines]);
 
@@ -31,19 +35,20 @@ export default function CartPage() {
       <section className="cart-items">
         <div className="shipping-progress">
           <div><span style={{width: (freeShippingThreshold === 0 ? 100 : Math.min(100, (subtotal / freeShippingThreshold) * 100)) + "%"}}/></div>
-          <p>{shippingCampaignActive ? "31 Ekim sonuna kadar tüm siparişlerde kargo ücretsiz. Minimum tutar yok." : subtotal === 0 ? freeShippingThreshold.toLocaleString("tr-TR") + " TL ve üzeri siparişlerde kargo ücretsiz." : freeShipping ? "Ücretsiz kargo kazandınız." : "Ücretsiz kargo için " + remaining.toLocaleString("tr-TR") + " TL daha ekleyin."}</p>
+          <p>{blackFriday ? "30 Kasım sonuna kadar tüm siparişlerde kargo ücretsiz." : shippingCampaignActive ? "31 Ekim sonuna kadar tüm siparişlerde kargo ücretsiz. Minimum tutar yok." : subtotal === 0 ? freeShippingThreshold.toLocaleString("tr-TR") + " TL ve üzeri siparişlerde kargo ücretsiz." : freeShipping ? "Ücretsiz kargo kazandınız." : "Ücretsiz kargo için " + remaining.toLocaleString("tr-TR") + " TL daha ekleyin."}</p>
         </div>
         {loading && cart.length > 0 ? <div className="cart-loading">Sepet güncelleniyor...</div> :
         lines.length === 0 ? <div className="empty-cart"><span>SEPETİNİZ BOŞ</span><h2>Henüz ürün eklemediniz.</h2><Link href="/kadin">Alışverişe başla →</Link></div> :
         lines.map(({ line, product, unitPrice }) => <div className="cart-line" key={line.slug + line.size + line.color}>
           <Link href={"/urun/" + product.slug}><img src={product.image} alt={product.name}/></Link>
           <div className="cart-line-main"><Link href={"/urun/" + product.slug}><h3>{product.name}</h3></Link><p>{line.size && "Beden: " + line.size}{line.color && " · Renk: " + line.color}</p><div className="cart-qty"><button type="button" aria-label="Adedi azalt" onClick={() => { const item=gaItem(product,1,unitPrice,line.color,line.size);if(item) gaEvent("remove_from_cart",{currency:"TRY",value:item.price,items:[item]});setQty(line,line.qty-1); }}><Minus size={14}/></button><span>{line.qty}</span><button type="button" aria-label="Adedi artır" onClick={() => { trackCartAddition(product,{...line,qty:1},unitPrice);setQty(line,line.qty+1); }}><Plus size={14}/></button></div></div>
-          <div className="cart-line-side"><strong>{formatPrice(unitPrice)}</strong><button onClick={() => {const item=gaItem(product,line.qty,unitPrice,line.color,line.size);if(item) gaEvent("remove_from_cart",{currency:"TRY",value:item.price*line.qty,items:[item]});removeFromCart(line);}} aria-label="Kaldır"><Trash2 size={16}/></button></div>
+          <div className="cart-line-side"><span className="bf-sale-price">{blackFriday && unitPrice !== null ? <><del>{formatPrice(unitPrice)}</del><strong>{formatPrice(blackFridayPrice(unitPrice))}</strong></> : <strong>{formatPrice(unitPrice)}</strong>}</span><button onClick={() => {const item=gaItem(product,line.qty,unitPrice,line.color,line.size);if(item) gaEvent("remove_from_cart",{currency:"TRY",value:item.price*line.qty,items:[item]});removeFromCart(line);}} aria-label="Kaldır"><Trash2 size={16}/></button></div>
         </div>)}
       </section>
       <aside className="cart-summary premium-cart-summary">
         <div className="summary-kicker">SİPARİŞ ÖZETİ</div><h2>Toplamınız</h2>
         <div><span>Ara toplam</span><b>{hasUnknownPrice ? "Fiyat listesi bekleniyor" : formatPrice(subtotal)}</b></div>
+        {blackFriday && <div><span>BLACK FRIDAY · %25 indirim</span><b>-{formatPrice(discount)}</b></div>}
         <div><span>Kargo</span><b>{commerceLoading ? "Hesaplanıyor" : freeShipping ? "Ücretsiz" : hasUnknownPrice ? "Hesaplanacak" : effectiveShippingFee === null ? "Kargo tutarı onayda" : formatPrice(effectiveShippingFee)}</b></div>
         <div className="summary-total"><span>Toplam</span><b>{hasUnknownPrice || total === null ? "—" : formatPrice(total)}</b></div>
         {lines.length > 0 && total !== null && !hasUnknownPrice && !commerceLoading ? <Link href="/checkout">Güvenli Ödemeye Geç</Link> : <span className="disabled-checkout">Güvenli Ödemeye Geç</span>}

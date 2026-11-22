@@ -1,4 +1,5 @@
 import { recordCheckoutEvent } from "@/lib/checkout-diagnostics-server";
+import { isBlackFridayActive, blackFridayDiscount } from "@/lib/black-friday";
 import { checkoutErrorCode, type CheckoutDiagnosticContext } from "@/lib/checkout-diagnostics";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -63,6 +64,11 @@ export async function POST(request: NextRequest) {
   if (!validatedPhone) return NextResponse.json({ error: "Telefon numarasını 05XX XXX XX XX biçiminde girin." }, { status: 400 });
   payload.phone = validatedPhone;
 
+  // Black Friday replaces all pre-existing discount codes; do not allow direct
+  // API callers to stack influencer promotions during the campaign.
+  const blackFriday = isBlackFridayActive();
+  if (blackFriday) delete payload.affiliateCode;
+
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("create_store_order", { payload });
 
@@ -78,8 +84,37 @@ export async function POST(request: NextRequest) {
   }
 
   const result = (data || {}) as OrderResult;
-  // The database transaction owns shipping, discounts and the final total.
-  // Do not overwrite its campaign-aware result with a second calculation.
+  // The existing DB function creates and reserves the order from trusted
+  // catalog prices. Only then apply the limited Black Friday campaign, before
+  // the order number or payment initiation is returned to the shopper.
+  if (blackFriday) {
+    const subtotal = Number(result.subtotal);
+    if (!result.orderId || !Number.isFinite(subtotal) || subtotal <= 0) {
+      console.error("Black Friday order response is incomplete");
+      return NextResponse.json({ error: "İndirimli sipariş tutarı doğrulanamadı. Ödeme başlatılmadı." }, { status: 503 });
+    }
+    const discountTotal = blackFridayDiscount(subtotal);
+    const grandTotal = Math.round((subtotal - discountTotal) * 100) / 100;
+    const { data: updated, error: updateError } = await createAdminClient()
+      .from("orders").update({
+        discount_total: discountTotal, shipping_fee: 0, grand_total: grandTotal,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", result.orderId)
+      .eq("payment_status", "pending")
+      .eq("status", "awaiting_payment")
+      .select("id,subtotal,discount_total,shipping_fee,grand_total");
+    const stored = updated?.[0];
+    if (updateError || updated?.length !== 1 ||
+        Math.abs(Number(stored?.subtotal) - subtotal) > 0.001 ||
+        Math.abs(Number(stored?.discount_total) - discountTotal) > 0.001 ||
+        Number(stored?.shipping_fee) !== 0 ||
+        Math.abs(Number(stored?.grand_total) - grandTotal) > 0.001) {
+      console.error("Black Friday order pricing could not be verified", updateError?.code);
+      return NextResponse.json({ error: "Kampanya tutarı kaydedilemedi. Ödeme başlatılmadı." }, { status: 503 });
+    }
+    Object.assign(result, { discountTotal, shippingFee: 0, grandTotal });
+  }
 
   if (result.orderId && payload.analytics) {
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
