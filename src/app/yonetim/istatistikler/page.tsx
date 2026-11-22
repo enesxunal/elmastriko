@@ -291,30 +291,20 @@ export default async function StatisticsPage({
     { label: "Ödeme Başarı", value: pct(paidRate), change: paidRateChange, icon: PackageCheck, note: "Siparişlerin ödeme oranı" },
   ];
 
-  // Only confirmed add_to_cart events qualify for the visitor journey.
-  // No inference from /sepet visits or checkout pageviews.
-  type RawCartEvent = Record<string, unknown>;
-  let cartEvents: RawCartEvent[] = [];
-  let cartEventsAvailable = false;
-  const possibleEventTables = ["analytics_events", "store_analytics_events", "analytics_event_log"];
-  for (const table of possibleEventTables) {
-    const probe = await supabase.from(table).select("*").limit(1);
-    if (probe.error) continue;
-    const sample = (probe.data || [])[0] as RawCartEvent | undefined;
-    const field = sample ? ("kind" in sample ? "kind" : "event_type" in sample ? "event_type" : "name" in sample ? "name" : null) : "kind";
-    if (!field) continue;
-    const query = await supabase.from(table).select("*").eq(field, "add_to_cart").limit(2000);
-    if (query.error) continue;
-    cartEvents = (query.data || []) as RawCartEvent[];
-    cartEventsAvailable = true;
-    break;
-  }
-  const occurredAt = (event: RawCartEvent): string => String(event.at || event.occurred_at || event.created_at || event.event_at || "");
-  const qualifyingEvents = cartEvents.filter(event => {
-    const at = Date.parse(occurredAt(event));
-    return Number.isFinite(at) && at >= period.from.getTime() && at < period.to.getTime();
-  });
-  const cartSessionIds = [...new Set(qualifyingEvents.map(event => String(event.session_id || event.sessionId || "")))]
+  // Read real add_to_cart events in the requested period. The event table
+  // stores timestamps in occurred_at and product identifiers in product_slug.
+  // Explicit ordering avoids showing stale events when the table grows.
+  const cartEventsResult = await supabase.from("analytics_events")
+    .select("session_id,occurred_at,product_slug")
+    .eq("kind", "add_to_cart")
+    .gte("occurred_at", period.from.toISOString())
+    .lt("occurred_at", period.to.toISOString())
+    .order("occurred_at", { ascending: false }).limit(2000);
+  type RawCartEvent = { session_id: string; occurred_at: string; product_slug: string | null };
+  const qualifyingEvents = (cartEventsResult.data || []) as RawCartEvent[];
+  const cartEventsAvailable = !cartEventsResult.error;
+  const occurredAt = (event: RawCartEvent) => event.occurred_at;
+  const cartSessionIds = [...new Set(qualifyingEvents.map(event => String(event.session_id || "")))]
     .filter(id => /^[a-f0-9]{8}-[a-f0-9-]{27,}$/i.test(id)).slice(0, 500);
   const cartSessionsResult = cartSessionIds.length
     ? await supabase.from("analytics_sessions")
@@ -337,8 +327,8 @@ export default async function StatisticsPage({
     session_id: string; path: string; page_title: string | null; entered_at: string; duration_seconds: number;
   }>;
   const cartEventDetails = qualifyingEvents
-    .filter(event => sessionIds.includes(String(event.session_id || event.sessionId || "")))
-    .map(event => ({session_id:String(event.session_id || event.sessionId),at:occurredAt(event),slug:typeof event.slug === "string" ? event.slug : null}));
+    .filter(event => sessionIds.includes(String(event.session_id || "")))
+    .map(event => ({session_id:String(event.session_id),at:occurredAt(event),slug:typeof event.product_slug === "string" ? event.product_slug : null}));
 
   const campaignEventsResult = await supabase.from("campaign_events")
     .select("kind,campaign_key,session_id")
