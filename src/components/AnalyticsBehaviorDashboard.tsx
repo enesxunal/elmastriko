@@ -13,7 +13,8 @@ function Delta({current,previous}:{current:number;previous:number|undefined}){
   const change=(current-previous)/previous*100;
   return <span className={"behavior-delta "+(change>=0?"up":"down")}>{change>0?"+":""}{change.toLocaleString("tr-TR",{maximumFractionDigits:1})}%</span>;
 }
-export default function AnalyticsBehaviorDashboard({period,report,previous,error,paymentActivity}:{period:AnalyticsRange;report:AnalyticsReport|null;previous:AnalyticsReport|null;error?:boolean;paymentActivity:PaymentActivityReport|null}){
+type SessionPageview = { session_id: string; path: string; page_title: string | null; entered_at: string; duration_seconds: number };
+export default function AnalyticsBehaviorDashboard({period,report,previous,error,paymentActivity,sessionPageviews,sessionDetailsError,cartEventsAvailable,cartSessions,cartEventDetails,verifiedSales}:{period:AnalyticsRange;report:AnalyticsReport|null;previous:AnalyticsReport|null;error?:boolean;paymentActivity:PaymentActivityReport|null;sessionPageviews:SessionPageview[];sessionDetailsError?:boolean;cartEventsAvailable:boolean;cartSessions:AnalyticsReport["recent"];cartEventDetails:Array<{session_id:string;at:string;slug:string|null}>;verifiedSales:{orders:number;revenue:number;error:boolean}}){
   const dateOptions:Intl.DateTimeFormatOptions={day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit"};
   const s=report?.summary,p=previous?.summary;
   const average=s?.measuredSessions?s.activeMs/1000/s.measuredSessions:null;
@@ -58,6 +59,13 @@ export default function AnalyticsBehaviorDashboard({period,report,previous,error
         <p className="analytics-helper">Bilinen teknik testler hariçtir. Aynı oturumdaki adımlar sırayla ve yalnızca bir kez sayılır. Karttan hızlı ekleme, ürünle etkileşime dahildir. Ödeme sayfasını açmak satış sayılmaz.</p>
         <div className="behavior-funnel-steps">{steps.map((step,i)=>{const before=i?steps[i-1].value:step.value;return <article key={step.label}><span className="funnel-step-number">{i+1}</span><h3>{step.label}</h3><strong>{count(step.value)}</strong><div className="funnel-bar"><i style={{width:(f!.sessions?step.value/f!.sessions*100:0)+"%"}}/></div><b>{i?analyticsPercent(step.value,before)+" geçiş":"Başlangıç"}</b><small>{i?`${count(Math.max(0,before-step.value))} oturum bu adımda kaybedildi`:"Seçili aralıkta başlayan oturumlar"}</small><p>{step.help}</p></article>;})}</div>
         <div className="behavior-funnel-foot"><span><b>{count(f!.orders)}</b> ödenmiş sipariş · {f!.revenue.toLocaleString("tr-TR",{style:"currency",currency:"TRY",maximumFractionDigits:0})}</span><span>Ödeme durumu raporun açıldığı andaki durumdur; EFT onayı sonradan dönüşüme yansır.</span></div>
+        <div className="behavior-sales-breakdown">
+          <div><small>Gerçek ödenmiş siparişler</small><strong>{verifiedSales.error?"—":count(verifiedSales.orders)}</strong><span>{verifiedSales.error?"Sipariş verileri okunamadı":verifiedSales.revenue.toLocaleString("tr-TR",{style:"currency",currency:"TRY",maximumFractionDigits:0})+" doğrulanmış ciro"}</span></div>
+          <div><small>Oturuma bağlanan satış</small><strong>{count(f!.purchase)}</strong><span>Yukarıdaki huni dönüşümüne dahil</span></div>
+          <div><small>Oturuma bağlanamayan satış</small><strong>{verifiedSales.error?"—":count(f!.unattributedPaidOrders)}</strong><span>Gerçek satıştan düşülmez, oturum dönüşümüne eklenmez</span></div>
+        </div>
+        <p className="analytics-helper">Gerçek satış: bu dönem ilk kez ödenmiş olarak doğrulanan siparişlerdir (test ve iptaller hariç). Oturum bazlı dönüşüm ayrıca ölçülür.</p>
+
         {f!.unattributedPaidOrders>0&&<p className="behavior-warning">Bu dönemde {count(f!.unattributedPaidOrders)} ödenmiş siparişin ölçülmüş oturum bağlantısı yok. Satış raporunda görünür; huninin dönüşüm oranına eklenmez.</p>}
         <p className="analytics-helper">Huni ve yeni aktif süre ölçümü {report.measurementStartedAt?formatAnalyticsTime(report.measurementStartedAt,dateOptions):"kurulumdan"} itibarıyla birikir. Geçmişte toplanmayan adımlar geriye dönük oluşturulmaz.</p>
       </section>
@@ -68,6 +76,30 @@ export default function AnalyticsBehaviorDashboard({period,report,previous,error
       </section>
       <section className="admin-section"><div className="admin-section-head"><div><span>CİHAZ DAĞILIMI</span><h2>Mobil ve masaüstü</h2></div></div><div className="behavior-devices">{report.devices.map(row=><div key={row.name}><b>{row.name}</b><strong>{count(row.sessions)}</strong><span>{analyticsPercent(row.sessions,s!.sessions)} trafik · {count(row.purchases)} satın alan oturum</span></div>)}</div></section>
       <section className="admin-section"><div className="admin-section-head"><div><span>SON OTURUMLAR</span><h2>Ziyaret akışı</h2></div></div><div className="behavior-table-scroll"><table><thead><tr><th>Başlangıç</th><th>Kaynak</th><th>İlk sayfa</th><th>Son sayfa</th><th>Sayfa</th><th>Aktif süre</th><th>Cihaz</th></tr></thead><tbody>{report.recent.map(row=><tr key={row.id}><td>{formatAnalyticsTime(row.started_at,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</td><td>{row.source}</td><td title={row.entry_path}>{row.entry_path}</td><td title={row.exit_path}>{row.exit_path}</td><td>{row.pageviews}</td><td>{analyticsDuration(row.seconds)}</td><td>{row.device_type}</td></tr>)}</tbody></table>{!report.recent.length&&<p className="behavior-empty">Bu aralıkta oturum kaydı yok.</p>}</div></section>
+      <section className="admin-section session-journey-section">
+        <div className="admin-section-head"><div><span>SEPETE EKLEYEN ZİYARETÇİLER</span><h2>Sepet sonrası müşteri yolculuğu</h2></div></div>
+        <p className="analytics-helper">Yalnızca doğrulanmış Sepete ekle olayı bulunan oturumlar listelenir. Sepet ziyaretleri tek başına dahil edilmez. Her oturumun sayfa ve sepet olaylarını kronolojik görebilirsiniz.</p>
+        {!cartEventsAvailable&&<p className="admin-alert error">Sepete ekleme olayları şu anda doğrulanamıyor. Yanlış oturum göstermemek için bu liste boş bırakıldı; olay tablosunun erişimini kontrol edin.</p>}
+        {sessionDetailsError&&<p className="admin-alert error">Oturum sayfa ayrıntıları şu anda okunamıyor. Özet kayıtlar gösteriliyor.</p>}
+        <div className="session-journey-list">
+          {cartSessions.map((session,index)=>{
+            const pages=sessionPageviews.filter(row=>row.session_id===session.id).sort((a,b)=>a.entered_at.localeCompare(b.entered_at));
+            const cartAdds=cartEventDetails.filter(event=>event.session_id===session.id);
+            const visitedCart=pages.some(row=>row.path==="/sepet");
+            const visitedCheckout=pages.some(row=>row.path.startsWith("/checkout"));
+            return <details className="session-journey-item" key={session.id}>
+              <summary><span className="journey-session-index">{index+1}</span><span className="journey-session-summary"><b>{formatAnalyticsTime(session.started_at,{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})} · {session.source}</b><small>{session.device_type||"Cihaz bilinmiyor"} · {session.pageviews} sayfa · {analyticsDuration(session.seconds)}</small></span><span className="journey-session-last">Son sayfa: <b>{session.exit_path}</b></span><span className="journey-expand">Detayları gör</span></summary>
+              <div className="session-journey-detail">
+                <div className="session-journey-badges"><span>{cartAdds.length} doğrulanmış sepete ekleme</span><span>{visitedCart?"Sepet sayfası ziyaret edildi":"Sepet sayfası kaydı yok"}</span><span>{visitedCheckout?"Ödeme sayfası ziyaret edildi":"Ödeme sayfası kaydı yok"}</span></div>
+                <ol className="session-journey-timeline">{[...pages.map(page=>({kind:"page" as const,at:page.entered_at,page})),...cartAdds.map(event=>({kind:"cart" as const,at:event.at,event}))].sort((a,b)=>a.at.localeCompare(b.at)).map((step,i)=>step.kind==="cart" ? <li key={step.at+"cart"+i}><span className="journey-time">{formatAnalyticsTime(step.at,{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</span><div><strong>Sepete eklendi</strong><p>{step.event.slug || "Ürün bilgisi kayıtlı değil"}</p></div></li> : <li key={step.at+step.page.path+i}><span className="journey-time">{formatAnalyticsTime(step.page.entered_at,{hour:"2-digit",minute:"2-digit",second:"2-digit"})}</span><div><strong>{step.page.path==="/sepet"?"Sepet sayfası":step.page.path.startsWith("/checkout")?"Ödeme adımı":step.page.path.startsWith("/urun/")?"Ürün görüntüleme":"Sayfa ziyareti"}</strong><p>{step.page.path}</p>{step.page.page_title&&<small>{step.page.page_title}</small>}</div><span>{analyticsDuration(step.page.duration_seconds)}</span></li>)}</ol>
+                {!pages.length&&<p className="behavior-empty">Bu oturuma ait ayrıntılı sayfa görüntüleme kaydı bulunamadı.</p>}
+                <p className="journey-end">Son kayıtlı konum: <strong>{session.exit_path}</strong>. Çıkış nedeni ölçülmez.</p>
+              </div>
+            </details>;
+          })}
+          {cartEventsAvailable&&!cartSessions.length&&<p className="behavior-empty">Bu tarih aralığında doğrulanmış sepete ekleme oturumu bulunamadı.</p>}
+        </div>
+      </section>
     </>}
   </>;
 }

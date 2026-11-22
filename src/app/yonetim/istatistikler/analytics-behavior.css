@@ -4,3 +4,45 @@
 @media(max-width:420px){.analytics-page .traffic-kpis{grid-template-columns:1fr 1fr;gap:10px}.analytics-page .traffic-kpis article{padding:14px}.analytics-page .traffic-kpis article>strong{font-size:23px}.behavior-delta{font-size:9px;padding:4px}.behavior-head{flex-wrap:wrap}.behavior-head .analytics-refresh{margin-left:auto}.analytics-metric-tabs{display:grid;grid-template-columns:1fr 1fr}.analytics-metric-tabs button{min-height:44px}}
 
 .behavior-internal-control{display:flex;align-items:center;justify-content:space-between;gap:16px;border:1px solid #dde5dc;border-radius:10px;padding:14px 16px;margin:12px 0 18px;background:#f8faf6}.behavior-internal-control p{font-size:12px;line-height:1.6;margin:0;color:#526356}.behavior-internal-control button{flex-shrink:0;border:1px solid #c6d5c5;border-radius:7px;background:#fff;padding:10px 12px;color:#234e39;font-size:12px;cursor:pointer}@media(max-width:700px){.behavior-internal-control{display:grid}.behavior-internal-control button{justify-self:start}}
+
+/* Admin-only session journey drilldown */
+.session-journey-list{display:grid;gap:10px;margin-top:18px}
+.session-journey-item{border:1px solid #dce5da;border-radius:11px;background:#fff;overflow:hidden}
+.session-journey-item>summary{display:flex;gap:13px;align-items:center;flex-wrap:wrap;min-height:76px;padding:15px;cursor:pointer;list-style:none}
+.session-journey-item>summary::-webkit-details-marker{display:none}
+.journey-session-index{flex:0 0 28px;height:28px;display:grid;place-items:center;border-radius:50%;background:#e5eee3;color:#345a40;font-size:12px}
+.journey-session-summary{display:grid;gap:5px;min-width:170px;flex:1}
+.journey-session-summary b{font-size:13px;color:#263a2e}
+.journey-session-summary small{font-size:11px;color:#7b887c}
+.journey-session-last{flex:1;font-size:11px;color:#657466;min-width:180px;overflow-wrap:anywhere}
+.journey-session-last b{color:#264b34}
+.journey-expand{font-size:11px;font-weight:600;color:#23563c}
+.session-journey-item[open] .journey-expand{color:#7b887c}
+.session-journey-detail{padding:4px 20px 18px 54px;border-top:1px solid #edf0e8}
+.session-journey-badges{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+.session-journey-badges span{border-radius:20px;background:#eef4ec;padding:7px 10px;font-size:11px;color:#47644b}
+.session-journey-timeline{padding:0;margin:12px 0 18px;list-style:none;display:grid;gap:0}
+.session-journey-timeline li{display:grid;grid-template-columns:92px minmax(0,1fr) auto;align-items:start;gap:12px;border-left:2px solid #dce7d9;padding:0 0 18px 16px;margin-left:6px;font-size:12px}
+.session-journey-timeline strong{color:#234b34}
+.session-journey-timeline p{margin:5px 0;color:#596b59;overflow-wrap:anywhere}
+.session-journey-timeline small,.session-journey-timeline li>span:last-child{color:#79857a}
+.journey-time{font-variant-numeric:tabular-nums;color:#657569}
+.journey-end{font-size:12px;color:#627363;border-top:1px solid #e5ede3;padding-top:12px;overflow-wrap:anywhere}
+@media(max-width:760px){.session-journey-item>summary{align-items:start}.journey-session-last{flex-basis:100%;padding-left:40px}.session-journey-detail{padding:6px 12px 18px}.session-journey-timeline li{grid-template-columns:70px minmax(0,1fr);gap:8px}.session-journey-timeline li>span:last-child{grid-column:2}}
+
+/* Conversion campaign analytics. Reuses admin panel typography and surfaces. */
+.campaign-performance{margin-top:24px;margin-bottom:24px}
+.campaign-performance-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:20px 0}
+.campaign-performance-kpis article{border:1px solid #dbe3dd;border-radius:12px;padding:18px;background:#fafbf9;display:flex;flex-direction:column;gap:8px}
+.campaign-performance-kpis article span{font-size:12px;color:#596c61}
+.campaign-performance-kpis article strong{font-size:30px;color:#173d31;line-height:1.1}
+.campaign-performance-kpis article small{font-size:11px;color:#697b70}
+@media(max-width:850px){.campaign-performance-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:450px){.campaign-performance-kpis{grid-template-columns:1fr 1fr;gap:8px}.campaign-performance-kpis article{padding:12px}.campaign-performance-kpis article strong{font-size:24px}}
+
+.behavior-sales-breakdown{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0 12px}
+.behavior-sales-breakdown>div{display:flex;flex-direction:column;gap:7px;padding:16px 18px;border-radius:12px;border:1px solid #dfe9de;background:#f8faf6}
+.behavior-sales-breakdown small{font-size:11px;color:#53675b;font-weight:650}
+.behavior-sales-breakdown strong{font-size:30px;line-height:1.1;color:#173d31}
+.behavior-sales-breakdown span{font-size:11px;color:#60776a;line-height:1.4}
+@media(max-width:700px){.behavior-sales-breakdown{grid-template-columns:1fr}.behavior-sales-breakdown>div{padding:14px}}
